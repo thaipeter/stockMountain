@@ -3283,7 +3283,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
+        const GAS_URL = "วาง_URL_ของ_Web_App_หลังบ้านที่นี่";
 
         // Polyfill for running outside Google Apps Script (e.g. on GitHub Pages)
         (function() {
@@ -3397,6 +3397,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                         });
                     }
                     if (s.sysLogo) {
+                        updateDynamicManifest(s.sysLogo);
                         document.addEventListener('DOMContentLoaded', () => {
                             document.querySelectorAll('.sys-logo-display').forEach(el => { el.src = s.sysLogo; el.style.display = 'block'; });
                             document.querySelectorAll('.sys-icon-display').forEach(el => { el.style.display = 'none'; });
@@ -3417,6 +3418,47 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             } catch (e) { console.warn("Error applying cached branding:", e); }
         }
         applyCachedBranding();
+
+        function updateDynamicManifest(logoUrl) {
+            try {
+                let manifestLink = document.querySelector('link[rel="manifest"]');
+                if (!manifestLink) {
+                    manifestLink = document.createElement('link');
+                    manifestLink.rel = 'manifest';
+                    document.head.appendChild(manifestLink);
+                }
+                const baseLogo = logoUrl || "https://cdn-icons-png.flaticon.com/512/583/583278.png";
+                const myManifest = {
+                    "short_name": "MountainWMS",
+                    "name": "Mountain WMS - คลังอะไหล่เมาท์เทน",
+                    "icons": [
+                        {
+                            "src": baseLogo,
+                            "sizes": "512x512",
+                            "type": "image/png",
+                            "purpose": "any maskable"
+                        }
+                    ],
+                    "start_url": "./index.html",
+                    "background_color": "#0f0f0f",
+                    "theme_color": "#e8a020",
+                    "display": "standalone",
+                    "orientation": "portrait"
+                };
+                const blob = new Blob([JSON.stringify(myManifest)], {type: 'application/json'});
+                const manifestURL = URL.createObjectURL(blob);
+                manifestLink.setAttribute('href', manifestURL);
+            } catch(e) {
+                console.warn('Failed to update PWA manifest:', e);
+            }
+        }
+
+        function restoreLastSection() {
+            const targetSec = sessionStorage.getItem('last_section') || 'dashboard';
+            const ADMIN_ONLY_SECTIONS = ['settings', 'archive'];
+            const isAllowed = (ADMIN_ONLY_SECTIONS.indexOf(targetSec) === -1) || (currentUserProfile.role === 'admin');
+            goTo(isAllowed ? targetSec : 'dashboard');
+        }
 
         let allData = { items: [], tools: [], history: [], activeBorrows: [], pendingPOs: [], users: [], settings: {} };
         let charts = {};
@@ -3599,6 +3641,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
         }
 
         function goTo(sectionId) {
+            try { sessionStorage.setItem('last_section', sectionId); } catch(e) {}
             const ADMIN_ONLY_SECTIONS = ['settings', 'archive'];
             if (ADMIN_ONLY_SECTIONS.indexOf(sectionId) !== -1 && currentUserProfile.role !== 'admin') {
                 Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
@@ -3827,7 +3870,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                         document.getElementById('loading').style.display = 'none';
                                         allData = data || {};
                                         onDataLoaded(allData);
-                                        goTo('dashboard'); // เผื่อหน้าจอไม่ขึ้นเองหลัง auto-login ผ่านลิงก์ ?uid=
+                                        restoreLastSection(); // เผื่อหน้าจอไม่ขึ้นเองหลัง auto-login ผ่านลิงก์ ?uid=
                                         resetSessionTimer();
                                         setupAutoRefresh(allData.settings);
                                         if (currentUserProfile.role === 'admin') setTimeout(startQRPendingPolling, 600);
@@ -3837,7 +3880,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                         document.getElementById('loading').style.display = 'none';
                                         allData = createMockData();
                                         onDataLoaded(allData);
-                                        goTo('dashboard');
+                                        restoreLastSection();
                                     })
                                     .getInventoryData();
                             } else {
@@ -3868,7 +3911,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     document.getElementById('loginScreen').style.display = 'none';
                     allData = createMockData();
                     onDataLoaded(allData);
-                    goTo('dashboard');
+                    restoreLastSection();
                 } else {
                     document.getElementById('loginScreen').style.display = 'flex';
                     allData = createMockData();
@@ -3959,7 +4002,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     document.getElementById('loginScreen').style.display = 'none';
                     Swal.fire({icon: 'success', title: 'เข้าสู่ระบบสำเร็จ', text: 'ยินดีต้อนรับ ' + currentUserProfile.name, timer: 600, showConfirmButton: false});
                     writeAudit('LOGIN', `เข้าสู่ระบบสำเร็จ — ${currentUserProfile.name} (${currentUserProfile.role})`);
-                    if (_inventoryData) { onDataLoaded(_inventoryData); goTo('dashboard'); }
+                    if (_inventoryData) { onDataLoaded(_inventoryData); restoreLastSection(); }
                     resetSessionTimer(); setupAutoRefresh(allData.settings);
                     if(currentUserProfile.role === 'admin') setTimeout(startQRPendingPolling, 600);
                 }
@@ -4008,7 +4051,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     Swal.fire({icon: 'success', title: 'เข้าสู่ระบบสำเร็จ (Demo Mode)', text: 'ยินดีต้อนรับ ' + currentUserProfile.name, timer: 1000, showConfirmButton: false});
                     allData = createMockData();
                     onDataLoaded(allData);
-                    goTo('dashboard');
+                    restoreLastSection();
                 } else {
                     document.getElementById('loginError').classList.remove('d-none');
                 }
@@ -4060,6 +4103,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             if (s.darkMode) document.body.classList.add('dark-mode'); else document.body.classList.remove('dark-mode');
             
             if (s.sysLogo) {
+                updateDynamicManifest(s.sysLogo);
                 document.querySelectorAll('.sys-logo-display').forEach(el => { el.src = s.sysLogo; el.style.display = 'block'; });
                 document.querySelectorAll('.sys-icon-display').forEach(el => { el.style.display = 'none'; });
             } else {
