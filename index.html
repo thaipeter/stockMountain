@@ -3454,7 +3454,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
         // [ลบ goTo() ตัวซ้ำ — ใช้ตัวหลักที่บรรทัดถัดไปแทน (มี logic ครบกว่า)]
 
         function openTransactionPage() {
-            window.open('https://script.google.com/macros/s/AKfycbyHljTeKi0DuuseQE6QnTNnSs1ECfMYJyxSmvQ3OsE0vLo6zCwP0yKXhGL4F9lMUodn_Q/exec?page=scanner', '_blank');
+            window.open('./indexqrv1.html', '_blank');
         }
 
         function copyTransactionUrl() {
@@ -7181,7 +7181,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 
         function printAppScannerQR() {
             // ลิงก์ล่าสุดที่คุณให้มา
-            const appUrl = "https://thaipeter.github.io/stockCyberbay/";
+            const appUrl = window.location.href.split('index.html')[0] + 'indexqrv1.html';
             
             // เปิดหน้าต่างใหม่ขึ้นมารอไว้ก่อนเลย ป้องกัน Pop-up Blocker
             const printWindow = window.open('', '_blank');
