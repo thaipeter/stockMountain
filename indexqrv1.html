@@ -2963,7 +2963,7 @@ function handleQR(code) {
 
 /* ══ HELPERS ══ */
 // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
-const MY_GAS_URL = "วาง_URL_ของ_Web_App_หลังบ้านที่นี่";
+const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
 const GAS_URL = (MY_GAS_URL && MY_GAS_URL.indexOf("วาง_URL") === -1) ? MY_GAS_URL : ((typeof __GAS_URL__ !== 'undefined') ? __GAS_URL__ : '');
 
 function callGAS(fn, args, onOk, onFail) {
