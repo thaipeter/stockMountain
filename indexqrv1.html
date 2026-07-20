@@ -1311,6 +1311,7 @@ function applyBrandingToLoginScreen(settings) {
     const imgEl = document.getElementById('loginLogoImg');
     const emojiEl = document.getElementById('loginLogoEmoji');
     if (settings.sysLogo) {
+      updateDynamicManifest(settings.sysLogo);
       imgEl.src = getProxyImgUrl(settings.sysLogo) || settings.sysLogo;
       imgEl.onload = () => { imgEl.style.display = 'block'; emojiEl.style.display = 'none'; };
       imgEl.onerror = () => { imgEl.style.display = 'none'; emojiEl.style.display = 'block'; };
@@ -1320,6 +1321,40 @@ function applyBrandingToLoginScreen(settings) {
       if (titleEl) titleEl.textContent = settings.sysName;
     }
   } catch (e) { /* ไม่ให้ error ตรงนี้บล็อกการเข้าสู่ระบบ */ }
+}
+
+function updateDynamicManifest(logoUrl) {
+  try {
+    let manifestLink = document.querySelector('link[rel="manifest"]');
+    if (!manifestLink) {
+      manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      document.head.appendChild(manifestLink);
+    }
+    const baseLogo = logoUrl || "https://cdn-icons-png.flaticon.com/512/583/583278.png";
+    const myManifest = {
+      "short_name": "MountainWMS",
+      "name": "Mountain WMS - คลังอะไหล่เมาท์เทน",
+      "icons": [
+        {
+          "src": baseLogo,
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any maskable"
+        }
+      ],
+      "start_url": "./index.html",
+      "background_color": "#0f0f0f",
+      "theme_color": "#e8a020",
+      "display": "standalone",
+      "orientation": "portrait"
+    };
+    const blob = new Blob([JSON.stringify(myManifest)], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    manifestLink.setAttribute('href', manifestURL);
+  } catch(e) {
+    console.warn('Failed to update PWA manifest:', e);
+  }
 }
 
 function startUserPoll() {
@@ -1546,6 +1581,13 @@ function loginSuccess(uid) {
   document.getElementById('mineBorrowList').innerHTML = '<div class="mine-empty"><i class="fas fa-clock"></i><p>กดรีเฟรชเพื่อโหลดข้อมูล</p></div>';
   checkPendingRetroWithdraws();
   initApp();
+  
+  const lastTab = sessionStorage.getItem('lastTab') || 'withdraw';
+  const allowed = (lastTab === 'newitem' && me.role === 'admin') ||
+                  (lastTab === 'receive' && me.role === 'admin') ||
+                  (lastTab === 'stocktake' && (me.role === 'admin' || me.role === 'staff')) ||
+                  (['withdraw', 'borrow', 'mine'].indexOf(lastTab) !== -1);
+  switchTab(allowed ? lastTab : 'withdraw');
 }
 
 // เช็คว่ามีรายการตกเบิกที่ถูกมอบหมายให้มายืนยันไหม — ถ้ามีเด้งแจ้งเตือนทันทีตอน login
