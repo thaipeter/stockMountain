@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="./manifest.json">
 <title>ทำรายการ</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -1255,14 +1256,53 @@ window.addEventListener('DOMContentLoaded', () => {
     allData = data || {};
     applyBrandingToLoginScreen(allData.settings || {});
     hide('loadingScreen');
-    show('loginScreen'); document.getElementById('appWrap').classList.remove('visible');
-    populateUsers(allData.users || []);
+    
+    let restored = false;
+    try {
+      const sessionStr = localStorage.getItem('user_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.uid && (Date.now() - session.timestamp < 86400000)) {
+          const userExists = (allData.users || []).some(x => x.userId === session.uid);
+          if (userExists) {
+            loginSuccess(session.uid);
+            restored = true;
+          } else {
+            localStorage.removeItem('user_session');
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (!restored) {
+      show('loginScreen'); document.getElementById('appWrap').classList.remove('visible');
+      populateUsers(allData.users || []);
+    }
     startUserPoll();
   }, () => {
     allData = demoData();
     hide('loadingScreen');
-    show('loginScreen'); document.getElementById('appWrap').classList.remove('visible');
-    populateUsers(allData.users || []);
+    
+    let restored = false;
+    try {
+      const sessionStr = localStorage.getItem('user_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.uid && (Date.now() - session.timestamp < 86400000)) {
+          loginSuccess(session.uid);
+          restored = true;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (!restored) {
+      show('loginScreen'); document.getElementById('appWrap').classList.remove('visible');
+      populateUsers(allData.users || []);
+    }
   });
 });
 
@@ -1469,6 +1509,13 @@ function doLogin() {
 function loginSuccess(uid) {
   const u  = (allData.users || []).find(x => x.userId === uid);
   me = { uid, name: u ? u.name : 'ผู้ใช้', role: u ? u.role : 'user', photoUrl: u ? (u.photoUrl || null) : null };
+  localStorage.setItem('user_session', JSON.stringify({
+    uid: me.uid,
+    name: me.name,
+    role: me.role,
+    photoUrl: me.photoUrl,
+    timestamp: Date.now()
+  }));
   Swal.fire({
     icon: 'success',
     title: 'เข้าสู่ระบบสำเร็จ',
@@ -1710,6 +1757,7 @@ function confirmLogout() {
     confirmButtonColor: '#ef5350', background: '#1e1e1e', color: '#c0c0c0',
   }).then(r => {
     if (!r.isConfirmed) return;
+    localStorage.removeItem('user_session');
     me = { uid: null, name: '', role: 'user', photoUrl: null };
     withdrawCart = []; borrowCart = []; receiveCart = [];
     mineData = { history: [], borrows: [], retro: [], retroPending: [] };
@@ -2138,6 +2186,26 @@ function stCloseSession() {
 /* ══ ITEMS ══ */
 function getAllItems() { return [...(allData.items || []), ...(allData.tools || [])]; }
 
+function isItemDamaged(code) {
+  if (!allData || !allData.history) return false;
+  let damagedQty = 0;
+  for (let i = allData.history.length - 1; i >= 0; i--) {
+    let log = allData.history[i];
+    if (String(log.code).trim() === String(code).trim()) {
+      let qty = parseFloat(String(log.amount).replace(/[^0-9.]/g, '')) || 0;
+      let act = String(log.action).trim().toLowerCase();
+      let userStr = String(log.user || '');
+      if (act === 'แจ้งชำรุด' || (act === 'เบิก' && userStr.includes('ชำรุด'))) {
+        damagedQty += qty;
+      }
+      if (act === 'ซ่อมแซมแล้ว' || (act === 'รับเข้า' && userStr.includes('ซ่อมแซมแล้ว'))) {
+        damagedQty -= qty;
+      }
+    }
+  }
+  return damagedQty > 0;
+}
+
 function renderList(mode, kw, cat) {
   const el   = document.getElementById(mode === 'withdraw' ? 'withdrawList' : 'borrowList');
   const cart = mode === 'withdraw' ? withdrawCart : borrowCart;
@@ -2152,13 +2220,25 @@ function renderList(mode, kw, cat) {
     const inCart = cart.find(function(c) { return c.code === item.code; });
     const sc     = item.stock <= 0 ? 'stock-zero' : item.stock <= (item.min || 0) ? 'stock-low' : 'stock-ok';
     const imgUrl = getProxyImgUrl(item.imageUrl);
+    const isDamaged = isItemDamaged(item.code);
+    
     const iconHtml = imgUrl
       ? '<img src="' + imgUrl + '" alt="' + esc(item.name) + '" style="width:100%;height:100%;object-fit:cover;border-radius:6px" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">'
         + '<span style="display:none;font-size:18px">📦</span>'
       : '<span style="font-size:18px">📦</span>';
+      
     const imgClickHtml = imgUrl
       ? '<div style="position:relative;width:56px;height:56px;overflow:hidden;border-radius:10px;background:var(--surface);border:1px solid var(--border2);flex-shrink:0;cursor:zoom-in" onclick="event.stopPropagation();showItemGallery(\'' + item.code + '\',\'' + esc(item.name) + '\')">'        + '<img src="' + imgUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'        + (item.images && item.images.length > 1 ? '<div style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:1px 4px;border-radius:6px">' + item.images.length + '</div>' : '')        + '<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:22px">📦</div></div>'      : '<div style="width:56px;height:56px;border-radius:10px;background:var(--surface);border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px">📦</div>';
-    return '<div class="item-card' + (inCart ? ' in-cart' : '') + '" style="padding:10px 12px">'      + imgClickHtml      + '<div class="item-info" style="flex:1;min-width:0" onclick="addToCart(\'' + item.code + '\',\'' + mode + '\')">'      + '<div class="item-name">' + esc(item.name) + '</div>'      + '<div class="item-code">' + item.code + '</div>'      + (inCart ? '<div class="in-cart-badge"><i class="fas fa-check-circle"></i> ในตะกร้า ×' + inCart.qty + '</div>' : '')      + '</div>'      + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'      + '<div class="item-stock" style="text-align:right"><div class="stock-num ' + sc + '">' + item.stock + '</div><div class="stock-unit">' + item.unit + '</div></div>'      + '<button onclick="event.stopPropagation();addToCart(\'' + item.code + '\',\'' + mode + '\')" style="background:' + (inCart ? 'var(--green)' : 'var(--amber)') + ';color:#111;border:none;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;cursor:pointer">'      + (inCart ? '✓ เพิ่ม' : '+ เพิ่ม') + '</button>'      + '</div>'      + '</div>';
+      
+    const badgeHtml = isDamaged 
+      ? '<div style="font-size:10px;font-weight:700;color:var(--red);background:var(--red-dim);padding:2px 6px;border-radius:4px;width:fit-content;margin-top:2px"><i class="fas fa-heart-broken"></i> ชำรุด/ส่งซ่อม</div>'
+      : (inCart ? '<div class="in-cart-badge"><i class="fas fa-check-circle"></i> ในตะกร้า ×' + inCart.qty + '</div>' : '');
+
+    const buttonHtml = isDamaged
+      ? '<button style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;cursor:not-allowed" disabled>ชำรุด</button>'
+      : '<button onclick="event.stopPropagation();addToCart(\'' + item.code + '\',\'' + mode + '\')" style="background:' + (inCart ? 'var(--green)' : 'var(--amber)') + ';color:#111;border:none;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;cursor:pointer">' + (inCart ? '✓ เพิ่ม' : '+ เพิ่ม') + '</button>';
+
+    return '<div class="item-card' + (inCart ? ' in-cart' : '') + '" style="padding:10px 12px">'      + imgClickHtml      + '<div class="item-info" style="flex:1;min-width:0" onclick="addToCart(\'' + item.code + '\',\'' + mode + '\')">'      + '<div class="item-name">' + esc(item.name) + '</div>'      + '<div class="item-code">' + item.code + '</div>'      + badgeHtml      + '</div>'      + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'      + '<div class="item-stock" style="text-align:right"><div class="stock-num ' + sc + '">' + item.stock + '</div><div class="stock-unit">' + item.unit + '</div></div>'      + buttonHtml      + '</div>'      + '</div>';
   }).join('');
 }
 
@@ -2185,6 +2265,17 @@ function renderReturnList() {
 function addToCart(code, mode) {
   const item = getAllItems().find(i => i.code === code);
   if (!item) return;
+  if (isItemDamaged(code)) {
+    Swal.fire({
+      icon: 'error',
+      title: 'ไม่สามารถทำรายการได้',
+      text: 'อุปกรณ์ชิ้นนี้อยู่ในสถานะชำรุด/กำลังส่งซ่อมบำรุง',
+      confirmButtonColor: '#ef5350',
+      background: '#1a1f2e',
+      color: '#e2e8f0'
+    });
+    return;
+  }
   if (item.stock <= 0 && mode !== 'borrow') { showToast('สินค้าหมดสต็อก', 'error'); return; }
   const cart  = mode === 'withdraw' ? withdrawCart : borrowCart;
   const exist = cart.find(c => c.code === code);
@@ -2872,7 +2963,7 @@ function handleQR(code) {
 
 /* ══ HELPERS ══ */
 // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
-const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
+const MY_GAS_URL = "วาง_URL_ของ_Web_App_หลังบ้านที่นี่";
 const GAS_URL = (MY_GAS_URL && MY_GAS_URL.indexOf("วาง_URL") === -1) ? MY_GAS_URL : ((typeof __GAS_URL__ !== 'undefined') ? __GAS_URL__ : '');
 
 function callGAS(fn, args, onOk, onFail) {
@@ -3649,6 +3740,16 @@ function submitCartWithSignature() {
   
   closeSignatureModal();
   executeSubmitCart(sigMode, base64);
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./service-worker.js').then(function(reg) {
+      console.log('PWA ServiceWorker registered');
+    }).catch(function(err) {
+      console.log('PWA ServiceWorker registration failed: ', err);
+    });
+  });
 }
 </script>
 </body>

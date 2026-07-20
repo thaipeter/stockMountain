@@ -5,6 +5,7 @@
     <style>html,body{background-color:#0f0f0f!important}</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f0f0f">
+    <link rel="manifest" href="./manifest.json">
     <title>คลังอะไหล่เมาท์เทน</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -2385,6 +2386,24 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row g-4 mb-4">
+                                    <div class="col-md-6">
+                                        <div class="card shadow-sm border p-3" style="background:#161616;">
+                                            <h6 class="fw-bold mb-3" style="color:#b0b0b0;"><i class="fas fa-chart-pie text-success me-2"></i> สัดส่วนการพิมพ์แยกตามประเภท</h6>
+                                            <div style="height: 220px; position: relative;">
+                                                <canvas id="qrTypeChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card shadow-sm border p-3" style="background:#161616;">
+                                            <h6 class="fw-bold mb-3" style="color:#b0b0b0;"><i class="fas fa-chart-line text-warning me-2"></i> ปริมาณการพิมพ์ในรอบ 7 วันที่ผ่านมา</h6>
+                                            <div style="height: 220px; position: relative;">
+                                                <canvas id="qrDailyChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 
                                 <h5 class="fw-bold mb-3"><i class="fas fa-crown text-warning me-2"></i> รายการที่พิมพ์บ่อยที่สุด (Top 10)</h5>
                                 <div class="table-responsive border rounded"><table class="table table-hover align-middle mb-0"><thead class="bg-light"><tr><th width="10%" class="text-center">ลำดับ</th><th width="60%">รายการ</th><th width="30%" class="text-center">จำนวนครั้ง</th></tr></thead><tbody id="topItemsBody"></tbody></table></div>
@@ -3264,7 +3283,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
+        const GAS_URL = "วาง_URL_ของ_Web_App_หลังบ้านที่นี่";
 
         // Polyfill for running outside Google Apps Script (e.g. on GitHub Pages)
         (function() {
@@ -3527,6 +3546,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             // เขียน audit ก่อนล้างข้อมูล (ใช้ชื่อผู้ใช้ปัจจุบัน)
             writeAudit('LOGOUT', `ออกจากระบบ — ${currentUserProfile.name}`);
             // ล้างข้อมูลทั้งหมดเพื่อความปลอดภัย
+            localStorage.removeItem('user_session');
             allData = { items: [], tools: [], history: [], activeBorrows: [], pendingPOs: [], users: [], settings: {} };
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('loginPin').value = '';
@@ -3755,7 +3775,23 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
         function checkLogin() {
             const urlParams = new URLSearchParams(window.location.search);
-            const uid = urlParams.get('uid');
+            let uid = urlParams.get('uid');
+
+            if (!uid) {
+                try {
+                    const sessionStr = localStorage.getItem('user_session');
+                    if (sessionStr) {
+                        const session = JSON.parse(sessionStr);
+                        if (session && session.uid && (Date.now() - session.timestamp < 86400000)) {
+                            uid = session.uid;
+                        } else {
+                            localStorage.removeItem('user_session');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Session restore failed:', e);
+                }
+            }
 
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 // ── Step 1: โหลดแค่ Users sheet ก่อน (เร็วมาก ~1 วินาที)
@@ -3913,6 +3949,12 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                         const u = _inventoryData.users.find(x => x.userId === uid);
                         if (u) { currentUserProfile.name = u.name; currentUserProfile.role = u.role; }
                     }
+                    localStorage.setItem('user_session', JSON.stringify({
+                        uid: currentUserProfile.uid,
+                        name: currentUserProfile.name,
+                        role: currentUserProfile.role,
+                        timestamp: Date.now()
+                    }));
                     document.getElementById('loginError').classList.add('d-none');
                     document.getElementById('loginScreen').style.display = 'none';
                     Swal.fire({icon: 'success', title: 'เข้าสู่ระบบสำเร็จ', text: 'ยินดีต้อนรับ ' + currentUserProfile.name, timer: 600, showConfirmButton: false});
@@ -3955,6 +3997,12 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     currentUserProfile.uid = uid;
                     currentUserProfile.name = 'Test Admin';
                     currentUserProfile.role = 'admin';
+                    localStorage.setItem('user_session', JSON.stringify({
+                        uid: currentUserProfile.uid,
+                        name: currentUserProfile.name,
+                        role: currentUserProfile.role,
+                        timestamp: Date.now()
+                    }));
                     document.getElementById('loginError').classList.add('d-none');
                     document.getElementById('loginScreen').style.display = 'none';
                     Swal.fire({icon: 'success', title: 'เข้าสู่ระบบสำเร็จ (Demo Mode)', text: 'ยินดีต้อนรับ ' + currentUserProfile.name, timer: 1000, showConfirmButton: false});
@@ -7868,6 +7916,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         tbody.innerHTML = res.logs.map(function(r, i) {
                             return '<tr>'                                +'<td class="small">'+(i+1)+'</td>'                                +'<td><span class="badge bg-dark font-monospace">'+r.itemCode+'</span></td>'                                +'<td class="fw-bold small">'+r.itemName+'</td>'                                +'<td><span class="badge '+(r.type.includes('Bulk')?'bg-primary':'bg-success')+' bg-opacity-10 '+(r.type.includes('Bulk')?'text-primary':'text-success')+' small">'+r.type+'</span></td>'                                +'<td class="small text-muted">'+r.printedAt+'</td>'                                +'<td class="small">'+r.userName+'</td>'                                +'</tr>';
                         }).join('');
+                        updateHistoryStats(res.logs);
                     })
                     .withFailureHandler(function() {
                         tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">โหลดประวัติไม่สำเร็จ</td></tr>';
@@ -7880,10 +7929,11 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 tbody.innerHTML = logs.map(function(r,i) {
                     return '<tr><td class="small">'+(i+1)+'</td><td><span class="badge bg-dark font-monospace">'+r.itemCode+'</span></td><td class="fw-bold small">'+r.itemName+'</td><td><span class="badge bg-success bg-opacity-10 text-success small">'+r.type+'</span></td><td class="small text-muted">'+r.printedAt+'</td><td class="small">-</td></tr>';
                 }).join('');
+                updateHistoryStats(logs);
             }
         }
-        function updateHistoryStats() {
-            const printHistory = JSON.parse(localStorage.getItem('qrBarcodeHistory') || '[]');
+        function updateHistoryStats(logs) {
+            const printHistory = Array.isArray(logs) ? logs : JSON.parse(localStorage.getItem('qrBarcodeHistory') || '[]');
             
             if (document.getElementById('totalPrints')) {
                 document.getElementById('totalPrints').innerText = printHistory.length;
@@ -7896,17 +7946,21 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             
             if (document.getElementById('todayPrints')) {
                 const today = new Date().toDateString();
-                const todayPrints = printHistory.filter(r => new Date(r.timestamp).toDateString() === today).length;
+                const todayPrints = printHistory.filter(r => {
+                    let d;
+                    if (r.timestamp) d = new Date(r.timestamp);
+                    else if (r.printedAt) d = new Date(r.printedAt.replace(/\//g, '-'));
+                    return d && d.toDateString() === today;
+                }).length;
                 document.getElementById('todayPrints').innerText = todayPrints;
             }
             
-            // อัปเดตตารางสินค้าที่พิมพ์มากที่สุด
-            updateTopPrintedItems();
+            updateTopPrintedItems(printHistory);
+            renderQRStatsCharts(printHistory);
         }
         
         // ตารางสินค้าที่พิมพ์มากที่สุด
-        function updateTopPrintedItems() {
-            const printHistory = JSON.parse(localStorage.getItem('qrBarcodeHistory') || '[]');
+        function updateTopPrintedItems(printHistory) {
             const itemCount = {};
             
             printHistory.forEach(record => {
@@ -7941,6 +7995,101 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        function renderQRStatsCharts(logs) {
+            try {
+                const typeCtx = document.getElementById('qrTypeChart');
+                if (typeCtx) {
+                    const typeMap = {};
+                    logs.forEach(log => {
+                        const t = log.type || 'เดี่ยว (Single)';
+                        typeMap[t] = (typeMap[t] || 0) + 1;
+                    });
+                    const labels = Object.keys(typeMap);
+                    const values = Object.values(typeMap);
+                    
+                    if (charts.qrType) charts.qrType.destroy();
+                    charts.qrType = new Chart(typeCtx.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: ['#4f8ef7', '#10b981', '#f59e0b', '#ec4899', '#84cc16'],
+                                borderWidth: 2,
+                                borderColor: '#161616'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { color: '#b0b0b0', font: { family: 'Sarabun', size: 11 }, usePointStyle: true }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                const dailyCtx = document.getElementById('qrDailyChart');
+                if (dailyCtx) {
+                    const dailyMap = {};
+                    for (let i = 6; i >= 0; i--) {
+                        const d = new Date();
+                        d.setDate(d.getDate() - i);
+                        const dateStr = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+                        dailyMap[dateStr] = 0;
+                    }
+                    
+                    logs.forEach(log => {
+                        let logDate;
+                        if (log.timestamp) {
+                            logDate = new Date(log.timestamp);
+                        } else if (log.printedAt) {
+                            logDate = new Date(log.printedAt.replace(/\//g, '-'));
+                        }
+                        if (logDate && !isNaN(logDate)) {
+                            const dateStr = logDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+                            if (dateStr in dailyMap) {
+                                dailyMap[dateStr]++;
+                            }
+                        }
+                    });
+                    
+                    const labels = Object.keys(dailyMap);
+                    const values = Object.values(dailyMap);
+                    
+                    if (charts.qrDaily) charts.qrDaily.destroy();
+                    charts.qrDaily = new Chart(dailyCtx.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'จำนวนครั้งที่พิมพ์',
+                                data: values,
+                                backgroundColor: 'rgba(232, 160, 32, 0.75)',
+                                borderColor: '#e8a020',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { grid: { display: false }, ticks: { color: '#b0b0b0', font: { family: 'Sarabun', size: 10 } } },
+                                y: { grid: { color: '#2a2a2a' }, ticks: { color: '#b0b0b0', font: { family: 'Sarabun', size: 10 }, stepSize: 1 } }
+                            },
+                            plugins: {
+                                legend: { display: false }
+                            }
+                        }
+                    });
+                }
+            } catch(e) { console.error('Error drawing QR charts:', e); }
         }
         
         // ลบบันทึกประวัติ
@@ -9974,6 +10123,16 @@ function showCatalogResult(category, unit) {
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
         }, i * 150);
+    });
+}
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./service-worker.js').then(function(reg) {
+            console.log('PWA ServiceWorker registered');
+        }).catch(function(err) {
+            console.log('PWA ServiceWorker registration failed: ', err);
+        });
     });
 }
 </script>
