@@ -1226,7 +1226,7 @@ body{display:flex;flex-direction:column}
 </div>
 
 </div><!-- /appWrap -->
-<script>const __GAS_URL__ = 'https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec';</script>
+<script>const __GAS_URL__ = 'https://script.google.com/macros/s/AKfycbyHljTeKi0DuuseQE6QnTNnSs1ECfMYJyxSmvQ3OsE0vLo6zCwP0yKXhGL4F9lMUodn_Q/exec';</script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
 /* ══ STATE ══ */
@@ -1411,6 +1411,8 @@ function numDel() {
   updatePinDots();
   document.getElementById('loginError').style.display = 'none';
 }
+
+
 
 function updatePinDots() {
   for (let i = 0; i < PIN_LEN; i++) {
@@ -2869,7 +2871,9 @@ function handleQR(code) {
 }
 
 /* ══ HELPERS ══ */
-const GAS_URL = localStorage.getItem('global_gas_url') || ((typeof __GAS_URL__ !== 'undefined') ? __GAS_URL__ : '');
+// 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
+const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
+const GAS_URL = (MY_GAS_URL && MY_GAS_URL.indexOf("วาง_URL") === -1) ? MY_GAS_URL : ((typeof __GAS_URL__ !== 'undefined') ? __GAS_URL__ : '');
 
 function callGAS(fn, args, onOk, onFail) {
   // 1. ถ้ารันอยู่บน Google Apps Script Web App (มี google.script.run) ให้ใช้ช่องทางหลักเสมอ เพื่อเลี่ยงปัญหา CORS
