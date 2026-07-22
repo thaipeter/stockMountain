@@ -1,17 +1,22 @@
-const CACHE_NAME = 'mountain-wms-cache-v1';
+const CACHE_NAME = 'mountain-wms-cache-v3';
 const urlsToCache = [
   './index.html',
   './indexqrv1.html',
-  './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
-  'https://cdn-icons-png.flaticon.com/512/583/583278.png'
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+    )).then(() => self.clients.claim())
   );
 });
 
@@ -19,21 +24,17 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) return response;
-        return fetch(event.request).then(networkResponse => {
-          if (!networkResponse || networkResponse.status !== 200) return networkResponse;
-          
+    // สำคัญ: cache:'no-store' บังคับให้เบราว์เซอร์ยิงไปเซิร์ฟเวอร์จริงเสมอ
+    // ไม่ใช้ไฟล์จาก HTTP cache ของเบราว์เซอร์เอง (คนละชั้นกับ Cache API ที่ service worker คุม)
+    // นี่คือจุดที่ทำให้เมื่อก่อนต้องกด Ctrl+Shift+R ถึงจะเห็นไฟล์ใหม่
+    fetch(event.request, { cache: 'no-store' })
+      .then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
-          return networkResponse;
-        });
-      }).catch(() => {
-        // Offline fallback
-        return caches.match('./index.html') || caches.match('./indexqrv1.html');
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+        }
+        return networkResponse;
       })
+      .catch(() => caches.match(event.request))
   );
 });
