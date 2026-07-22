@@ -3940,9 +3940,11 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             const fullUrl = url.toString();
             navigator.clipboard.writeText(fullUrl).then(() => {
                 const icon = document.getElementById('copyIcon');
-                const oldHtml = icon.innerHTML;
-                icon.innerHTML = '<i class="fas fa-check"></i>';
-                setTimeout(() => { icon.innerHTML = oldHtml; }, 2000);
+                if (icon) {
+                    const oldHtml = icon.innerHTML;
+                    icon.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => { icon.innerHTML = oldHtml; }, 2000);
+                }
                 Swal.fire({icon: 'success', title: 'คัดลอกแล้ว', text: 'ลิงก์สำเร็จแล้ว', timer: 1500, showConfirmButton: false});
             }).catch(() => {
                 Swal.fire({icon: 'error', title: 'ไม่สามารถคัดลอก', text: 'ลองใหม่อีกครั้ง'});
