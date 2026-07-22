@@ -2024,7 +2024,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                     <div>
                                         <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">การรับเข้าสินค้า</div>
                                         <div class="stat-value text-success" id="count-logs" style="font-size:2rem; font-weight:800; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
-                                        <div style="font-size:12px; color:#a78bfa; font-weight:700; margin-top:2px;" id="statChangeReceiving">0 หน่วยรับเข้าวันนี้</div>
+                                        <div style="font-size:12px; color:#a78bfa; font-weight:700; margin-top:2px;" id="statChangeReceiving">0 รายการรับเข้าวันนี้</div>
                                     </div>
                                     <div class="stat-icon bg-success bg-opacity-10 text-success mb-0"><i class="fas fa-warehouse"></i></div>
                                 </div>
@@ -3335,13 +3335,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                 </div>
                                 <div class="settings-grid">
                                     <div class="settings-col">
-                                        <div class="settings-box">
-                                            <div>
-                                                <label class="form-label"><i class="fab fa-line text-success fs-5 me-1"></i> LINE Notify Token <span class="badge bg-secondary ms-2" style="font-size:.65rem">เลิกใช้แล้ว</span></label>
-                                                <input type="password" class="form-control" id="setLineNotify" placeholder="LINE ปิดบริการนี้ถาวรแล้ว ไม่ต้องกรอก" disabled>
-                                                <div class="settings-toggle-sub mt-2">ตอนนี้ระบบแจ้งเตือนแอดมินทุกคนผ่านบอท LINE โดยตรงอัตโนมัติ ไม่ต้องตั้งค่า Token นี้อีกต่อไป</div>
-                                            </div>
-                                        </div>
+    
                                         <div class="settings-box" style="border-top-color:#4caf50; background:linear-gradient(145deg,rgba(76,175,80,.1) 0%,rgba(76,175,80,.02) 100%); border-color:rgba(76,175,80,.3);">
                                             <div>
                                                 <label class="form-label d-flex align-items-center gap-2 mb-2 text-success">
@@ -3489,22 +3483,81 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                     <div class="settings-toggle-sub mb-3">กำหนดสิทธิ์เฉพาะจุดเพิ่มเติมสำหรับ role "user" และ "staff" โดยไม่ต้องเปลี่ยน role หลัก</div>
                                     <div class="table-responsive">
                                         <table class="table table-sm align-middle mb-0" style="color:rgba(255,255,255,.8);font-size:.85rem">
-                                            <thead><tr style="color:rgba(255,255,255,.5)"><th>สิทธิ์</th><th class="text-center">User</th><th class="text-center">Staff</th></tr></thead>
+                                            <thead><tr style="color:rgba(255,255,255,.5);background:rgba(96,165,250,.08);"><th style="padding-left:8px">สิทธิ์การใช้งาน</th><th class="text-center" style="width:80px">User</th><th class="text-center" style="width:80px">Staff</th></tr></thead>
                                             <tbody>
+                                                <tr style="border-top:1px solid rgba(255,255,255,.05)"><td colspan="3" style="color:#60a5fa;font-weight:700;font-size:.8rem;padding:8px 8px 4px;background:rgba(96,165,250,.05)"><i class="fas fa-box me-1"></i> สินค้า / อะไหล่</td></tr>
                                                 <tr>
-                                                    <td>Export ข้อมูลเป็น Excel</td>
+                                                    <td style="padding-left:20px">เพิ่มสินค้าใหม่ / แก้ไขข้อมูลสินค้า</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermAddItemUser"></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermAddItemStaff" checked></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">รับเข้าสินค้า (เพิ่มสต็อก)</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermReceiveUser"></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermReceiveStaff" checked></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">เบิกจ่ายสินค้า</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermDispatchUser" checked></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermDispatchStaff" checked></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">ลบสินค้าออกจากระบบ</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermDeleteItemUser"></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermDeleteItemStaff"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">มองเห็นราคา / ต้นทุนสินค้า</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermPriceUser"></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermPriceStaff" checked></td>
+                                                </tr>
+                                                <tr style="border-top:1px solid rgba(255,255,255,.05)"><td colspan="3" style="color:#a78bfa;font-weight:700;font-size:.8rem;padding:8px 8px 4px;background:rgba(167,139,250,.05)"><i class="fas fa-tools me-1"></i> เครื่องมือ / อุปกรณ์</td></tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">เพิ่ม/แก้ไขเครื่องมือ</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermAddToolUser"></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermAddToolStaff" checked></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">ยืม / คืนเครื่องมือ</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermBorrowUser" checked></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermBorrowStaff" checked></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">แจ้งชำรุด / ส่งซ่อม</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermDamageUser" checked></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermDamageStaff" checked></td>
+                                                </tr>
+                                                <tr style="border-top:1px solid rgba(255,255,255,.05)"><td colspan="3" style="color:#fbbf24;font-weight:700;font-size:.8rem;padding:8px 8px 4px;background:rgba(251,191,36,.05)"><i class="fas fa-clipboard-list me-1"></i> ประวัติ / รายงาน</td></tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">Export ข้อมูลเป็น Excel</td>
                                                     <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermExportUser"></td>
                                                     <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermExportStaff" checked></td>
                                                 </tr>
                                                 <tr>
-                                                    <td>มองเห็นราคา/ต้นทุนสินค้า</td>
-                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermPriceUser"></td>
-                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermPriceStaff" checked></td>
+                                                    <td style="padding-left:20px">ดูประวัติการทำรายการทั้งหมด</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermViewHistoryUser" checked></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermViewHistoryStaff" checked></td>
                                                 </tr>
                                                 <tr>
-                                                    <td>ลบประวัติ / แก้ไขรายการย้อนหลัง</td>
+                                                    <td style="padding-left:20px">ลบประวัติ / แก้ไขรายการย้อนหลัง</td>
                                                     <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermEditHistoryUser"></td>
                                                     <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermEditHistoryStaff"></td>
+                                                </tr>
+                                                <tr style="border-top:1px solid rgba(255,255,255,.05)"><td colspan="3" style="color:#4ade80;font-weight:700;font-size:.8rem;padding:8px 8px 4px;background:rgba(74,222,128,.05)"><i class="fas fa-qrcode me-1"></i> QR / ใบสั่งซื้อ</td></tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">สร้าง / จัดการ QR Code</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermQRUser"></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermQRStaff" checked></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">สร้าง / จัดการใบสั่งซื้อ (PO)</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermPOUser"></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermPOStaff" checked></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-left:20px">อนุมัติคำขอจากหน้า QR</td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermApproveUser"></td>
+                                                    <td class="text-center"><input class="form-check-input" type="checkbox" id="setPermApproveStaff" checked></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -4533,7 +4586,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             if(document.getElementById('setMaxBorrowDays')) document.getElementById('setMaxBorrowDays').value = s.maxBorrowDays || 7;
             if(document.getElementById('setReqRemark')) document.getElementById('setReqRemark').checked = !!s.reqRemark;
             if(document.getElementById('setDecimalPlaces')) document.getElementById('setDecimalPlaces').value = s.decimalPlaces || 0;
-            if(document.getElementById('setLineNotify')) document.getElementById('setLineNotify').value = s.lineNotifyToken || '';
+
             if(document.getElementById('setChannelToken')) document.getElementById('setChannelToken').value = s.channelAccessToken || '';
             if(document.getElementById('setDailyDigest')) document.getElementById('setDailyDigest').value = s.dailyDigestTime || '08:30';
             if(document.getElementById('setSessionTime')) document.getElementById('setSessionTime').value = s.sessionTimeout || 30;
@@ -4561,12 +4614,38 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             if(document.getElementById('setAutoBackupTime')) document.getElementById('setAutoBackupTime').value = s.autoBackupTime || '23:00';
             if(document.getElementById('setAutoBackupEmail')) document.getElementById('setAutoBackupEmail').value = s.autoBackupEmail || '';
 
-            if(document.getElementById('setPermExportUser')) document.getElementById('setPermExportUser').checked = !!s.permExportUser;
-            if(document.getElementById('setPermExportStaff')) document.getElementById('setPermExportStaff').checked = s.permExportStaff !== undefined ? !!s.permExportStaff : true;
+            // --- Detailed Permissions: Items ---
+            if(document.getElementById('setPermAddItemUser')) document.getElementById('setPermAddItemUser').checked = !!s.permAddItemUser;
+            if(document.getElementById('setPermAddItemStaff')) document.getElementById('setPermAddItemStaff').checked = s.permAddItemStaff !== undefined ? !!s.permAddItemStaff : true;
+            if(document.getElementById('setPermReceiveUser')) document.getElementById('setPermReceiveUser').checked = !!s.permReceiveUser;
+            if(document.getElementById('setPermReceiveStaff')) document.getElementById('setPermReceiveStaff').checked = s.permReceiveStaff !== undefined ? !!s.permReceiveStaff : true;
+            if(document.getElementById('setPermDispatchUser')) document.getElementById('setPermDispatchUser').checked = s.permDispatchUser !== undefined ? !!s.permDispatchUser : true;
+            if(document.getElementById('setPermDispatchStaff')) document.getElementById('setPermDispatchStaff').checked = s.permDispatchStaff !== undefined ? !!s.permDispatchStaff : true;
+            if(document.getElementById('setPermDeleteItemUser')) document.getElementById('setPermDeleteItemUser').checked = !!s.permDeleteItemUser;
+            if(document.getElementById('setPermDeleteItemStaff')) document.getElementById('setPermDeleteItemStaff').checked = !!s.permDeleteItemStaff;
             if(document.getElementById('setPermPriceUser')) document.getElementById('setPermPriceUser').checked = !!s.permPriceUser;
             if(document.getElementById('setPermPriceStaff')) document.getElementById('setPermPriceStaff').checked = s.permPriceStaff !== undefined ? !!s.permPriceStaff : true;
+            // --- Detailed Permissions: Tools ---
+            if(document.getElementById('setPermAddToolUser')) document.getElementById('setPermAddToolUser').checked = !!s.permAddToolUser;
+            if(document.getElementById('setPermAddToolStaff')) document.getElementById('setPermAddToolStaff').checked = s.permAddToolStaff !== undefined ? !!s.permAddToolStaff : true;
+            if(document.getElementById('setPermBorrowUser')) document.getElementById('setPermBorrowUser').checked = s.permBorrowUser !== undefined ? !!s.permBorrowUser : true;
+            if(document.getElementById('setPermBorrowStaff')) document.getElementById('setPermBorrowStaff').checked = s.permBorrowStaff !== undefined ? !!s.permBorrowStaff : true;
+            if(document.getElementById('setPermDamageUser')) document.getElementById('setPermDamageUser').checked = s.permDamageUser !== undefined ? !!s.permDamageUser : true;
+            if(document.getElementById('setPermDamageStaff')) document.getElementById('setPermDamageStaff').checked = s.permDamageStaff !== undefined ? !!s.permDamageStaff : true;
+            // --- Detailed Permissions: History/Report ---
+            if(document.getElementById('setPermExportUser')) document.getElementById('setPermExportUser').checked = !!s.permExportUser;
+            if(document.getElementById('setPermExportStaff')) document.getElementById('setPermExportStaff').checked = s.permExportStaff !== undefined ? !!s.permExportStaff : true;
+            if(document.getElementById('setPermViewHistoryUser')) document.getElementById('setPermViewHistoryUser').checked = s.permViewHistoryUser !== undefined ? !!s.permViewHistoryUser : true;
+            if(document.getElementById('setPermViewHistoryStaff')) document.getElementById('setPermViewHistoryStaff').checked = s.permViewHistoryStaff !== undefined ? !!s.permViewHistoryStaff : true;
             if(document.getElementById('setPermEditHistoryUser')) document.getElementById('setPermEditHistoryUser').checked = !!s.permEditHistoryUser;
             if(document.getElementById('setPermEditHistoryStaff')) document.getElementById('setPermEditHistoryStaff').checked = !!s.permEditHistoryStaff;
+            // --- Detailed Permissions: QR/PO ---
+            if(document.getElementById('setPermQRUser')) document.getElementById('setPermQRUser').checked = !!s.permQRUser;
+            if(document.getElementById('setPermQRStaff')) document.getElementById('setPermQRStaff').checked = s.permQRStaff !== undefined ? !!s.permQRStaff : true;
+            if(document.getElementById('setPermPOUser')) document.getElementById('setPermPOUser').checked = !!s.permPOUser;
+            if(document.getElementById('setPermPOStaff')) document.getElementById('setPermPOStaff').checked = s.permPOStaff !== undefined ? !!s.permPOStaff : true;
+            if(document.getElementById('setPermApproveUser')) document.getElementById('setPermApproveUser').checked = !!s.permApproveUser;
+            if(document.getElementById('setPermApproveStaff')) document.getElementById('setPermApproveStaff').checked = s.permApproveStaff !== undefined ? !!s.permApproveStaff : true;
 
             if (s.reqRemark) {
                 const txReq = document.getElementById('txRemarkReq'); if(txReq) txReq.classList.remove('d-none'); 
@@ -4744,7 +4823,6 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 maxBorrowDays: document.getElementById('setMaxBorrowDays').value,
                 reqRemark: document.getElementById('setReqRemark').checked, 
                 decimalPlaces: document.getElementById('setDecimalPlaces').value, 
-                lineNotifyToken: document.getElementById('setLineNotify').value.trim(),
                 channelAccessToken: document.getElementById('setChannelToken') ? document.getElementById('setChannelToken').value.trim() : '', 
                 dailyDigestTime: document.getElementById('setDailyDigest').value,
                 sessionTimeout: document.getElementById('setSessionTime').value, 
@@ -4764,12 +4842,38 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 autoBackupEnabled: document.getElementById('setAutoBackupEnabled') ? document.getElementById('setAutoBackupEnabled').checked : false,
                 autoBackupTime: document.getElementById('setAutoBackupTime') ? document.getElementById('setAutoBackupTime').value : '23:00',
                 autoBackupEmail: document.getElementById('setAutoBackupEmail') ? document.getElementById('setAutoBackupEmail').value.trim() : '',
-                permExportUser: document.getElementById('setPermExportUser') ? document.getElementById('setPermExportUser').checked : false,
-                permExportStaff: document.getElementById('setPermExportStaff') ? document.getElementById('setPermExportStaff').checked : true,
+                // Items permissions
+                permAddItemUser: document.getElementById('setPermAddItemUser') ? document.getElementById('setPermAddItemUser').checked : false,
+                permAddItemStaff: document.getElementById('setPermAddItemStaff') ? document.getElementById('setPermAddItemStaff').checked : true,
+                permReceiveUser: document.getElementById('setPermReceiveUser') ? document.getElementById('setPermReceiveUser').checked : false,
+                permReceiveStaff: document.getElementById('setPermReceiveStaff') ? document.getElementById('setPermReceiveStaff').checked : true,
+                permDispatchUser: document.getElementById('setPermDispatchUser') ? document.getElementById('setPermDispatchUser').checked : true,
+                permDispatchStaff: document.getElementById('setPermDispatchStaff') ? document.getElementById('setPermDispatchStaff').checked : true,
+                permDeleteItemUser: document.getElementById('setPermDeleteItemUser') ? document.getElementById('setPermDeleteItemUser').checked : false,
+                permDeleteItemStaff: document.getElementById('setPermDeleteItemStaff') ? document.getElementById('setPermDeleteItemStaff').checked : false,
                 permPriceUser: document.getElementById('setPermPriceUser') ? document.getElementById('setPermPriceUser').checked : false,
                 permPriceStaff: document.getElementById('setPermPriceStaff') ? document.getElementById('setPermPriceStaff').checked : true,
+                // Tools permissions
+                permAddToolUser: document.getElementById('setPermAddToolUser') ? document.getElementById('setPermAddToolUser').checked : false,
+                permAddToolStaff: document.getElementById('setPermAddToolStaff') ? document.getElementById('setPermAddToolStaff').checked : true,
+                permBorrowUser: document.getElementById('setPermBorrowUser') ? document.getElementById('setPermBorrowUser').checked : true,
+                permBorrowStaff: document.getElementById('setPermBorrowStaff') ? document.getElementById('setPermBorrowStaff').checked : true,
+                permDamageUser: document.getElementById('setPermDamageUser') ? document.getElementById('setPermDamageUser').checked : true,
+                permDamageStaff: document.getElementById('setPermDamageStaff') ? document.getElementById('setPermDamageStaff').checked : true,
+                // History/Report permissions
+                permExportUser: document.getElementById('setPermExportUser') ? document.getElementById('setPermExportUser').checked : false,
+                permExportStaff: document.getElementById('setPermExportStaff') ? document.getElementById('setPermExportStaff').checked : true,
+                permViewHistoryUser: document.getElementById('setPermViewHistoryUser') ? document.getElementById('setPermViewHistoryUser').checked : true,
+                permViewHistoryStaff: document.getElementById('setPermViewHistoryStaff') ? document.getElementById('setPermViewHistoryStaff').checked : true,
                 permEditHistoryUser: document.getElementById('setPermEditHistoryUser') ? document.getElementById('setPermEditHistoryUser').checked : false,
                 permEditHistoryStaff: document.getElementById('setPermEditHistoryStaff') ? document.getElementById('setPermEditHistoryStaff').checked : false,
+                // QR/PO permissions
+                permQRUser: document.getElementById('setPermQRUser') ? document.getElementById('setPermQRUser').checked : false,
+                permQRStaff: document.getElementById('setPermQRStaff') ? document.getElementById('setPermQRStaff').checked : true,
+                permPOUser: document.getElementById('setPermPOUser') ? document.getElementById('setPermPOUser').checked : false,
+                permPOStaff: document.getElementById('setPermPOStaff') ? document.getElementById('setPermPOStaff').checked : true,
+                permApproveUser: document.getElementById('setPermApproveUser') ? document.getElementById('setPermApproveUser').checked : false,
+                permApproveStaff: document.getElementById('setPermApproveStaff') ? document.getElementById('setPermApproveStaff').checked : true,
                 aiEnabled: document.getElementById('setAiEnabled') ? document.getElementById('setAiEnabled').checked : false,
                 geminiApiKey: document.getElementById('setGeminiApiKey') ? document.getElementById('setGeminiApiKey').value.trim() : '',
                 geminiModel: document.getElementById('setGeminiModel') ? document.getElementById('setGeminiModel').value : 'gemini-2.5-flash',
@@ -4870,6 +4974,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 applySettingsUI(allData.settings);
                 
                 if (currentUserProfile.uid && allData.users) { let u = allData.users.find(x => x.userId === currentUserProfile.uid); if (u) { currentUserProfile.name = u.name; currentUserProfile.role = u.role; } }
+
                 const profileDisplay = document.getElementById('userProfileName'); if(profileDisplay) profileDisplay.innerText = currentUserProfile.name;
                 const pinNameDisplay = document.getElementById('pinUserNameDisplay'); if(pinNameDisplay) pinNameDisplay.innerText = currentUserProfile.name;
 
@@ -4900,7 +5005,12 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 window.damagedCodesSet = new Set(currentlyDamaged.map(d => String(d.code)));
                 let lowStockCount = data.items.filter(i => i.stock <= i.min).length + data.tools.filter(i => i.stock <= i.min).length;
                 
-                animateValue("count-items", 0, data.items.length, 500); animateValue("count-tools", 0, data.tools.length, 500); animateValue("count-low", 0, lowStockCount, 500); animateValue("count-logs", 0, data.history.filter(h => h.time.includes(getFormattedDate().split(' ')[0])).length, 500);
+                // count-low = จำนวนรายการเบิกจ่ายวันนี้ (เฉพาะวันปัจจุบัน)
+                // count-logs = จำนวนรายการรับเข้าวันนี้ (เฉพาะวันปัจจุบัน)
+                const _todayDateStr = getFormattedDate().split(' ')[0];
+                const _dispatchToday = data.history.filter(h => h.time && h.time.includes(_todayDateStr) && String(h.action).trim().toLowerCase().startsWith('เบิก')).length;
+                const _receiveToday = data.history.filter(h => h.time && h.time.includes(_todayDateStr) && (String(h.action).trim().toLowerCase() === 'รับเข้า' || String(h.action).trim().toLowerCase() === 'new item')).length;
+                animateValue("count-items", 0, data.items.length, 500); animateValue("count-tools", 0, data.tools.length, 500); animateValue("count-low", 0, _dispatchToday, 500); animateValue("count-logs", 0, _receiveToday, 500);
 
                 const toolCodes = new Set(data.tools.map(t => t.code));
                 const activeToolBorrows = data.activeBorrows.filter(b => toolCodes.has(b.itemCode));
@@ -5148,8 +5258,9 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 );
                 const isAction = (h, act) => String(h.action).trim().toLowerCase() === act;
 
-                const receivedByDay = countHistoryByDay(h => isAction(h, 'รับเข้า'));
-                const dispatchedByDay = countHistoryByDay(h => isAction(h, 'เบิก'));
+                // นับ "รับเข้า" + "new item" (เพิ่มสินค้าใหม่) รวมกัน เพื่อให้สะท้อนการเคลื่อนไหวที่แท้จริง
+                const receivedByDay = countHistoryByDay(h => isAction(h, 'รับเข้า') || String(h.action).trim().toLowerCase() === 'new item');
+                const dispatchedByDay = countHistoryByDay(h => isAction(h, 'เบิก') || String(h.action).trim().toLowerCase().startsWith('เบิก'));
                 const poByDay = dayBuckets.map(dateStr => (data.pendingPOs || []).filter(p => p.date && String(p.date).includes(dateStr)).length);
                 // Running total of items entering stock, used as a proxy trend for overall inventory growth
                 let running = 0;
@@ -5183,9 +5294,11 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 if (dispToday === 0 && dispYesterday === 0) setBadge('statChangeDispatch', 'ไม่มีการเบิกวันนี้', null, 'fa-minus');
                 else setBadge('statChangeDispatch', `${dispToday >= dispYesterday ? '+' : ''}${dispToday - dispYesterday} เทียบเมื่อวาน`, dispToday >= dispYesterday, dispToday >= dispYesterday ? 'fa-caret-up' : 'fa-caret-down');
 
-                const receivingUnitsToday = (data.history || []).filter(h => h.time && h.time.includes(todayStr) && isAction(h, 'รับเข้า')).reduce((sum, h) => sum + (parseFloat(String(h.amount).replace(/[^0-9.\-]/g, '')) || 0), 0);
+                // แสดง: จำนวนรายการรับเข้าวันนี้ และหน่วยรับเข้าทั้งหมดวันนี้
+                const receivingItemsToday = (data.history || []).filter(h => h.time && h.time.includes(todayStr) && (isAction(h, 'รับเข้า') || String(h.action).trim().toLowerCase() === 'new item')).length;
+                const receivingUnitsToday = (data.history || []).filter(h => h.time && h.time.includes(todayStr) && (isAction(h, 'รับเข้า') || String(h.action).trim().toLowerCase() === 'new item')).reduce((sum, h) => sum + (parseFloat(String(h.amount).replace(/[^0-9.\-]/g, '')) || 0), 0);
                 const elRecvBadge = document.getElementById('statChangeReceiving');
-                if (elRecvBadge) elRecvBadge.textContent = `${formatNumber(receivingUnitsToday)} หน่วยรับเข้าวันนี้`;
+                if (elRecvBadge) elRecvBadge.textContent = `${receivingItemsToday} รายการ (${formatNumber(receivingUnitsToday)} หน่วย) วันนี้`;
 
                 const elRange = document.getElementById('chartDateRange');
                 if (elRange) elRange.textContent = `${dayBuckets[0]} - ${dayBuckets[6]}`;
@@ -5365,7 +5478,12 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
         const filteredLogs = allData.history.filter(log => {
             const act = String(log.action).trim().toLowerCase();
             if(!['รับเข้า', 'เบิก', 'new item', 'ซ่อมแซมแล้ว', 'แจ้งชำรุด'].includes(act)) return false;
-            if(typeFilter && act !== typeFilter) return false;
+            // typeFilter: "รับเข้า" ครอบคลุม "new item" ด้วย, "เบิก" ครอบคลุม action ที่ขึ้นต้น "เบิก"
+            if(typeFilter) {
+                if(typeFilter === 'รับเข้า' && !(act === 'รับเข้า' || act === 'new item')) return false;
+                else if(typeFilter === 'เบิก' && !act.startsWith('เบิก')) return false;
+                else if(typeFilter !== 'รับเข้า' && typeFilter !== 'เบิก' && act !== typeFilter) return false;
+            }
             if(searchVal) {
                 const haystack = [log.code, log.itemName, log.user, log.remark].join(' ').toLowerCase();
                 if(!haystack.includes(searchVal)) return false;
