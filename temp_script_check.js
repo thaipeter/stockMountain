@@ -8,7 +8,7 @@
 
 
         // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
-        const GAS_URL = "วาง_URL_ของ_Web_App_หลังบ้านที่นี่";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyHljTeKi0DuuseQE6QnTNnSs1ECfMYJyxSmvQ3OsE0vLo6zCwP0yKXhGL4F9lMUodn_Q/exec";
 
         // Polyfill for running outside Google Apps Script (e.g. on GitHub Pages)
         (function() {
