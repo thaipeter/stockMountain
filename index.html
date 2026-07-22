@@ -2231,6 +2231,54 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                             </div>
                         </div>
                     </div>
+                    <!-- Footer / System Tech Details & Dynamic Last Update — ด้านล่างสุดของแดชบอร์ด -->
+                    <div class="card mt-4 border-0 shadow-sm" style="background: linear-gradient(145deg, rgba(30,41,59,0.8), rgba(15,23,42,0.95)); border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 16px;">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center g-3">
+                                <div class="col-lg-5 col-md-6">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div style="width:44px; height:44px; min-width:44px; border-radius:12px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; color:#fbbf24; font-size:1.25rem;">
+                                            <i class="fas fa-laptop-code"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size:.72rem; font-weight:700; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:1.2px;">ภาษา & เทคโนโลยีที่ใช้สร้าง</div>
+                                            <div class="d-flex align-items-center gap-1 flex-wrap mt-1">
+                                                <span class="badge bg-primary bg-opacity-20 text-primary border border-primary px-2 py-1" style="font-size:.72rem;"><i class="fab fa-html5 me-1"></i>HTML5</span>
+                                                <span class="badge bg-info bg-opacity-20 text-info border border-info px-2 py-1" style="font-size:.72rem;"><i class="fab fa-css3-alt me-1"></i>CSS3</span>
+                                                <span class="badge bg-warning bg-opacity-20 text-warning border border-warning px-2 py-1" style="font-size:.72rem;"><i class="fab fa-js me-1"></i>JavaScript ES6+</span>
+                                                <span class="badge bg-success bg-opacity-20 text-success border border-success px-2 py-1" style="font-size:.72rem;"><i class="fas fa-code me-1"></i>Google Apps Script</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div style="width:44px; height:44px; min-width:44px; border-radius:12px; background:rgba(96,165,250,0.15); display:flex; align-items:center; justify-content:center; color:#60a5fa; font-size:1.25rem;">
+                                            <i class="fas fa-database"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size:.72rem; font-weight:700; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:1.2px;">ฐานข้อมูล (Data Source)</div>
+                                            <div style="font-size:.85rem; font-weight:600; color:#e2e8f0;" class="mt-1">
+                                                <i class="fas fa-table text-success me-1"></i> Google Sheets API & Script Properties
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-12 text-lg-end">
+                                    <div class="d-inline-flex flex-column align-items-lg-end w-100">
+                                        <div class="badge bg-dark bg-opacity-60 border border-secondary px-3 py-2 rounded-pill text-muted fw-medium d-flex align-items-center justify-content-center gap-2 mb-2 w-100 w-lg-auto" style="border-color:rgba(255,255,255,0.12) !important;">
+                                            <i class="far fa-clock text-warning"></i> อัปเดตล่าสุด: <span id="dashFooterLastUpdate" class="text-white fw-bold">-</span>
+                                            <span id="dashFooterSyncIndicator" class="text-success d-none" title="กำลังซิงค์"><i class="fas fa-sync-alt fa-spin"></i></span>
+                                        </div>
+                                        <div style="font-size:.78rem; color:rgba(255,255,255,.45);" class="text-center text-lg-end w-100">
+                                            <i class="fas fa-code-branch text-warning me-1"></i> เวอร์ชันระบบ: <span id="sysVersionDisplay" class="fw-bold" style="color:#fbbf24;">v2.5.0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div id="transactionsInOut" class="section-view">
@@ -3038,27 +3086,6 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
                         <div class="col-lg-4">
                             <div class="card border-0 shadow-sm mb-4" style="background:#1a2230;border-radius:16px">
-                                <div class="card-body p-4">
-                                    <h5 class="fw-bold mb-3" style="color:#fff"><i class="fas fa-file-excel me-2" style="color:#22c55e"></i> รายงานสรุปครึ่งปี</h5>
-                                    <label class="form-label small fw-bold" style="color:rgba(255,255,255,.5)">จากเดือน</label>
-                                    <input type="month" id="stReportFrom" class="form-control mb-2" style="background:#232838;color:#e0e0e0;border:1px solid #2a2f3d;border-radius:10px">
-                                    <label class="form-label small fw-bold" style="color:rgba(255,255,255,.5)">ถึงเดือน</label>
-                                    <input type="month" id="stReportTo" class="form-control mb-3" style="background:#232838;color:#e0e0e0;border:1px solid #2a2f3d;border-radius:10px">
-                                    <button class="btn w-100 fw-bold py-2" onclick="exportStockTakeReport()" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:10px">
-                                        <i class="fas fa-download me-2"></i> Export เป็น Excel
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        </div>
-                    </div>
-
-                    <div id="stTabDiffPane" style="display:none">
-                        <div class="card border-0 shadow-sm" style="background:#1a2230;border-radius:16px">
-                            <div class="card-body p-4">
-                                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                                    <h5 class="fw-bold mb-0" style="color:#fff"><i class="fas fa-exclamation-triangle me-2" style="color:#f59e0b"></i> รายการที่มีส่วนต่าง (ยังไม่อธิบายสาเหตุ)</h5>
-                                </div>
                                 <p class="small mb-3" style="color:rgba(255,255,255,.4)">รายการที่ยอดนับไม่ตรงกับระบบ — สต็อกถูกปรับให้ตรงแล้วอัตโนมัติ แต่ยังไม่รู้สาเหตุ กด "เบิกย้อนหลัง" เพื่อบันทึกสาเหตุพร้อมสร้างรายการเบิกจริงเพื่อการตรวจสอบย้อนหลัง</p>
                                 <div style="max-height:560px;overflow-y:auto">
                                     <table class="table table-sm align-middle mb-0" style="color:#e0e0e0">
@@ -3238,31 +3265,6 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                             <div class="d-flex justify-content-between align-items-start gap-3">
                                                 <div><div class="settings-toggle-title">Dark Mode</div><div class="settings-toggle-sub">เปิดโหมดมืด (Dark Theme) ทั่วทั้งระบบ</div></div>
                                                 <div class="form-check form-switch mb-0 flex-shrink-0 mt-1"><input class="form-check-input" type="checkbox" id="setDarkMode" onchange="toggleDarkModePreview(this.checked)" style="width:2.5em;height:1.25em"></div>
-                                            </div>
-                                        </div>
-                                        <div class="settings-box">
-                                            <div class="d-flex justify-content-between align-items-start gap-3">
-                                                <div><div class="settings-toggle-title">Live Sync</div><div class="settings-toggle-sub">อัปเดตข้อมูลตารางอัตโนมัติตามเวลาที่กำหนด</div></div>
-                                                <div class="form-check form-switch mb-0 flex-shrink-0 mt-1"><input class="form-check-input" type="checkbox" id="setAutoRefresh" onchange="toggleAutoRefresh(this.checked)" style="width:2.5em;height:1.25em"></div>
-                                            </div>
-                                            <div id="autoRefreshOptions" style="display:none;padding-top:16px;border-top:1px solid rgba(245,158,11,.15)">
-                                                <label class="form-label">ความถี่การอัปเดต</label>
-                                                <div class="input-group" style="max-width:160px">
-                                                    <input type="number" class="form-control text-center fw-bold" id="setRefreshInterval" value="3" min="3">
-                                                    <span class="input-group-text">วินาที</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="settings-box">
-                                            <div class="d-flex justify-content-between align-items-start gap-3">
-                                                <div><div class="settings-toggle-title">แจ้งเตือนสลับบอทสำรอง</div><div class="settings-toggle-sub">ส่งข้อความแจ้งเตือนไปหาแอดมินเมื่อต้องสลับไปใช้บอทสำรองในการส่งข้อความ (ประหยัดโทเค็น)</div></div>
-                                                <div class="form-check form-switch mb-0 flex-shrink-0 mt-1"><input class="form-check-input" type="checkbox" id="setNotifyFallback" onchange="toggleNotifyFallbackMsgBox(this.checked)" style="width:2.5em;height:1.25em"></div>
-                                            </div>
-                                            <div id="notifyFallbackMsgBox" style="display:none;padding-top:16px;border-top:1px solid rgba(245,158,11,.15)">
-                                                <label class="form-label">ข้อความแจ้งเตือน</label>
-                                                <textarea class="form-control" id="setNotifyFallbackMsg" rows="3" placeholder="🚨 แจ้งเตือนจากระบบ:&#10;โควต้าบอทตัวหลักเต็มแล้ว! ข้อความนี้จึงถูกสลับมาส่งผ่านบอทสำรองครับ"></textarea>
-                                                <div style="font-size:.7rem;color:rgba(255,255,255,.4)" class="mt-2">เว้นว่างไว้เพื่อใช้ข้อความเริ่มต้นของระบบ</div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -3452,6 +3454,12 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                 </div>
                                 <div class="settings-grid mb-5">
                                     <div class="settings-col">
+                                        <div class="settings-box text-center justify-content-center align-items-center" style="border-top-color:#10b981; background:linear-gradient(145deg,rgba(16,185,129,.1) 0%,rgba(16,185,129,.02) 100%); border-color:rgba(16,185,129,.3);">
+                                            <i class="fas fa-file-excel mb-2" style="font-size:2.5rem;color:#10b981"></i>
+                                            <div class="fw-bold mb-1 fs-5" style="color:rgba(255,255,255,.9)">ส่งออกสรุปรายเดือน</div>
+                                            <div class="settings-toggle-sub mb-3 text-center">รวมข้อมูลสต็อก ค้างยืม PO และ Logs 30 วันเป็น Excel</div>
+                                            <button class="btn fw-bold px-4 py-2 w-100" onclick="exportMonthlySummary()" style="background:#10b981;color:#000;border-radius:10px; max-width: 200px;"><i class="fas fa-download me-1"></i> ส่งออก Excel</button>
+                                        </div>
                                         <div class="settings-box text-center justify-content-center align-items-center" style="border-top-color:#4ade80; background:linear-gradient(145deg,rgba(74,222,128,.1) 0%,rgba(74,222,128,.02) 100%); border-color:rgba(74,222,128,.3);">
                                             <i class="fas fa-file-download mb-2" style="font-size:2.5rem;color:#4ade80"></i>
                                             <div class="fw-bold mb-1 fs-5" style="color:rgba(255,255,255,.9)">ดึงไฟล์ Backup</div>
@@ -4971,7 +4979,10 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 selectedQRCodes.clear();
                 updateSelectedQRCount();
                 
-                document.getElementById('lastUpdate').innerText = getFormattedDate();
+                const currentDateFormatted = getFormattedDate();
+                if (document.getElementById('lastUpdate')) document.getElementById('lastUpdate').innerText = currentDateFormatted;
+                if (document.getElementById('dashFooterLastUpdate')) document.getElementById('dashFooterLastUpdate').innerText = currentDateFormatted;
+                if (document.getElementById('sysVersionDisplay')) document.getElementById('sysVersionDisplay').innerText = `v2.5.0 (${currentDateFormatted})`;
 
                 applySettingsUI(allData.settings);
                 
@@ -5051,7 +5062,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             isFetchingData = true;
 
             if (!isSilent) document.getElementById('loading').style.display = 'flex';
-            else { const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.remove('d-none'); }
+            else { const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.remove('d-none'); const syncInd2 = document.getElementById('dashFooterSyncIndicator'); if(syncInd2) syncInd2.classList.remove('d-none'); }
             
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 google.script.run.withSuccessHandler((data) => {
@@ -5060,7 +5071,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                         document.getElementById('loading').style.display = 'none';
                         
                     } else { 
-                        const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.add('d-none'); 
+                        const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.add('d-none'); const syncInd2 = document.getElementById('dashFooterSyncIndicator'); if(syncInd2) syncInd2.classList.add('d-none'); 
                     }
                     onDataLoaded(data, isSilent);
                 }).withFailureHandler((e) => {
@@ -5069,7 +5080,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                         document.getElementById('loading').style.display = 'none';
                         Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: e});
                     } else { 
-                        const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.add('d-none'); 
+                        const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.add('d-none'); const syncInd2 = document.getElementById('dashFooterSyncIndicator'); if(syncInd2) syncInd2.classList.add('d-none'); 
                     }
                 }).getInventoryData();
             } else {
@@ -5079,7 +5090,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                         document.getElementById('loading').style.display = 'none'; 
                         
                     } else { 
-                        const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.add('d-none'); 
+                        const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.add('d-none'); const syncInd2 = document.getElementById('dashFooterSyncIndicator'); if(syncInd2) syncInd2.classList.add('d-none'); 
                     }
                     onDataLoaded(allData, isSilent); 
                 }, 500);
