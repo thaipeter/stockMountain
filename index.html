@@ -1933,7 +1933,9 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                 <li class="dropdown-item" onclick="goTo('aiCenter')"><i class="fas fa-robot"></i> AI วิเคราะห์คลัง</li>
                             </ul>
                         </div>
-                        <a class="dropdown-toggle" onclick="goTo('settings')"><i class="fas fa-sliders-h"></i> <span>ตั้งค่า</span></a>
+                        <div class="topnav-group">
+                            <a class="dropdown-toggle" id="menu-settings" onclick="goTo('settings')" data-group-sections="settings" style="cursor:pointer;"><i class="fas fa-sliders-h"></i> <span>ตั้งค่า</span></a>
+                        </div>
                     </div>
 
                     <!-- Search Box matching mockup -->
@@ -3794,7 +3796,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 if (cached) {
                     const s = JSON.parse(cached);
                     if (s.themeColor) document.documentElement.style.setProperty('--primary-color', s.themeColor);
-                    document.body.classList.add('dark-mode');
+                    if (s.darkMode === false) document.body.classList.remove('dark-mode'); else document.body.classList.add('dark-mode');
                     if (s.sysName) {
                         document.title = s.sysName;
                         document.addEventListener('DOMContentLoaded', () => {
@@ -4545,7 +4547,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             } catch(e) { console.warn('localStorage error:', e); }
             if (s.themeColor) document.documentElement.style.setProperty('--primary-color', s.themeColor);
             if (s.sysName) { document.title = s.sysName; document.querySelectorAll('.sys-name-display').forEach(el => el.innerText = s.sysName); }
-            document.body.classList.add('dark-mode');
+            if (s.darkMode === false) document.body.classList.remove('dark-mode'); else document.body.classList.add('dark-mode');
             
             if (s.sysLogo) {
                 updateDynamicManifest(s.sysLogo);
@@ -10635,22 +10637,26 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 
 // --- 1. AI Chat Assistant ---
 function testGeminiConnection() {
-    if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        return Swal.fire({icon: 'warning', title: 'ทดสอบไม่ได้', text: 'ต้องรันบน Apps Script หรือเชื่อมต่อ Backend ก่อน'});
+    Swal.fire({title: 'กำลังทดสอบ...', text: 'กำลังเชื่อมต่อ Gemini API...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+    
+    const handleRes = function(res) {
+        if (res && res.success) {
+            Swal.fire({icon: 'success', title: 'เชื่อมต่อสำเร็จ!', text: res.message || 'Gemini API พร้อมใช้งาน'});
+        } else {
+            Swal.fire({icon: 'error', title: 'เชื่อมต่อไม่สำเร็จ', text: (res && res.error) || 'ไม่ทราบสาเหตุ'});
+        }
+    };
+    const handleErr = function(err) {
+        Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: String(err && err.message || err)});
+    };
+
+    if (typeof google !== 'undefined' && google.script && google.script.run && google.script.run.webTestGeminiConnection) {
+        google.script.run.withSuccessHandler(handleRes).withFailureHandler(handleErr).webTestGeminiConnection();
+    } else if (typeof webPost === 'function') {
+        webPost('webTestGeminiConnection', []).then(handleRes).catch(handleErr);
+    } else {
+        Swal.fire({icon: 'warning', title: 'ทดสอบไม่ได้', text: 'กรุณาเชื่อมต่อ Backend ก่อน'});
     }
-    Swal.fire({title: 'กำลังทดสอบ...', text: 'กำลังเรียก Gemini API', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-    google.script.run
-        .withSuccessHandler(function(res) {
-            if (res && res.success) {
-                Swal.fire({icon: 'success', title: 'เชื่อมต่อสำเร็จ!', text: res.message || 'Gemini API พร้อมใช้งาน'});
-            } else {
-                Swal.fire({icon: 'error', title: 'เชื่อมต่อไม่สำเร็จ', text: (res && res.error) || 'ไม่ทราบสาเหตุ'});
-            }
-        })
-        .withFailureHandler(function(err) {
-            Swal.fire({icon: 'error', title: 'ผิดพลาด', text: String(err && err.message || err)});
-        })
-        .webTestGeminiConnection();
 }
 
 function sendAiChat() {
