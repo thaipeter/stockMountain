@@ -1985,7 +1985,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                     <div>
                                         <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">จำนวนอะไหล่ทั้งหมด</div>
                                         <div class="stat-value" id="count-items" style="font-size:2rem; font-weight:800; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
-                                        <div style="font-size:12px; color:#10b981; font-weight:700; margin-top:2px;"><i class="fas fa-caret-up"></i> +3.2% เพิ่มขึ้น</div>
+                                        <div style="font-size:12px; font-weight:700; margin-top:2px;" id="statChangeItems"><i class="fas fa-minus"></i> ไม่มีข้อมูล</div>
                                     </div>
                                     <div class="stat-icon bg-primary bg-opacity-10 text-primary mb-0"><i class="fas fa-chart-line"></i></div>
                                 </div>
@@ -1998,7 +1998,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                     <div>
                                         <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">ใบสั่งซื้อรอดำเนินการ</div>
                                         <div class="stat-value text-info" id="count-tools" style="font-size:2rem; font-weight:800; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
-                                        <div style="font-size:12px; color:#10b981; font-weight:700; margin-top:2px;"><i class="fas fa-caret-up"></i> +12% เทียบเมื่อวาน</div>
+                                        <div style="font-size:12px; font-weight:700; margin-top:2px;" id="statChangePOs"><i class="fas fa-minus"></i> ไม่มีข้อมูล</div>
                                     </div>
                                     <div class="stat-icon bg-info bg-opacity-10 text-info mb-0"><i class="fas fa-shopping-cart"></i></div>
                                 </div>
@@ -2011,7 +2011,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                     <div>
                                         <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">การเบิกจ่ายวันนี้</div>
                                         <div class="stat-value text-danger" id="count-low" style="font-size:2rem; font-weight:800; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
-                                        <div style="font-size:12px; color:#10b981; font-weight:700; margin-top:2px;"><i class="fas fa-check"></i> 94% ส่งมอบตรงเวลา</div>
+                                        <div style="font-size:12px; font-weight:700; margin-top:2px;" id="statChangeDispatch"><i class="fas fa-minus"></i> ไม่มีข้อมูล</div>
                                     </div>
                                     <div class="stat-icon bg-danger bg-opacity-10 text-danger mb-0"><i class="fas fa-truck"></i></div>
                                 </div>
@@ -2024,6 +2024,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                     <div>
                                         <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">การรับเข้าสินค้า</div>
                                         <div class="stat-value text-success" id="count-logs" style="font-size:2rem; font-weight:800; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
+                                        <div style="font-size:12px; color:#a78bfa; font-weight:700; margin-top:2px;" id="statChangeReceiving">0 หน่วยรับเข้าวันนี้</div>
                                     </div>
                                     <div class="stat-icon bg-success bg-opacity-10 text-success mb-0"><i class="fas fa-warehouse"></i></div>
                                 </div>
@@ -2038,10 +2039,10 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div>
-                                            <h6 class="fw-bold mb-1 text-white font-headers">จำนวนสต็อกคงเหลือตามหมวดหมู่</h6>
-                                            <div style="font-size: 13px; color: var(--text-muted);">Top 6 หมวดหมู่ที่มีจำนวนมากที่สุด</div>
+                                            <h6 class="fw-bold mb-1 text-white font-headers">แนวโน้มความเคลื่อนไหวสต็อก (7 วันล่าสุด)</h6>
+                                            <div style="font-size: 13px; color: var(--text-muted);" id="chartDateRange">-</div>
                                         </div>
-                                        <div class="fw-bold text-white font-headers" style="font-size: 20px;" id="categoryChartTotal">0 รายการ</div>
+                                        <div class="fw-bold text-white font-headers" style="font-size: 20px;" id="chartTotalTx">0</div>
                                     </div>
                                     <div style="height: 240px; width: 100%;"><canvas id="inventoryValueChart"></canvas></div>
                                 </div>
@@ -4890,6 +4891,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
                 try { 
                     renderMockupDashboard(data); 
+                    if (lastGlobalSearchValue) filterDashUnifiedInventoryTable(lastGlobalSearchValue);
                 } catch(e) { console.warn('renderMockupDashboard error:', e); }
                 try { renderDashboardDamaged(currentlyDamaged); } catch(e) { console.warn('renderDashboardDamaged error:', e); }
                 try { renderLowStockTables(data.items, data.tools); } catch(e) { console.warn('renderLowStockTables error:', e); }
@@ -4999,8 +5001,22 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             } catch(e) { console.warn('drawSparkline error:', e); }
         }
 
+        let lastGlobalSearchValue = '';
+
+        function filterDashUnifiedInventoryTable(value) {
+            try {
+                const rows = document.querySelectorAll('#dashUnifiedInventoryTable tbody tr');
+                const query = (value || '').toLowerCase().trim();
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            } catch(e) { console.error(e); }
+        }
+
         function triggerGlobalSearch(value) {
             try {
+                lastGlobalSearchValue = value;
                 const itemsSearchInput = document.querySelector('#items .search-box input');
                 const toolsSearchInput = document.querySelector('#tools .search-box input');
                 if (itemsSearchInput) {
@@ -5011,9 +5027,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     toolsSearchInput.value = value;
                     filterTable('toolsTable');
                 }
-                if (typeof allData !== 'undefined' && allData) {
-                    renderDashUnifiedTable(allData, value);
-                }
+                filterDashUnifiedInventoryTable(value);
             } catch(e) { console.error(e); }
         }
 
@@ -5055,36 +5069,86 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 const elPO = document.getElementById('metricPendingPOCount');
                 if (elPO) elPO.textContent = pendingPOsCount + ' รายการ';
 
-                // 2. Draw Sparklines
-                drawSparkline('sparkline-1', [12, 19, 15, 25, 22, 30, 40], '#e8a020');
-                drawSparkline('sparkline-2', [2, 8, 5, 10, 15, 12, 20], '#29b6f6');
-                drawSparkline('sparkline-3', [20, 15, 25, 10, 18, 12, 14], '#ef5350');
-                drawSparkline('sparkline-4', [5, 12, 9, 18, 15, 25, 30], '#66bb6a');
+                // 2. Build real 7-day date buckets (uses the same date-string convention as getFormattedDate/count-logs elsewhere in the app)
+                const dayBuckets = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    dayBuckets.push(getFormattedDate(d).split(' ')[0]);
+                }
+                const todayStr = dayBuckets[6];
+                const yesterdayStr = dayBuckets[5];
 
-                // 3. Draw Main Chart — จำนวนสต็อกคงเหลือตามหมวดหมู่ (ข้อมูลจริง ไม่ใช้ราคา)
+                const countHistoryByDay = (matchFn) => dayBuckets.map(dateStr =>
+                    (data.history || []).filter(h => h.time && h.time.includes(dateStr) && matchFn(h)).length
+                );
+                const isAction = (h, act) => String(h.action).trim().toLowerCase() === act;
+
+                const receivedByDay = countHistoryByDay(h => isAction(h, 'รับเข้า'));
+                const dispatchedByDay = countHistoryByDay(h => isAction(h, 'เบิก'));
+                const poByDay = dayBuckets.map(dateStr => (data.pendingPOs || []).filter(p => p.date && String(p.date).includes(dateStr)).length);
+                // Running total of items entering stock, used as a proxy trend for overall inventory growth
+                let running = 0;
+                const itemsGrowthByDay = receivedByDay.map(v => (running += v));
+
+                // 3. Draw Sparklines from real activity, not fake numbers
+                drawSparkline('sparkline-1', itemsGrowthByDay, '#e8a020');
+                drawSparkline('sparkline-2', poByDay, '#29b6f6');
+                drawSparkline('sparkline-3', dispatchedByDay, '#ef5350');
+                drawSparkline('sparkline-4', receivedByDay, '#66bb6a');
+
+                // 4. Update the % / trend badges using real day-over-day comparisons
+                const setBadge = (id, deltaLabel, positive, icon) => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    el.style.color = positive ? '#10b981' : (positive === false ? '#ef5350' : 'var(--text-muted)');
+                    el.innerHTML = `<i class="fas ${icon}"></i> ${deltaLabel}`;
+                };
+                const itemsAddedToday = receivedByDay[6];
+                const itemsAddedYesterday = receivedByDay[5];
+                if (itemsAddedToday === 0 && itemsAddedYesterday === 0) setBadge('statChangeItems', 'ไม่มีการเคลื่อนไหววันนี้', null, 'fa-minus');
+                else setBadge('statChangeItems', `${itemsAddedToday >= itemsAddedYesterday ? '+' : ''}${itemsAddedToday - itemsAddedYesterday} เทียบเมื่อวาน`, itemsAddedToday >= itemsAddedYesterday, itemsAddedToday >= itemsAddedYesterday ? 'fa-caret-up' : 'fa-caret-down');
+
+                const poToday = poByDay[6];
+                const poYesterday = poByDay[5];
+                if (poToday === 0 && poYesterday === 0) setBadge('statChangePOs', 'ไม่มี PO ใหม่วันนี้', null, 'fa-minus');
+                else setBadge('statChangePOs', `${poToday >= poYesterday ? '+' : ''}${poToday - poYesterday} เทียบเมื่อวาน`, poToday >= poYesterday, poToday >= poYesterday ? 'fa-caret-up' : 'fa-caret-down');
+
+                const dispToday = dispatchedByDay[6];
+                const dispYesterday = dispatchedByDay[5];
+                if (dispToday === 0 && dispYesterday === 0) setBadge('statChangeDispatch', 'ไม่มีการเบิกวันนี้', null, 'fa-minus');
+                else setBadge('statChangeDispatch', `${dispToday >= dispYesterday ? '+' : ''}${dispToday - dispYesterday} เทียบเมื่อวาน`, dispToday >= dispYesterday, dispToday >= dispYesterday ? 'fa-caret-up' : 'fa-caret-down');
+
+                const receivingUnitsToday = (data.history || []).filter(h => h.time && h.time.includes(todayStr) && isAction(h, 'รับเข้า')).reduce((sum, h) => sum + (parseFloat(String(h.amount).replace(/[^0-9.\-]/g, '')) || 0), 0);
+                const elRecvBadge = document.getElementById('statChangeReceiving');
+                if (elRecvBadge) elRecvBadge.textContent = `${formatNumber(receivingUnitsToday)} หน่วยรับเข้าวันนี้`;
+
+                const elRange = document.getElementById('chartDateRange');
+                if (elRange) elRange.textContent = `${dayBuckets[0]} - ${dayBuckets[6]}`;
+                const elTotalTx = document.getElementById('chartTotalTx');
+                const totalTxWeek = receivedByDay.reduce((a,b) => a+b, 0) + dispatchedByDay.reduce((a,b) => a+b, 0);
+                if (elTotalTx) elTotalTx.textContent = formatNumber(totalTxWeek) + ' รายการ';
+
+                // 5. Draw Main Line Chart using real transaction counts (รับเข้า + เบิก) per day, not fabricated currency values
                 const ctx = document.getElementById('inventoryValueChart');
                 if (ctx) {
-                    const catTotals = {};
-                    [...(data.items || []), ...(data.tools || [])].forEach(x => {
-                        const cat = x.category || 'ไม่ระบุหมวดหมู่';
-                        catTotals[cat] = (catTotals[cat] || 0) + (parseFloat(x.stock) || 0);
-                    });
-                    const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 6);
-                    const catLabels = sortedCats.map(c => c[0]);
-                    const catValues = sortedCats.map(c => c[1]);
-                    const totalEl = document.getElementById('categoryChartTotal');
-                    if (totalEl) totalEl.textContent = catValues.reduce((a, b) => a + b, 0).toLocaleString() + ' รายการ';
-
                     if (window.inventoryValueChartObj) window.inventoryValueChartObj.destroy();
                     window.inventoryValueChartObj = new Chart(ctx.getContext('2d'), {
-                        type: 'bar',
+                        type: 'line',
                         data: {
-                            labels: catLabels.length ? catLabels : ['ไม่มีข้อมูล'],
+                            labels: dayBuckets,
                             datasets: [{
-                                label: 'จำนวนคงเหลือ',
-                                data: catValues.length ? catValues : [0],
-                                backgroundColor: '#e8a020',
-                                borderRadius: 6
+                                label: 'จำนวนรายการเคลื่อนไหว',
+                                data: dayBuckets.map((_, i) => receivedByDay[i] + dispatchedByDay[i]),
+                                borderColor: '#e8a020',
+                                backgroundColor: 'rgba(232, 160, 32, 0.05)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#e8a020',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4
                             }]
                         },
                         options: {
@@ -5093,56 +5157,46 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                             plugins: { legend: { display: false } },
                             scales: {
                                 x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Sarabun' } } },
-                                y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Sarabun' } } }
+                                y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Sarabun' }, precision: 0 } }
                             }
                         }
                     });
                 }
 
-                // 4. Populate Unified Inventory Table (ค่าเริ่มต้น: ไม่มีคำค้นหา แสดง 8 รายการแรก)
-                renderDashUnifiedTable(data, '');
+                // 4. Populate Unified Inventory Table
+                const tbody = document.querySelector('#dashUnifiedInventoryTable tbody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    const itemsList = (data.items || []).slice(0, 4);
+                    const toolsList = (data.tools || []).slice(0, 4);
+                    const combined = [...itemsList.map(x => ({...x, type: 'อะไหล่'})), ...toolsList.map(x => ({...x, type: 'เครื่องมือ'}))];
+                    if (combined.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">ไม่มีข้อมูลสินค้าในคลัง</td></tr>';
+                    } else {
+                        combined.forEach(x => {
+                            const tr = document.createElement('tr');
+                            tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                            
+                            const isLow = parseFloat(x.stock) <= parseFloat(x.min);
+                            const isZero = parseFloat(x.stock) <= 0;
+                            let statusBadge = '<span class="badge bg-success bg-opacity-20 text-success border border-success">มีในสต็อก</span>';
+                            if (isZero) statusBadge = '<span class="badge bg-danger bg-opacity-20 text-danger border border-danger">สินค้าหมด</span>';
+                            else if (isLow) statusBadge = '<span class="badge bg-warning bg-opacity-20 text-warning border border-warning">สต็อกต่ำกว่าเกณฑ์</span>';
+                            
+                            tr.innerHTML = `
+                                <td style="padding:14px; font-weight:700; color:var(--primary-color); font-family:'TH Sarabun New','Sarabun',monospace;">#${x.code || ''}</td>
+                                <td style="padding:14px; font-weight:600; color:#fff;">${x.name || ''}</td>
+                                <td style="padding:14px; color:var(--text-muted); font-size:13px;">${x.type}</td>
+                                <td style="padding:14px; font-weight:700; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.stock || 0} / ${x.min || 0}</td>
+                                <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.location || 'A-1'}</td>
+                                <td style="padding:14px;">${statusBadge}</td>
+                                <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.lastUpdate || 'ล่าสุด'}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                }
             } catch(e) { console.error('renderMockupDashboard err:', e); }
-        }
-
-        // แสดงตารางคลังอุปกรณ์บน Dashboard — ค้นหาจากข้อมูลทั้งหมดจริงๆ ไม่ใช่แค่ 8 รายการแรกที่โชว์อยู่
-        function renderDashUnifiedTable(data, query) {
-            const tbody = document.querySelector('#dashUnifiedInventoryTable tbody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            const q = (query || '').toLowerCase().trim();
-            const allItems = (data.items || []).map(x => ({...x, type: 'อะไหล่'}));
-            const allTools = (data.tools || []).map(x => ({...x, type: 'เครื่องมือ'}));
-            let combined = [...allItems, ...allTools];
-            if (q) {
-                combined = combined.filter(x => (String(x.code || '') + ' ' + String(x.name || '')).toLowerCase().includes(q));
-            } else {
-                combined = combined.slice(0, 8);
-            }
-            if (combined.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">${q ? 'ไม่พบรายการที่ค้นหา "' + q + '"' : 'ไม่มีข้อมูลสินค้าในคลัง'}</td></tr>`;
-                return;
-            }
-            combined.forEach(x => {
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
-
-                const isLow = parseFloat(x.stock) <= parseFloat(x.min);
-                const isZero = parseFloat(x.stock) <= 0;
-                let statusBadge = '<span class="badge bg-success bg-opacity-20 text-success border border-success">มีในสต็อก</span>';
-                if (isZero) statusBadge = '<span class="badge bg-danger bg-opacity-20 text-danger border border-danger">สินค้าหมด</span>';
-                else if (isLow) statusBadge = '<span class="badge bg-warning bg-opacity-20 text-warning border border-warning">สต็อกต่ำกว่าเกณฑ์</span>';
-
-                tr.innerHTML = `
-                    <td style="padding:14px; font-weight:700; color:var(--primary-color); font-family:'TH Sarabun New','Sarabun',monospace;">#${x.code || ''}</td>
-                    <td style="padding:14px; font-weight:600; color:#fff;">${x.name || ''}</td>
-                    <td style="padding:14px; color:var(--text-muted); font-size:13px;">${x.type}</td>
-                    <td style="padding:14px; font-weight:700; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.stock || 0} / ${x.min || 0}</td>
-                    <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.location || 'A-1'}</td>
-                    <td style="padding:14px;">${statusBadge}</td>
-                    <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.lastUpdate || 'ล่าสุด'}</td>
-                `;
-                tbody.appendChild(tr);
-            });
         }
 
          function renderDashboardTx(history) {
