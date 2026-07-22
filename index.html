@@ -19,17 +19,6 @@
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-      /* ตั้งค่าสำหรับมือถือ */
-    @media (max-width: 768px) {
-        .table-responsive {
-            display: block;
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        table { font-size: 13px !important; }
-        .btn { padding: 4px 8px !important; font-size: 12px !important; }
-    }
         :root{
   --primary-color:#e8a020;--primary-hover:#d4911a;
   --accent-color:#f0b840;
@@ -48,110 +37,247 @@
   --shadow-xl:0 20px 50px rgba(0,0,0,0.6);
   --radius-md:8px;--radius-lg:12px;--radius-xl:16px;
   --sidebar-width:0px;--header-height:64px;
-  --font-headers:'Outfit', sans-serif;
+  --font-headers:'Sarabun','Outfit',sans-serif;
 }
         *{box-sizing:border-box}
         *:focus{outline:none}
         button,a,.btn{-webkit-tap-highlight-color:transparent}
-        body{font-family:'Sarabun',sans-serif;background-color:var(--light-bg);color:var(--text-main);overflow-x:hidden;transition:background-color .3s,color .3s;-webkit-font-smoothing:antialiased;animation:pageFadeIn .35s ease}
+        html { font-size: 16px !important; }
+        
+        /* MODERN GOOGLE FONT: SARABUN (Base: 16px / 1rem) */
+        *, html, body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, table, th, td, label, .btn, .badge, .form-control, .form-select, .nav-link, .stat-title, .stat-value, small, .small, .form-label, .table-responsive {
+          font-family: 'Sarabun', sans-serif !important;
+        }
+
+        /* EXCEPTION FOR FONT AWESOME ICONS */
+        i, .fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands, [class*=" fa-"], [class^="fa-"] {
+          font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+        }
+
+        body {
+          font-family: 'Sarabun', sans-serif !important;
+          font-size: 1rem !important; /* Standard Base Font-Size 16px */
+          line-height: 1.5 !important;
+          background-color: var(--light-bg);
+          color: var(--text-main);
+          overflow-x: hidden;
+          transition: background-color .3s, color .3s;
+          -webkit-font-smoothing: antialiased;
+          animation: pageFadeIn .35s ease;
+        }
+
+        /* TYPOGRAPHY SCALE IN REM UNITS */
+        h1, .h1 { font-size: 2.5rem !important; font-weight: 700 !important; line-height: 1.2 !important; } /* 40px */
+        h2, .h2 { font-size: 2rem !important; font-weight: 700 !important; line-height: 1.25 !important; } /* 32px */
+        h3, .h3 { font-size: 1.75rem !important; font-weight: 700 !important; line-height: 1.3 !important; } /* 28px */
+        h4, .h4 { font-size: 1.5rem !important; font-weight: 700 !important; line-height: 1.35 !important; } /* 24px */
+        h5, .h5 { font-size: 1.25rem !important; font-weight: 700 !important; line-height: 1.4 !important; } /* 20px */
+        h6, .h6 { font-size: 1.125rem !important; font-weight: 700 !important; line-height: 1.4 !important; } /* 18px */
+
+        /* CONTENT COMPONENTS REM SCALE & INLINE PX OVERRIDES */
+        p, div, span, a, label, .form-label, .nav-link, #sidebar a, .dropdown-item, .dropdown-toggle {
+          font-size: 1rem !important; /* 16px */
+        }
+
+        /* SUBTEXT UNDER HEADINGS (All menus/tabs) */
+        h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p, 
+        h1 + div, h2 + div, h3 + div, h4 + div, h5 + div, h6 + div,
+        .text-muted.small.mb-0, p.text-muted.small {
+          font-size: 1.15rem !important; /* ~18.4px in TH Sarabun New, very clear and readable */
+          font-weight: 600 !important;
+          color: #94a3b8 !important; /* Slightly brighter muted color for optimal contrast */
+        }
+
+        /* Target inline font-size overrides on spans, divs, cells and force 1rem */
+        span[style*="font-size"], div[style*="font-size"], td[style*="font-size"], th[style*="font-size"], a[style*="font-size"], p[style*="font-size"] {
+          font-size: 1rem !important;
+        }
+
+        table, .table, table th, table td, .table th, .table td {
+          font-size: 1rem !important; /* 16px */
+          padding: 0.75rem 0.875rem !important;
+        }
+
+        .btn, .form-control, .form-select, input, select, textarea, #globalNavSearch {
+          font-size: 1rem !important; /* 16px */
+        }
+
+        /* Form labels override to prevent specificity leak */
+        label, .form-label, label.text-muted.small {
+          font-size: 1rem !important;
+          font-weight: 700 !important;
+        }
+
+        /* SMALL ELEMENTS / MUTED LABELS */
+        .badge, small, .small, .text-muted, .sp-hint, .sp-top-sub, [style*="font-size: 11px"], [style*="font-size:11px"], [style*="font-size: 12px"], [style*="font-size:12px"], [style*="font-size: 13px"], [style*="font-size:13px"], [style*="font-size: 10px"], [style*="font-size:10px"] {
+          font-size: 0.875rem !important; /* 14px */
+        }
+
+        .stat-title {
+          font-size: 0.875rem !important; /* 14px */
+          font-weight: 700 !important;
+        }
+
+        /* LARGE METRICS / STATISTICS */
+        .stat-value, .sp-top-title, [style*="font-size: 20px"], [style*="font-size:20px"] {
+          font-size: 2.25rem !important; /* 36px */
+          font-weight: 800 !important;
+        }
+
+        /* Specific small adjustments to fit within bounded containers */
+        #metricPercent1, #metricPercent2, #metricPercent3 {
+          font-size: 1.25rem !important; /* 20px */
+        }
+        #userProfileName {
+          font-size: 0.875rem !important; /* 14px */
+        }
         @keyframes pageFadeIn{from{opacity:0}to{opacity:1}}
         ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:var(--light-bg)}::-webkit-scrollbar-thumb{background:#475569;border-radius:10px}::-webkit-scrollbar-thumb:hover{background:#64748b}
         body{--light-bg:#0c0d12;--card-bg:#161922;--text-main:#cbd5e1;--text-muted:#64748b;--border-color:rgba(255,255,255,0.06)}
-        body.dark-mode ::-webkit-scrollbar-track{background:var(--light-bg)}body.dark-mode ::-webkit-scrollbar-thumb{background:#475569}
-        body.dark-mode .bg-light,body.dark-mode .bg-white{background-color:var(--card-bg)!important}
-        body.dark-mode .page-content.bg-light,body.dark-mode .modal-body.bg-light,body.dark-mode .nav-tabs{background-color:var(--light-bg)!important}
-        body.dark-mode .card,body.dark-mode .table-container{background-color:var(--card-bg)!important;border-color:var(--border-color)!important}
-        body.dark-mode .card-header,body.dark-mode .card-body{background-color:var(--card-bg)!important}
-        body.dark-mode .card-header.bg-white,body.dark-mode .card-header.bg-light,body.dark-mode .card-header.bg-transparent{background-color:var(--card-bg)!important}
-        body.dark-mode .stat-card{background-color:var(--card-bg)!important}
-        body.dark-mode .filter-group{background-color:var(--card-bg)!important}
-        body.dark-mode [style*="background:#f8fafc"],body.dark-mode [style*="background: #f8fafc"],body.dark-mode [style*="background: #fff"],body.dark-mode [style*="background:#fff"],body.dark-mode [style*="background: white"],body.dark-mode [style*="background:white"]{background-color:var(--card-bg)!important}
-        body.dark-mode [style*="background:#ecfdf5"]{background-color:rgba(16,185,129,.1)!important;border-color:rgba(16,185,129,.2)!important}
-        body.dark-mode [style*="background:#fffbeb"]{background-color:rgba(245,158,11,.1)!important;border-color:rgba(245,158,11,.2)!important}
-        body.dark-mode [style*="background:#fef2f2"]{background-color:rgba(239,68,68,.1)!important;border-color:rgba(239,68,68,.2)!important}
-        body.dark-mode .text-dark,body.dark-mode h1,body.dark-mode h2,body.dark-mode h3,body.dark-mode h4,body.dark-mode h5,body.dark-mode h6{color:var(--text-main)!important}
-        body.dark-mode .text-muted,body.dark-mode .form-label,body.dark-mode label{color:var(--text-muted)!important}
-        body.dark-mode .stat-title{color:var(--text-muted)!important}
-        body.dark-mode .stat-value{color:var(--text-main)!important}
-        body.dark-mode .border,body.dark-mode .border-light,body.dark-mode .border-bottom,body.dark-mode .border-top,body.dark-mode .border-start,body.dark-mode .border-end{border-color:var(--border-color)!important}
-        body.dark-mode hr,body.dark-mode .dropdown-divider{border-color:var(--border-color)!important}
-        body.dark-mode .table{--bs-table-bg:transparent;--bs-table-color:var(--text-main)}
-        body.dark-mode .table thead th{background-color:#11141d!important;border-color:rgba(255,255,255,0.06)!important;color:var(--text-muted)!important}
-        body.dark-mode .table tbody td{color:#cbd5e1!important;border-color:rgba(255,255,255,0.04)!important}
-        body.dark-mode .table-hover tbody tr:hover{background-color:rgba(255,255,255,.02)!important}
-        body.dark-mode .table-light{background-color:#11141d!important}
-        body.dark-mode .table-warning{background-color:rgba(245,158,11,.08)!important}
-        body.dark-mode .form-control,body.dark-mode .form-select,body.dark-mode textarea.form-control{background-color:#0f1118!important;border-color:rgba(255,255,255,0.08)!important;color:#f1f5f9!important}
-        body.dark-mode .form-control:focus,body.dark-mode .form-select:focus{background-color:#161922!important;border-color:var(--primary-color)!important;color:#f1f5f9!important}
-        body.dark-mode .form-control::placeholder{color:#475569!important}
-        body.dark-mode .form-control:disabled,body.dark-mode .form-control[readonly]{background-color:#161922!important;color:#64748b!important}
-        body.dark-mode .input-group-text{background-color:#161922!important;border-color:rgba(255,255,255,0.08)!important;color:var(--text-muted)!important}
-        body.dark-mode .input-group-text.bg-white,body.dark-mode .input-group-text.bg-light{background-color:#0f1118!important;color:var(--text-muted)!important;border-color:var(--border-color)!important}
-        body.dark-mode .form-check-label{color:var(--text-main)!important}
-        body.dark-mode .search-box input{background:#0f1118!important;color:#f1f5f9!important}
-        body.dark-mode .search-box input:focus{background:#161922!important;border-color:var(--primary-color)!important}
-        body.dark-mode .bg-light.text-dark,body.dark-mode .badge.bg-light{background-color:#1e293b!important;color:#e2e8f0!important;border-color:#334155!important}
-        body.dark-mode .font-monospace.bg-light{background-color:#1e293b!important;color:#93c5fd!important}
-        body.dark-mode .modal-content{background-color:var(--card-bg)!important;color:var(--text-main)!important}
-        body.dark-mode .modal-footer{background-color:#0f1118!important;border-color:rgba(255,255,255,0.08)!important}
-        body.dark-mode .modal-header{border-color:rgba(255,255,255,0.08)!important}
-        body.dark-mode .modal-body{background-color:var(--card-bg)!important}
-        body.dark-mode .modal-body .bg-light,body.dark-mode .modal-body .text-center.bg-light{background-color:#0f1118!important}
-        body.dark-mode .navbar{background:var(--glass-bg)!important;backdrop-filter:var(--glass-blur)!important;-webkit-backdrop-filter:var(--glass-blur)!important}
-        body.dark-mode .dropdown-menu{background-color:#161922!important;border-color:rgba(255,255,255,0.08)!important}
-        body.dark-mode .dropdown-item{color:var(--text-main)!important}
-        body.dark-mode .dropdown-item:hover{background-color:rgba(255,255,255,0.04)!important}
-        body.dark-mode .btn-toggle-sidebar{background:#1e293b!important;color:#f8fafc!important}
-        body.dark-mode .nav-tabs .nav-link{color:var(--text-muted)!important}
-        body.dark-mode .nav-tabs .nav-link:hover{color:var(--text-main)!important;background:rgba(255,255,255,0.04)!important}
-        body.dark-mode .nav-tabs .nav-link.active{color:var(--primary-color)!important}
-        body.dark-mode .tab-content{background-color:var(--card-bg)!important}
-        body.dark-mode .btn-light{background-color:#1e293b!important;border-color:#334155!important;color:#f1f5f9!important}
-        body.dark-mode .btn-light:hover{background-color:#475569!important;color:#b0b0b0!important}
-        body.dark-mode .btn-white,body.dark-mode .btn.bg-white{background-color:#334155!important;color:#f1f5f9!important;border-color:#475569!important}
-        body.dark-mode .loading-overlay::before{background:rgba(10,10,20,.6)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-        body.dark-mode .tag-chip{background:#312e81!important;color:#c4b5fd!important;border-color:#4338ca!important}
-        body.dark-mode .tag-chip.tag-location{background:#7f1d1d!important;color:#fca5a5!important;border-color:#991b1b!important}
-        body.dark-mode .tag-chip-container{background:#0f172a!important;border-color:#334155!important}
-        body.dark-mode .ts-wrapper .ts-control{background-color:#0f172a!important;border-color:#334155!important;color:#f1f5f9!important}
-        body.dark-mode .ts-wrapper .ts-dropdown{background-color:#1e293b!important;border-color:#334155!important;color:#f1f5f9!important}
-        body.dark-mode .ts-wrapper .ts-dropdown .option:hover,body.dark-mode .ts-wrapper .ts-dropdown .option.active{background-color:#334155!important}
-        body.dark-mode .alert-info{background-color:rgba(6,182,212,.1)!important;border-color:rgba(6,182,212,.2)!important;color:#7dd3fc!important}
-        body.dark-mode .alert-warning{background-color:rgba(245,158,11,.1)!important;border-color:rgba(245,158,11,.2)!important;color:#fcd34d!important}
-        body.dark-mode .alert-danger{background-color:rgba(239,68,68,.1)!important;border-color:rgba(239,68,68,.2)!important;color:#fca5a5!important}
-        body.dark-mode .card.border-0.bg-light,body.dark-mode .card.bg-light{background-color:#0f172a!important}
-        body.dark-mode .card.border-info{background-color:rgba(6,182,212,.08)!important}
-        body.dark-mode .card.border-danger{background-color:rgba(239,68,68,.06)!important}
-        body.dark-mode .card.border-warning{background-color:rgba(245,158,11,.06)!important}
-        div:where(.swal2-container) div:where(.swal2-popup){font-family:'Sarabun',sans-serif!important;border-radius:var(--radius-lg)!important;box-shadow:var(--shadow-xl)!important}div:where(.swal2-container) button:where(.swal2-styled){font-weight:600!important;border-radius:8px!important;padding:10px 24px!important}body.dark-mode div:where(.swal2-container) div:where(.swal2-popup){background-color:var(--card-bg)!important;color:var(--text-main)!important}body.dark-mode div:where(.swal2-container) h2:where(.swal2-title){color:#f8fafc!important}
+        ::-webkit-scrollbar-track{background:var(--light-bg)}::-webkit-scrollbar-thumb{background:#475569}
+        .bg-light,.bg-white{background-color:var(--card-bg)!important}
+        .page-content.bg-light,.modal-body.bg-light,.nav-tabs{background-color:var(--light-bg)!important}
+        .card,.table-container{background-color:var(--card-bg)!important;border-color:var(--border-color)!important}
+        .card-header,.card-body{background-color:var(--card-bg)!important}
+        .card-header.bg-white,.card-header.bg-light,.card-header.bg-transparent{background-color:var(--card-bg)!important}
+        .stat-card{background-color:var(--card-bg)!important}
+        .filter-group{background-color:var(--card-bg)!important}
+        [style*="background:#f8fafc"],[style*="background: #f8fafc"],[style*="background: #fff"],[style*="background:#fff"],[style*="background: white"],[style*="background:white"]{background-color:var(--card-bg)!important}
+        [style*="background:#ecfdf5"]{background-color:rgba(16,185,129,.1)!important;border-color:rgba(16,185,129,.2)!important}
+        [style*="background:#fffbeb"]{background-color:rgba(245,158,11,.1)!important;border-color:rgba(245,158,11,.2)!important}
+        [style*="background:#fef2f2"]{background-color:rgba(239,68,68,.1)!important;border-color:rgba(239,68,68,.2)!important}
+        .text-dark,h1,h2,h3,h4,h5,h6{color:var(--text-main)!important}
+        .text-muted,.form-label,label{color:var(--text-muted)!important}
+        .stat-title{color:var(--text-muted)!important}
+        .stat-value{color:var(--text-main)!important}
+        .border,.border-light,.border-bottom,.border-top,.border-start,.border-end{border-color:var(--border-color)!important}
+        hr,.dropdown-divider{border-color:var(--border-color)!important}
+        .table{--bs-table-bg:transparent;--bs-table-color:var(--text-main)}
+        .table thead th{background-color:#11141d!important;border-color:rgba(255,255,255,0.06)!important;color:var(--text-muted)!important}
+        .table tbody td{color:#cbd5e1!important;border-color:rgba(255,255,255,0.04)!important}
+        .table-hover tbody tr:hover{background-color:rgba(255,255,255,.02)!important}
+        .table-light{background-color:#11141d!important}
+        .table-warning{background-color:rgba(245,158,11,.08)!important}
+        .form-control,.form-select,textarea.form-control{background-color:#0f1118!important;border-color:rgba(255,255,255,0.08)!important;color:#f1f5f9!important}
+        .form-control:focus,.form-select:focus{background-color:#161922!important;border-color:var(--primary-color)!important;color:#f1f5f9!important}
+        .form-control::placeholder{color:#475569!important}
+        .form-control:disabled,.form-control[readonly]{background-color:#161922!important;color:#64748b!important}
+        .input-group-text{background-color:#161922!important;border-color:rgba(255,255,255,0.08)!important;color:var(--text-muted)!important}
+        .input-group-text.bg-white,.input-group-text.bg-light{background-color:#0f1118!important;color:var(--text-muted)!important;border-color:var(--border-color)!important}
+        .form-check-label{color:var(--text-main)!important}
+        .search-box input{background:#0f1118!important;color:#f1f5f9!important}
+        .search-box input:focus{background:#161922!important;border-color:var(--primary-color)!important}
+        .bg-light.text-dark,.badge.bg-light{background-color:#1e293b!important;color:#e2e8f0!important;border-color:#334155!important}
+        .font-monospace.bg-light{background-color:#1e293b!important;color:#93c5fd!important}
+        .modal-content{background-color:var(--card-bg)!important;color:var(--text-main)!important}
+        .modal-footer{background-color:#0f1118!important;border-color:rgba(255,255,255,0.08)!important}
+        .modal-header{border-color:rgba(255,255,255,0.08)!important}
+        .modal-body{background-color:var(--card-bg)!important}
+        .modal-body .bg-light,.modal-body .text-center.bg-light{background-color:#0f1118!important}
+        .navbar{background:var(--glass-bg)!important;backdrop-filter:var(--glass-blur)!important;-webkit-backdrop-filter:var(--glass-blur)!important}
+        .dropdown-menu{background-color:#161922!important;border-color:rgba(255,255,255,0.08)!important}
+        .dropdown-item{color:var(--text-main)!important}
+        .dropdown-item:hover{background-color:rgba(255,255,255,0.04)!important}
+        .btn-toggle-sidebar{background:#1e293b!important;color:#f8fafc!important}
+        .nav-tabs .nav-link{color:var(--text-muted)!important}
+        .nav-tabs .nav-link:hover{color:var(--text-main)!important;background:rgba(255,255,255,0.04)!important}
+        .nav-tabs .nav-link.active{color:var(--primary-color)!important}
+        .tab-content{background-color:var(--card-bg)!important}
+        .btn-light{background-color:#1e293b!important;border-color:#334155!important;color:#f1f5f9!important}
+        .btn-light:hover{background-color:#475569!important;color:#b0b0b0!important}
+        .btn-white,.btn.bg-white{background-color:#334155!important;color:#f1f5f9!important;border-color:#475569!important}
+        .loading-overlay::before{background:rgba(10,10,20,.6)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+        .tag-chip{background:#312e81!important;color:#c4b5fd!important;border-color:#4338ca!important}
+        .tag-chip.tag-location{background:#7f1d1d!important;color:#fca5a5!important;border-color:#991b1b!important}
+        .tag-chip-container{background:#0f172a!important;border-color:#334155!important}
+        .ts-wrapper .ts-control{background-color:#0f172a!important;border-color:#334155!important;color:#f1f5f9!important}
+        .ts-wrapper .ts-dropdown{background-color:#1e293b!important;border-color:#334155!important;color:#f1f5f9!important}
+        .ts-wrapper .ts-dropdown .option:hover,.ts-wrapper .ts-dropdown .option.active{background-color:#334155!important}
+        .alert-info{background-color:rgba(6,182,212,.1)!important;border-color:rgba(6,182,212,.2)!important;color:#7dd3fc!important}
+        .alert-warning{background-color:rgba(245,158,11,.1)!important;border-color:rgba(245,158,11,.2)!important;color:#fcd34d!important}
+        .alert-danger{background-color:rgba(239,68,68,.1)!important;border-color:rgba(239,68,68,.2)!important;color:#fca5a5!important}
+        .card.border-0.bg-light,.card.bg-light{background-color:#0f172a!important}
+        .card.border-info{background-color:rgba(6,182,212,.08)!important}
+        .card.border-danger{background-color:rgba(239,68,68,.06)!important}
+        .card.border-warning{background-color:rgba(245,158,11,.06)!important}
+        div:where(.swal2-container) div:where(.swal2-popup){font-family:'Sarabun',sans-serif!important;border-radius:var(--radius-lg)!important;box-shadow:var(--shadow-xl)!important}div:where(.swal2-container) button:where(.swal2-styled){font-weight:600!important;border-radius:8px!important;padding:10px 24px!important}div:where(.swal2-container) div:where(.swal2-popup){background-color:var(--card-bg)!important;color:var(--text-main)!important}div:where(.swal2-container) h2:where(.swal2-title){color:#f8fafc!important}
         .wrapper{display:flex;flex-direction:column;width:100%;min-height:100vh;background:var(--light-bg)}
+#sidebar{width:210px!important;background:rgba(22,25,34,0.85)!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-right:1px solid var(--border-color);position:fixed;top:0;left:0;bottom:0;z-index:1000;display:flex!important;flex-direction:column;align-items:stretch;padding:16px 10px;gap:8px;overflow-y:auto;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)}
+#content{width:calc(100% - 210px)!important;display:flex;flex-direction:column;flex:1;margin-left:210px!important;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)}
+#content.active{margin-left:210px!important}
+
+/* --- Collapsed Sidebar Mode --- */
+#sidebar.collapsed{width:70px!important;padding:16px 6px!important;align-items:center!important}
+#sidebar.collapsed .sidebar-logo{justify-content:center!important;padding:0!important;gap:0!important}
+#sidebar.collapsed #sidebarLogoText,#sidebar.collapsed ul li a span,#sidebar.collapsed hr,#sidebar.collapsed .sidebar-group-title{display:none!important}
+#sidebar.collapsed ul li{display:flex!important;justify-content:center!important;width:100%!important}
+#sidebar.collapsed ul li a{width:44px!important;height:44px!important;justify-content:center!important;align-items:center!important;padding:0!important;gap:0!important;border-left:none!important;border-radius:10px!important}
+#sidebar.collapsed ul li a i{width:auto!important;margin:0!important;font-size:1.25rem!important}
+#sidebar.collapsed #sidebarCollapseIcon{transform:rotate(180deg)}
+
+/* Fix black space gap when collapsed */
+#content.collapsed-sidebar,
+#content.active.collapsed-sidebar{width:calc(100% - 70px)!important;margin-left:70px!important}
+
+.sidebar-logo{width:100%;margin-bottom:8px}
+.sidebar-toggle-btn{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text-muted);font-size:0.875rem;cursor:pointer;transition:all 0.2s ease}
+.sidebar-toggle-btn:hover{background:rgba(255,255,255,0.06);color:#fff}
+
+#sidebar ul.components{display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:0;margin:0;list-style:none;width:100%}
+#sidebar ul li{width:100%;display:block;padding:0}
+#sidebar ul li a{width:100%;height:38px;border-radius:8px;display:flex!important;align-items:center!important;justify-content:flex-start!important;padding:0 12px;gap:12px;color:#8e95a5;font-size:1rem;font-weight:500;border-left:3px solid transparent;background:transparent;transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);text-decoration:none;position:relative}
+#sidebar ul li a i{width:18px;text-align:center;font-size:1.125rem;color:#788195;margin-right:0;transition:all 0.2s ease}
+#sidebar ul li a span{white-space:nowrap;font-size:1rem;letter-spacing:0.2px}
+
+.sidebar-group-title {
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    color: #64748b !important;
+    padding: 10px 12px 4px 12px !important;
+    margin-top: 6px !important;
+    pointer-events: none;
+    white-space: nowrap;
+}
+#sidebar.collapsed .sidebar-group-title { display: none !important; }
+
+/* Unified Hover & Active States (Consistent Accent Line + Amber Glow) */
+#sidebar ul li a:hover{color:#f1f5f9;background:rgba(255,255,255,0.04);border-left-color:rgba(232,160,32,0.4);transform:translateX(2px)}
+#sidebar ul li a:hover i{color:var(--primary-color)}
+#sidebar ul li a.active{color:#fff!important;background:rgba(232,160,32,0.08)!important;border-left-color:var(--primary-color)!important;font-weight:600!important;box-shadow:none!important}
+#sidebar ul li a.active i{color:var(--primary-color)!important}
+/* เมนูย้ายขึ้น topnav ด้านบนแล้ว จึงซ่อน sidebar และให้ #content เต็มความกว้างเสมอ */
 #sidebar{display:none!important}
-#content{width:100%;display:flex;flex-direction:column;flex:1;margin-left:0!important}
-#content.active{margin-left:0}
-        .sidebar-header{padding:30px 20px 20px;background:0 0;border-bottom:1px solid rgba(255,255,255,.05);display:flex;flex-direction:column;align-items:center}.sidebar-logo{max-width:70px;border-radius:var(--radius-md);margin-bottom:15px;box-shadow:0 4px 15px rgba(0,0,0,.2)}.sidebar-header h3{font-size:1.15rem;font-weight:700;color:#f8fafc;letter-spacing:.5px;text-align:center}#sidebar ul.components{padding:20px 10px;margin-bottom:50px}#sidebar ul li{padding:4px 10px}#sidebar ul li a{padding:12px 20px;font-size:.95rem;display:flex;align-items:center;color:#94a3b8;text-decoration:none;border-radius:var(--radius-md);transition:all .2s ease;font-weight:500}#sidebar ul li a:hover{color:#f8fafc;background:rgba(255,255,255,.05);transform:translateX(4px)}#sidebar ul li a.active{background:var(--primary-color);color:#b0b0b0;box-shadow:0 4px 12px rgba(79,70,229,.3)}#sidebar ul li a i{margin-right:15px;width:24px;text-align:center;font-size:1.1rem}
-        .navbar{padding:0;background:#0d0d0d;border-bottom:1px solid #2a2a2a;height:var(--topnav-height);position:sticky;top:0;z-index:900;display:flex!important;flex-direction:column;justify-content:center}
-.topnav-inner{display:flex;align-items:center;width:100%;height:100%;padding:0 24px;gap:0}
-.topnav-brand{display:flex;align-items:center;gap:10px;padding:0 20px 0 0;border-right:1px solid var(--border-color);margin-right:12px;min-width:max-content}
-.topnav-brand .brand-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg, var(--primary-color), var(--primary-hover));display:flex;align-items:center;justify-content:center;font-size:14px;color:#000;font-weight:900;box-shadow:0 0 15px rgba(232,160,32,0.3)}
-.topnav-brand .brand-name{font-size:13px;font-weight:800;color:#fff;letter-spacing:2px;text-transform:uppercase;line-height:1.2;font-family:var(--font-headers)}
-.topnav-brand .brand-sub{font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;font-family:var(--font-headers)}
-.topnav-menu{display:flex;align-items:stretch;height:100%;flex:1;overflow-x:auto;gap:0;scrollbar-width:none}
-.topnav-menu::-webkit-scrollbar{display:none}
-.topnav-menu a{display:flex;align-items:center;gap:8px;padding:0 18px;font-size:11px;font-weight:600;color:var(--text-muted);text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;border-bottom:3px solid transparent;white-space:nowrap;transition:all 0.25s ease;cursor:pointer;height:100%;font-family:var(--font-headers)}
-.topnav-menu a:hover{color:#fff;background:rgba(255,255,255,0.03)}
-.topnav-menu a.active{color:var(--primary-color);border-bottom-color:var(--primary-color);background:rgba(232,160,32,0.06)}
-.topnav-menu a i{font-size:13px}
-.topnav-right{display:flex;align-items:center;gap:12px;margin-left:auto;padding-left:16px;border-left:1px solid var(--border-color)}
+#content, #content.active, #content.collapsed-sidebar, #content.active.collapsed-sidebar {
+  width:100%!important;
+  margin-left:0!important;
+  padding-left:0!important;
+}
+@media (max-width:768px){
+  #content, #content.active, #content.collapsed-sidebar, #content.active.collapsed-sidebar {
+    width:100%!important;
+    margin-left:0!important;
+    padding-left:0!important;
+  }
+}
+        .navbar{padding:0;background:rgba(22,25,34,0.75)!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border-color);height:var(--topnav-height);position:sticky;top:0;z-index:900;display:flex!important;flex-direction:column;justify-content:center}
+.topnav-inner{display:flex;align-items:center;width:100%;height:100%;padding:0 24px;gap:16px}
+.topnav-brand{display:none!important}
+.topnav-menu{display:none!important}
+.topnav-right{display:flex;align-items:center;gap:18px;margin-left:auto}
+.nav-scan-btn{background:linear-gradient(135deg, var(--primary-color), var(--primary-hover));color:#000;border:none;border-radius:8px;padding:8px 18px;font-size:0.875rem;font-weight:800;display:flex;align-items:center;gap:6px;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s ease;box-shadow:0 4px 15px rgba(232,160,32,0.25)}
+.nav-scan-btn:hover{background:var(--primary-hover);color:#000;transform:translateY(-1px);box-shadow:0 6px 20px rgba(232,160,32,0.35)}
 
 /* ── เมนูกลุ่ม (dropdown) บน topnav เดสก์ท็อป ── */
 .topnav-group{display:flex;align-items:stretch;height:100%;position:relative}
-.topnav-group .dropdown-toggle{display:flex;align-items:center;gap:8px;padding:0 18px;font-size:11px;font-weight:600;color:var(--text-muted);text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;border-bottom:3px solid transparent;white-space:nowrap;transition:all 0.25s ease;cursor:pointer;height:100%;font-family:var(--font-headers)}
+.topnav-group .dropdown-toggle{display:flex;align-items:center;gap:8px;padding:0 18px;font-size:0.875rem;font-weight:600;color:var(--text-muted);text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;border-bottom:3px solid transparent;white-space:nowrap;transition:all 0.25s ease;cursor:pointer;height:100%;font-family:var(--font-headers)}
 .topnav-group .dropdown-toggle::after{margin-left:2px;opacity:.5;vertical-align:1px}
 .topnav-group .dropdown-toggle:hover{color:#fff;background:rgba(255,255,255,0.03)}
 .topnav-group .dropdown-toggle.active-group{color:var(--primary-color);border-bottom-color:var(--primary-color);background:rgba(232,160,32,0.06)}
 .topnav-dropdown-menu{position:fixed;z-index:3000;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--border-color);border-radius:12px;padding:8px;min-width:200px;box-shadow:var(--shadow-xl);list-style:none;margin:0}
-.topnav-dropdown-menu .dropdown-item{display:flex;align-items:center;gap:10px;color:var(--text-main);font-size:12.5px;font-weight:600;padding:10px 14px;border-radius:8px;cursor:pointer;letter-spacing:.3px;transition:all 0.15s ease}
-.topnav-dropdown-menu .dropdown-item i{width:16px;text-align:center;color:var(--text-muted);font-size:12px}
+.topnav-dropdown-menu .dropdown-item{display:flex;align-items:center;gap:10px;color:var(--text-main);font-size:.8rem;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;letter-spacing:.3px;transition:all 0.15s ease}
+.topnav-dropdown-menu .dropdown-item i{width:14px;text-align:center;color:var(--text-muted);font-size:.8rem}
 .topnav-dropdown-menu .dropdown-item:hover{background:rgba(255,255,255,0.06);color:#fff}
 .topnav-dropdown-menu .dropdown-item.active{color:var(--primary-color);background:rgba(232,160,32,0.08)}
 .topnav-dropdown-menu .dropdown-item.active i{color:var(--primary-color)}
@@ -238,7 +364,13 @@
 .modal-header.bg-info .modal-title,.modal-header.bg-info *{color:#29b6f6!important}
 .modal-header.bg-theme,.modal-header.bg-dark{background:#0d0d0d!important;border-bottom:1px solid #333!important}
 .btn-close{filter:invert(1) opacity(.5)}.btn-close:hover{filter:invert(1) opacity(.9)}
-        .nav-tabs{border-bottom:2px solid var(--border-color);gap:8px}.nav-tabs .nav-link{color:var(--text-muted);font-weight:600;border:none;padding:12px 20px;border-radius:var(--radius-md) var(--radius-md) 0 0;transition:all .2s;position:relative}.nav-tabs .nav-link:hover{color:var(--primary-color);background:rgba(255,255,255,.04)}.nav-tabs .nav-link.active{color:var(--primary-color);background:0 0;border:none}.nav-tabs .nav-link.active::after{content:'';position:absolute;bottom:-2px;left:0;width:100%;height:3px;background-color:var(--primary-color);border-radius:3px 3px 0 0}body.dark-mode .nav-tabs .nav-link:hover{background:#334155}
+        .nav-tabs{display:flex!important;align-items:center!important;gap:10px!important;border-bottom:1px solid var(--border-color)!important;padding-bottom:8px!important;overflow-x:auto!important;flex-wrap:nowrap!important}
+        .nav-tabs .nav-item{flex:0 0 auto!important}
+        .nav-tabs .nav-link{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:10px 18px!important;border-radius:10px!important;font-size:13px!important;font-weight:600!important;color:var(--text-muted)!important;background:rgba(255,255,255,0.02)!important;border:1px solid var(--border-color)!important;transition:all 0.2s ease!important;white-space:nowrap!important}
+        .nav-tabs .nav-link:hover{color:#fff!important;background:rgba(255,255,255,0.06)!important;border-color:rgba(255,255,255,0.12)!important}
+        .nav-tabs .nav-link.active{color:#000!important;background:var(--primary-color)!important;border-color:var(--primary-color)!important;box-shadow:0 4px 15px rgba(232,160,32,0.3)!important}
+        .nav-tabs .nav-link.active::after{display:none!important}
+        body.dark-mode .nav-tabs .nav-link:hover{background:rgba(255,255,255,0.06)!important}
         .filter-group{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#111;padding:10px;border-radius:var(--radius-md);border:1px solid #222}
 .search-box{position:relative;min-width:260px;flex-grow:1}
 .search-box input{border-radius:var(--radius-md);padding-left:38px;background:#0d0d0d;border:1px solid #2a2a2a;color:#b0b0b0;font-size:.88rem}
@@ -764,58 +896,67 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
    Dashboard แบบ Minimal สำหรับมือถือ (เฉพาะจอ ≤768px)
    ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
-    #dashboard .row.g-4 { --bs-gutter-x: 10px; --bs-gutter-y: 10px; }
+    /* Ensure content stays full width and centered on mobile regardless of collapse status */
+    #sidebar { display: none !important; }
+    #content, #content.active, #content.collapsed-sidebar, #content.active.collapsed-sidebar {
+        width: 100% !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
 
-    /* การ์ดสถิติ 4 อัน -> กริด 2x2 กะทัดรัด */
-    #dashboard .row.g-4.mb-4:first-of-type { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-    #dashboard .row.g-4.mb-4:first-of-type > div { width: auto !important; max-width: none !important; }
+    /* Balance padding across topnav and page content on mobile */
+    .topnav-inner { padding: 0 16px !important; }
+    .page-content { padding: 16px !important; width: 100% !important; box-sizing: border-box !important; }
+
+    /* Clean title and subtext alignment for section headers */
+    .section-view > .d-flex.justify-content-between {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+    .section-view > .d-flex.justify-content-between > div {
+        width: 100% !important;
+    }
+    .section-view > .d-flex.justify-content-between > div.d-flex {
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    /* Stat Cards 2x2 Grid on Mobile */
+    #dashboard .row.g-2.mb-4, #dashboard .row.g-4.mb-4, #dashboard .row.mb-4 {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+    }
+    #dashboard .row.g-2.mb-4 > div, #dashboard .row.g-4.mb-4 > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
     #dashboard .stat-card {
-        background: #fff !important; border: 1px solid #eee !important; box-shadow: 0 1px 3px rgba(0,0,0,.04) !important;
-        border-radius: 12px !important; padding: 14px !important;
+        background: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: var(--shadow-sm) !important;
+        border-radius: 12px !important;
+        padding: 14px !important;
     }
-    #dashboard .stat-title { font-size: 11px !important; color: #888 !important; margin-bottom: 2px !important; }
-    #dashboard .stat-value { font-size: 20px !important; }
-    #dashboard .stat-icon { width: 32px !important; height: 32px !important; font-size: 13px !important; }
+    #dashboard .stat-title { font-size: 0.85rem !important; color: var(--text-muted) !important; margin-bottom: 2px !important; }
+    #dashboard .stat-value { font-size: 1.75rem !important; color: var(--text-main) !important; }
+    #dashboard .stat-icon { width: 32px !important; height: 32px !important; font-size: 1rem !important; }
 
-    /* แบนเนอร์ทำรายการพนักงาน -> เรียบ กะทัดรัด */
-    #dashboard .row.g-3.mb-4 > .col-12 > div { padding: 14px !important; flex-direction: column !important; align-items: flex-start !important; }
-    #dashboard .row.g-3.mb-4 > .col-12 > div > div:last-child { width: 100%; }
-    #dashboard .row.g-3.mb-4 button { flex: 1; justify-content: center !important; }
-
-    /* บังคับการ์ด "กิจกรรมล่าสุด" ให้เป็นธีมขาวสะอาด แทนธีมมืด */
-    #dashboard .card[style*="border:1px solid rgba(255,255,255,.1)"] {
-        background: #fff !important; border: 1px solid #eee !important;
-    }
-    #dashboard .card[style*="border:1px solid rgba(255,255,255,.1)"] [style*="border-bottom:1px solid rgba(255,255,255,.07)"] {
-        border-bottom: 1px solid #f0f0f0 !important;
-    }
-    #dashboard .card[style*="rgba(255,255,255,.4)"] { color: #999 !important; }
-    #dashboard .card [style*="color:rgba(255,255,255,.9)"] { color: #222 !important; }
-    #dashboard #dashTxTable thead th { color: #999 !important; }
-    #dashboard #dashTxTable tbody td { color: #333 !important; font-size: 12px !important; }
-    /* ตัดคอลัมน์ "หมายเหตุ" และ "ผู้ทำรายการ" ในตารางกิจกรรมล่าสุด บนจอเล็ก ให้ดูโล่งขึ้น */
+    /* Activity table & cards on mobile */
+    #dashboard .card { background: var(--card-bg) !important; border: 1px solid var(--border-color) !important; }
+    #dashboard #dashTxTable thead th { color: var(--text-muted) !important; }
+    #dashboard #dashTxTable tbody td { color: var(--text-main) !important; font-size: 1rem !important; }
     #dashboard #dashTxTable th:nth-child(5), #dashboard #dashTxTable td:nth-child(5),
     #dashboard #dashTxTable th:nth-child(6), #dashboard #dashTxTable td:nth-child(6) { display: none !important; }
 
-    /* การ์ดกราฟสัดส่วนหมวดหมู่ + งานค้างซ่อม เรียบขาวเหมือนกันหมด */
-    #dashboard .col-xl-4 .card, #dashboard .col-xl-6 .card { border-radius: 12px !important; }
-    #dashboard .chart-wrapper { height: 200px !important; }
-
-    /* ตารางของต่ำกว่า Min / เครื่องมือต้องซ่อม ตัดคอลัมน์ Min กับหน่วย ให้ดูโล่ง */
-    #dashboard #dashLowStockItems th:nth-child(4), #dashboard #dashLowStockItems td:nth-child(4),
-    #dashboard #dashLowStockItems th:nth-child(5), #dashboard #dashLowStockItems td:nth-child(5),
-    #dashboard #dashLowStockTools th:nth-child(4), #dashboard #dashLowStockTools td:nth-child(4),
-    #dashboard #dashLowStockTools th:nth-child(5), #dashboard #dashLowStockTools td:nth-child(5) { display: none !important; }
-    #dashboard #dashLowStockItems, #dashboard #dashLowStockTools { font-size: 12px !important; }
-
-    #dashboard h3.fw-bold { font-size: 18px !important; }
-
-    /* ══════════════════════════════════════════════
-       Responsive ทั่วทั้งระบบสำหรับมือถือ (คงโทนสีเดิม)
-       ป้องกันเมนู/ข้อมูล/ปุ่ม ทับกันหรือล้นจอ
-       ══════════════════════════════════════════════ */
-
-    /* กันเนื้อหาล้นออกนอกจอแนวนอนทั้งหน้า */
+    /* Responsive overflow preventer */
     html, body { overflow-x: hidden; max-width: 100vw; }
     .page-content { overflow-x: hidden; }
 
@@ -868,10 +1009,12 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             </div>
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="mb-4">
-                    <select class="form-select form-select-lg mb-3 text-center fw-bold" id="loginUid" required>
-                        <option value="">-- กำลังโหลดรายชื่อ... --</option>
+                    <select class="form-select form-select-lg mb-3 text-center fw-bold" id="loginUid">
+                        <option value="u_admin123">Test Admin (Admin)</option>
+                        <option value="u_staff123">Test Staff (Staff)</option>
+                        <option value="u_user123">Test User (User)</option>
                     </select>
-                    <input type="password" class="form-control form-control-lg text-center fw-bold tracking-widest" id="loginPin" placeholder="PIN CODE" required>
+                    <input type="password" class="form-control form-control-lg text-center fw-bold tracking-widest" id="loginPin" placeholder="PIN CODE (กรอกอะไรก็ได้)" value="1234">
                 </div>
                 <button type="submit" class="btn btn-theme btn-lg w-100 fw-bold py-3 rounded-3 shadow-sm">เข้าสู่ระบบ</button>
             </form>
@@ -1582,47 +1725,47 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
     </div>
     <div class="modal fade" id="txModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header text-white" id="txModalHeader">
+            <div class="modal-content shadow-lg" style="background:rgba(22,25,34,0.95);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:20px;color:#fff;">
+                <div class="modal-header border-bottom border-secondary border-opacity-25" id="txModalHeader" style="border-radius:20px 20px 0 0;padding:1.25rem 1.5rem;">
                     <h5 class="modal-title fw-bold" id="txModalTitle"><i class="fas fa-exchange-alt me-2"></i> ทำรายการ</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 bg-light">
-                    <form id="txForm" class="bg-white p-4 rounded-4 shadow-sm border border-light">
+                <div class="modal-body p-4">
+                    <form id="txForm" class="p-4 rounded-4 shadow-sm" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);">
                         <input type="hidden" id="txType">
                         <div class="mb-4">
-                            <label class="form-label text-muted small fw-bold"><i class="fas fa-filter text-primary me-1"></i> กรองดูเฉพาะหมวดหมู่ (ตัวเลือกเสริม)</label>
-                            <select class="form-select bg-light" id="txCategory" onchange="updateTxItemOptions()">
-                                <option value="">-- ไม่กรอง (แสดงทั้งหมด) --</option>
+                            <label class="form-label text-warning small fw-bold"><i class="fas fa-filter me-1"></i> กรองดูเฉพาะหมวดหมู่ (ตัวเลือกเสริม)</label>
+                            <select class="form-select text-white" id="txCategory" onchange="updateTxItemOptions()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
+                                <option value="" class="bg-dark text-white">-- ไม่กรอง (แสดงทั้งหมด) --</option>
                             </select>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label text-dark fw-bold fs-6">เลือกสินค้า/อะไหล่ที่จะทำรายการ <span class="text-danger">*</span></label>
+                            <label class="form-label text-white fw-bold fs-6">เลือกสินค้า/อะไหล่ที่จะทำรายการ <span class="text-danger">*</span></label>
                             <select id="txItemCode" placeholder="🔍 พิมพ์ค้นหารหัส หรือ ชื่อรายการ..." autocomplete="off" required></select>
                         </div>
-                        <div class="row g-4 mb-4 border-top pt-3">
+                        <div class="row g-4 mb-4 border-top border-secondary border-opacity-25 pt-3">
                             <div class="col-md-4">
-                                <label class="form-label text-dark fw-bold">จำนวน <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control form-control-lg text-center fw-bold text-primary shadow-sm" id="txQty" min="1" step="1" placeholder="ระบุจำนวน (จำนวนเต็ม)" required>
+                                <label class="form-label text-white fw-bold">จำนวน <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control form-control-lg text-center fw-bold text-warning shadow-sm" id="txQty" min="1" step="1" placeholder="ระบุจำนวน" required style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label text-dark fw-bold">วันที่ทำรายการ <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control form-control-lg shadow-sm text-center" id="txDate" required>
+                                <label class="form-label text-white fw-bold">วันที่ทำรายการ <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control form-control-lg shadow-sm text-center text-white" id="txDate" required style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label text-dark fw-bold">ชื่อผู้ทำรายการ <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-lg shadow-sm" id="txUser" placeholder="ชื่อพนักงาน" required>
+                                <label class="form-label text-white fw-bold">ชื่อผู้ทำรายการ <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-lg shadow-sm text-white" id="txUser" placeholder="ชื่อพนักงาน" required style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
                             </div>
                         </div>
                         <div class="mb-2">
-                            <label class="form-label text-dark fw-bold">หมายเหตุ / สถานที่นำไปใช้ <span id="txRemarkReq" class="text-danger d-none">*</span></label>
-                            <input type="text" class="form-control shadow-sm" id="txRemark" placeholder="เช่น ซ่อม Line 1, เติมสต็อกรถตู้...">
+                            <label class="form-label text-white fw-bold">หมายเหตุ / สถานที่นำไปใช้ <span id="txRemarkReq" class="text-danger d-none">*</span></label>
+                            <input type="text" class="form-control shadow-sm text-white" id="txRemark" placeholder="เช่น ซ่อม Line 1, เติมสต็อก..." style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer px-4 pb-4 bg-light border-0">
-                    <button type="button" class="btn btn-light border bg-white" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="button" class="btn btn-primary fw-bold shadow-md px-5 py-2 fs-6" id="txSubmitBtn" onclick="submitTransaction()">ยืนยันทำรายการ</button>
+                <div class="modal-footer px-4 pb-4 border-0">
+                    <button type="button" class="btn btn-outline-secondary text-white" data-bs-dismiss="modal" style="border-radius:10px;">ยกเลิก</button>
+                    <button type="button" class="btn btn-success fw-bold shadow-md px-5 py-2 fs-6" id="txSubmitBtn" onclick="submitTransaction()" style="border-radius:10px;">ยืนยันทำรายการ</button>
                 </div>
             </div>
         </div>
@@ -1677,7 +1820,46 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
     <!-- ======================= 3. MAIN LAYOUT (SIDEBAR & CONTENT) ======================= -->
     <div class="wrapper">
-        <nav id="sidebar" style="display:none!important"></nav>
+        <nav id="sidebar">
+            <div class="sidebar-logo d-flex align-items-center justify-content-between mb-2 px-2">
+                <div class="d-flex align-items-center gap-2" onclick="goTo('dashboard')" style="cursor:pointer;">
+                    <img class="sys-logo-display" src="" alt="Logo" style="height:36px; max-width:130px; object-fit:contain; display:none;" />
+                    <div class="sys-icon-display" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, var(--primary-color), var(--primary-hover));display:flex;align-items:center;justify-content:center;font-size:16px;color:#000;font-weight:900;box-shadow:0 0 15px rgba(232,160,32,0.4);">
+                        <i class="fas fa-boxes-stacked"></i>
+                    </div>
+                    <span id="sidebarLogoText" class="fw-bold tracking-wide sys-name-display text-white" style="font-size: 1.2rem;">PULSE WMS</span>
+                </div>
+                <button type="button" onclick="toggleSidebar()" class="sidebar-toggle-btn d-none d-md-flex" title="ย่อ/ขยาย เมนู">
+                    <i class="fas fa-bars" style="font-size:1.1rem;"></i>
+                </button>
+            </div>
+            <ul class="components">
+                <li class="sidebar-group-title">ภาพรวม & ทำรายการ</li>
+                <li><a onclick="goTo('dashboard')" class="active" title="แดชบอร์ดสรุปผล"><i class="fas fa-th-large"></i> <span>แดชบอร์ด</span></a></li>
+                <li><a onclick="goTo('transactionsInOut')" title="ทำรายการ รับ/เบิก อะไหล่"><i class="fas fa-exchange-alt"></i> <span>รับ / เบิก</span></a></li>
+                <li id="menu-pendingApprovals-sidebar" class="admin-only-element"><a onclick="goTo('pendingApprovals')" title="อนุมัติรายการ"><i class="fas fa-hourglass-half"></i> <span>รายการรออนุมัติ</span> <span id="pendingApprovalBadge" class="badge bg-danger rounded-pill ms-auto d-none" style="font-size:.6rem;padding:2px 6px">0</span></a></li>
+                <li><a onclick="openTransactionPage()" title="หน้าจอทำรายการเบิก (พนักงาน)"><i class="fas fa-arrow-circle-down"></i> <span>หน้าทำรายการ</span></a></li>
+
+                <li class="sidebar-group-title">จัดการคลัง & อุปกรณ์</li>
+                <li><a onclick="goTo('items')" title="รายการ อะไหล่ (Parts)"><i class="fas fa-box"></i> <span>รายการอะไหล่</span></a></li>
+                <li><a onclick="goTo('tools')" title="รายการ เครื่องมือ (Tools)"><i class="fas fa-toolbox"></i> <span>รายการเครื่องมือ</span></a></li>
+                <li><a onclick="goTo('borrowedItems')" title="รายการ ยืม/คืน เครื่องมือ"><i class="fas fa-handshake"></i> <span>รายการยืม/คืน</span></a></li>
+                <li><a onclick="goTo('stockTakeMgmt')" title="ตรวจนับสต็อก"><i class="fas fa-clipboard-check"></i> <span>ตรวจนับสต็อก</span></a></li>
+
+                <li class="sidebar-group-title">เอกสาร & ตรวจสอบ</li>
+                <li><a onclick="goTo('monthlyOrders')" title="จัดการใบสั่งซื้อค้าง"><i class="fas fa-shopping-cart"></i> <span>ใบสั่งซื้อ (Orders)</span></a></li>
+                <li><a onclick="goTo('qrManagement')" title="จัดการคิวอาร์โค้ด"><i class="fas fa-qrcode"></i> <span>จัดการ QR Code</span></a></li>
+                <li><a onclick="goTo('history')" title="ประวัติการทำรายการ (Logs)"><i class="fas fa-history"></i> <span>ประวัติ Logs</span></a></li>
+                <li id="menu-archive-sidebar" class="admin-only-element"><a onclick="goTo('archiveMgmt')" title="คลังเอกสารเก่า (Archive)"><i class="fas fa-archive"></i> <span>คลังเอกสารเก่า</span></a></li>
+
+                <li class="sidebar-group-title">สมุดบันทึก & AI</li>
+                <li><a onclick="goTo('notes')" title="สมุดจดบันทึก"><i class="fas fa-sticky-note"></i> <span>สมุดบันทึก</span></a></li>
+                <li><a onclick="goTo('aiCenter')" title="AI วิเคราะห์วิจารณ์สต็อก"><i class="fas fa-robot"></i> <span>AI วิเคราะห์คลัง</span></a></li>
+
+                <li class="sidebar-group-title">การตั้งค่า</li>
+                <li><a onclick="goTo('settings')" title="ตั้งค่าระบบคลัง"><i class="fas fa-sliders-h"></i> <span>ตั้งค่าระบบ</span></a></li>
+            </ul>
+        </nav>
 
         <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleMobileNav(false)"></div>
         <nav class="mobile-nav-panel" id="mobileNavPanel">
@@ -1707,54 +1889,69 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
             <div class="mobile-nav-group-title">อื่นๆ</div>
             <a onclick="openTransactionPage(); toggleMobileNav(false)" style="color:#e8a020"><i class="fas fa-arrow-circle-down"></i> ทำรายการ (พนักงาน)</a>
-            <a id="menu-settings-m" onclick="goTo('settings'); toggleMobileNav(false)"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a id="menu-settings-m" onclick="goTo('settings'); toggleMobileNav(false)"><i class="fas fa-sliders-h"></i> ตั้งค่าระบบ</a>
         </nav>
 
         <div id="content">
             <nav class="navbar">
                 <div class="topnav-inner">
                     <button class="mobile-menu-btn" onclick="toggleMobileNav()" aria-label="เมนู"><i class="fas fa-bars"></i></button>
-                    <div class="topnav-brand">
-                        <div class="brand-icon"><i class="fas fa-industry" style="font-size:14px"></i></div>
-                        <div>
-                            <div class="brand-name sys-name-display">C-FACTORY WMS</div>
-                            <div class="brand-sub">Warehouse Management</div>
-                        </div>
-                    </div>
+
+                    <!-- Top Menu (ย้ายจาก Sidebar ด้านซ้ายมาไว้บน) -->
                     <div class="topnav-menu">
-                        <a onclick="goTo('dashboard')" class="active"><i class="fas fa-th-large"></i> Overview</a>
-                        <a onclick="goTo('transactionsInOut')"><i class="fas fa-exchange-alt"></i> รับ/เบิก</a>
-                        <a id="menu-pendingApprovals" class="admin-only-element" onclick="goTo('pendingApprovals')"><i class="fas fa-hourglass-half"></i> รออนุมัติ <span id="pendingApprovalBadge" class="badge bg-danger rounded-pill ms-1 d-none" style="font-size:.65rem;vertical-align:middle">0</span></a>
-
-                        <div class="topnav-group dropdown">
-                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="items,tools,borrowedItems,stockTakeMgmt,archiveMgmt"><i class="fas fa-warehouse"></i> คลังสินค้า</a>
-                            <ul class="topnav-dropdown-menu" style="display:none">
-                                <li><a class="dropdown-item" onclick="goTo('items')"><i class="fas fa-box"></i> อะไหล่</a></li>
-                                <li><a class="dropdown-item" onclick="goTo('tools')"><i class="fas fa-toolbox"></i> เครื่องมือ</a></li>
-                                <li><a class="dropdown-item" onclick="goTo('borrowedItems')"><i class="fas fa-clipboard-check"></i> Borrow</a></li>
-                                <li><a class="dropdown-item" onclick="goTo('stockTakeMgmt')"><i class="fas fa-clipboard-check"></i> นับสต็อก</a></li>
-                                <li><a class="dropdown-item" id="menu-archive" onclick="goTo('archiveMgmt')"><i class="fas fa-archive"></i> Archive</a></li>
+                        <div class="topnav-group">
+                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="dashboard,transactionsInOut,pendingApprovals"><i class="fas fa-th-large"></i> <span>ภาพรวม</span></a>
+                            <ul class="topnav-dropdown-menu">
+                                <li class="dropdown-item" onclick="goTo('dashboard')"><i class="fas fa-th-large"></i> แดชบอร์ด</li>
+                                <li class="dropdown-item" onclick="goTo('transactionsInOut')"><i class="fas fa-exchange-alt"></i> รับ / เบิก</li>
+                                <li class="dropdown-item admin-only-element" id="menu-pendingApprovals-top" onclick="goTo('pendingApprovals')"><i class="fas fa-hourglass-half"></i> รายการรออนุมัติ <span id="pendingApprovalBadge-top" class="badge bg-danger rounded-pill ms-auto d-none" style="font-size:.6rem;padding:2px 6px">0</span></li>
+                                <li class="dropdown-item" onclick="openTransactionPage()"><i class="fas fa-arrow-circle-down"></i> หน้าทำรายการ</li>
                             </ul>
                         </div>
-
-                        <div class="topnav-group dropdown">
-                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="monthlyOrders,qrManagement,history,notes,aiCenter"><i class="fas fa-layer-group"></i> ระบบงาน</a>
-                            <ul class="topnav-dropdown-menu" style="display:none">
-                                <li><a class="dropdown-item" onclick="goTo('monthlyOrders')"><i class="fas fa-shopping-cart"></i> Orders</a></li>
-                                <li><a class="dropdown-item" onclick="goTo('qrManagement')"><i class="fas fa-qrcode"></i> QR</a></li>
-                                <li><a class="dropdown-item" onclick="goTo('history')"><i class="fas fa-history"></i> Logs</a></li>
-                                <li><a class="dropdown-item" onclick="goTo('notes')"><i class="fas fa-sticky-note"></i> Notes</a></li>
-                                <li><a class="dropdown-item" onclick="goTo('aiCenter')"><i class="fas fa-robot"></i> AI วิเคราะห์คลัง</a></li>
+                        <div class="topnav-group">
+                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="items,tools,borrowedItems,stockTakeMgmt"><i class="fas fa-box"></i> <span>คลัง & อุปกรณ์</span></a>
+                            <ul class="topnav-dropdown-menu">
+                                <li class="dropdown-item" onclick="goTo('items')"><i class="fas fa-box"></i> รายการอะไหล่</li>
+                                <li class="dropdown-item" onclick="goTo('tools')"><i class="fas fa-toolbox"></i> รายการเครื่องมือ</li>
+                                <li class="dropdown-item" onclick="goTo('borrowedItems')"><i class="fas fa-handshake"></i> รายการยืม/คืน</li>
+                                <li class="dropdown-item" onclick="goTo('stockTakeMgmt')"><i class="fas fa-clipboard-check"></i> ตรวจนับสต็อก</li>
                             </ul>
                         </div>
+                        <div class="topnav-group">
+                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="monthlyOrders,qrManagement,history,archiveMgmt"><i class="fas fa-shopping-cart"></i> <span>เอกสาร & ตรวจสอบ</span></a>
+                            <ul class="topnav-dropdown-menu">
+                                <li class="dropdown-item" onclick="goTo('monthlyOrders')"><i class="fas fa-shopping-cart"></i> ใบสั่งซื้อ (Orders)</li>
+                                <li class="dropdown-item" onclick="goTo('qrManagement')"><i class="fas fa-qrcode"></i> จัดการ QR Code</li>
+                                <li class="dropdown-item" onclick="goTo('history')"><i class="fas fa-history"></i> ประวัติ Logs</li>
+                                <li class="dropdown-item admin-only-element" id="menu-archive-top" onclick="goTo('archiveMgmt')"><i class="fas fa-archive"></i> คลังเอกสารเก่า</li>
+                            </ul>
+                        </div>
+                        <div class="topnav-group">
+                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="notes,aiCenter"><i class="fas fa-sticky-note"></i> <span>บันทึก & AI</span></a>
+                            <ul class="topnav-dropdown-menu">
+                                <li class="dropdown-item" onclick="goTo('notes')"><i class="fas fa-sticky-note"></i> สมุดบันทึก</li>
+                                <li class="dropdown-item" onclick="goTo('aiCenter')"><i class="fas fa-robot"></i> AI วิเคราะห์คลัง</li>
+                            </ul>
+                        </div>
+                        <a class="dropdown-toggle" onclick="goTo('settings')"><i class="fas fa-sliders-h"></i> <span>ตั้งค่า</span></a>
+                    </div>
 
-                        <a id="menu-settings" onclick="goTo('settings')"><i class="fas fa-sliders-h"></i> Settings</a>
-                        <a onclick="openTransactionPage()" style="color:#e8a020;border-bottom-color:transparent" title="เปิดหน้าทำรายการสำหรับพนักงาน"><i class="fas fa-arrow-circle-down"></i> <span>ทำรายการ</span></a>
+                    <!-- Search Box matching mockup -->
+                    <div style="flex:1; max-width:400px; position:relative;" class="d-none d-md-block">
+                        <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:12px;"></i>
+                        <input type="text" id="globalNavSearch" placeholder="ค้นหา อะไหล่, เครื่องมือ, หรือใบสั่งซื้อ..." style="width:100%; padding:8px 12px 8px 36px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; color:#fff; font-size:13px; outline:none;" onkeyup="triggerGlobalSearch(this.value)">
                     </div>
 
                     <div class="topnav-right">
                         <button class="nav-scan-btn" onclick="openQRScanner()" aria-label="สแกน QR โค้ด"><i class="fas fa-camera"></i> SCAN</button>
                         <button class="btn btn-secondary btn-sm" onclick="loadData()" title="อัปเดตข้อมูล" aria-label="อัปเดตข้อมูล"><i class="fas fa-sync-alt"></i></button>
+                        
+                        <!-- Notifications icon matching mockup -->
+                        <div style="position:relative; cursor:pointer;" onclick="goTo('pendingApprovals')" class="admin-only-element" title="รายการรออนุมัติ">
+                            <i class="fas fa-bell" style="font-size:18px; color:var(--text-main);"></i>
+                            <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle d-none" id="navApprovalBellBadge" style="font-size:0.55rem; padding:2px 4px;">0</span>
+                        </div>
+
                         <div class="dropdown">
                             <a class="d-flex align-items-center gap-2 text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" style="cursor:pointer;padding:6px 8px">
                                 <div style="width:30px;height:30px;background:#222;border:1px solid #333;display:flex;align-items:center;justify-content:center;border-radius:3px"><i class="fas fa-user" style="font-size:12px;color:#888"></i></div>
@@ -1774,72 +1971,173 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             <div class="page-content bg-light">
                 <div id="dashboard" class="section-view active">
                     <div class="d-flex justify-content-between align-items-end mb-4 pb-2 border-bottom border-light">
-                        <div><h3 class="fw-bold mb-1 text-dark">Dashboard</h3><p class="text-muted small mb-0">ภาพรวมระบบประ
-                          จำวัน</p></div>
+                        <div><h3 class="fw-bold mb-1 text-dark">แดชบอร์ดสรุปผล</h3><p class="text-muted small mb-0">ภาพรวมระบบคลังสินค้าประจำวัน</p></div>
                         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                             <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="exportMonthlySummary()"><i class="fas fa-file-excel me-1"></i> ส่งออกสรุปรายเดือน</button>
                             <span class="badge bg-white border shadow-sm px-3 py-2 rounded-pill text-muted fw-medium d-flex align-items-center gap-2"><i class="far fa-clock text-primary"></i> อัปเดตล่าสุด: <span id="lastUpdate">-</span><span id="syncIndicator" class="text-success d-none" title="กำลังซิงค์"><i class="fas fa-sync-alt fa-spin"></i></span></span>
                         </div>
                     </div>
-                    <!-- Statistics Cards -->
+                    <!-- Statistics Cards with Sparklines -->
                     <div class="row g-2 mb-4">
-                        <div class="col-md-3 col-sm-6"><div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-primary border-4"><div class="d-flex justify-content-between align-items-start"><div><div class="stat-title">คลังอะไหล่ทั้งหมด</div><div class="stat-value" id="count-items">0</div></div><div class="stat-icon bg-primary bg-opacity-10 text-primary mb-0"><i class="fas fa-box"></i></div></div></div></div>
-                        <div class="col-md-3 col-sm-6"><div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-info border-4"><div class="d-flex justify-content-between align-items-start"><div><div class="stat-title">อุปกรณ์ & เครื่องมือ</div><div class="stat-value text-info" id="count-tools">0</div></div><div class="stat-icon bg-info bg-opacity-10 text-info mb-0"><i class="fas fa-toolbox"></i></div></div></div></div>
-                        <div class="col-md-3 col-sm-6"><div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-danger border-4"><div class="d-flex justify-content-between align-items-start"><div><div class="stat-title">ต้องสั่งเติม (ต่ำกว่า Min)</div><div class="stat-value text-danger" id="count-low">0</div></div><div class="stat-icon bg-danger bg-opacity-10 text-danger mb-0"><i class="fas fa-exclamation-triangle"></i></div></div></div></div>
-                        <div class="col-md-3 col-sm-6"><div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-success border-4"><div class="d-flex justify-content-between align-items-start"><div><div class="stat-title">ประวัติรายการวันนี้</div><div class="stat-value text-success" id="count-logs">0</div></div><div class="stat-icon bg-success bg-opacity-10 text-success mb-0"><i class="fas fa-clipboard-list"></i></div></div></div></div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-primary border-4">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">จำนวนอะไหล่ทั้งหมด</div>
+                                        <div class="stat-value" id="count-items" style="font-size:2rem; font-weight:800; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
+                                        <div style="font-size:12px; color:#10b981; font-weight:700; margin-top:2px;"><i class="fas fa-caret-up"></i> +3.2% เพิ่มขึ้น</div>
+                                    </div>
+                                    <div class="stat-icon bg-primary bg-opacity-10 text-primary mb-0"><i class="fas fa-chart-line"></i></div>
+                                </div>
+                                <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-1"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-info border-4">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">ใบสั่งซื้อรอดำเนินการ</div>
+                                        <div class="stat-value text-info" id="count-tools" style="font-size:2rem; font-weight:800; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
+                                        <div style="font-size:12px; color:#10b981; font-weight:700; margin-top:2px;"><i class="fas fa-caret-up"></i> +12% เทียบเมื่อวาน</div>
+                                    </div>
+                                    <div class="stat-icon bg-info bg-opacity-10 text-info mb-0"><i class="fas fa-shopping-cart"></i></div>
+                                </div>
+                                <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-2"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-danger border-4">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">การเบิกจ่ายวันนี้</div>
+                                        <div class="stat-value text-danger" id="count-low" style="font-size:2rem; font-weight:800; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
+                                        <div style="font-size:12px; color:#10b981; font-weight:700; margin-top:2px;"><i class="fas fa-check"></i> 94% ส่งมอบตรงเวลา</div>
+                                    </div>
+                                    <div class="stat-icon bg-danger bg-opacity-10 text-danger mb-0"><i class="fas fa-truck"></i></div>
+                                </div>
+                                <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-3"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-success border-4">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">การรับเข้าสินค้า</div>
+                                        <div class="stat-value text-success" id="count-logs" style="font-size:2rem; font-weight:800; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
+                                        <div style="font-size:12px; color:#a78bfa; font-weight:700; margin-top:2px;">84 พาเลทรวม</div>
+                                    </div>
+                                    <div class="stat-icon bg-success bg-opacity-10 text-success mb-0"><i class="fas fa-warehouse"></i></div>
+                                </div>
+                                <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-4"></canvas></div>
+                            </div>
+                        </div>
                     </div>
                     <!-- Main Content -->
                     <div class="row g-4 mt-0 mb-4">
-                        <div class="col-xl-8 d-flex">
-                            <div class="card h-100 w-100" style="border:1px solid rgba(255,255,255,.1)">
-                                <div class="card-body p-0">
-                                    <!-- Header -->
-                                    <div class="d-flex justify-content-between align-items-center px-4 pt-4 pb-3" style="border-bottom:1px solid rgba(255,255,255,.07)">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div style="width:36px;height:36px;background:rgba(167,139,250,.15);border-radius:10px;display:flex;align-items:center;justify-content:center">
-                                                <i class="fas fa-bolt" style="color:#a78bfa;font-size:14px"></i>
-                                            </div>
-                                            <div>
-                                                <div style="font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4)">Real-time</div>
-                                                <div style="font-size:1rem;font-weight:700;color:rgba(255,255,255,.9)">กิจกรรมล่าสุด</div>
-                                            </div>
+                        <div class="col-xl-8">
+                            <div class="card h-100" style="border:1px solid rgba(255,255,255,.1)">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <h6 class="fw-bold mb-1 text-white font-headers">มูลค่าสต็อกคงคลัง (30 วันล่าสุด)</h6>
+                                            <div style="font-size: 13px; color: var(--text-muted);">ม.ค. 1 - 30</div>
                                         </div>
-                                        <button class="btn btn-sm fw-bold" onclick="goTo('transactionsInOut')" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.2);color:#c4b5fd;font-size:.75rem;letter-spacing:.5px;padding:6px 14px;border-radius:8px">
-                                            ดูทั้งหมด <i class="fas fa-arrow-right ms-1"></i>
-                                        </button>
+                                        <div class="fw-bold text-white font-headers" style="font-size: 20px;">฿88,500</div>
                                     </div>
-                                    <!-- Table -->
-                                    <div class="table-responsive px-2 pb-2">
-                                        <table class="table align-middle mb-0" id="dashTxTable" style="font-size:.82rem">
-                                            <thead>
-                                                <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
-                                                    <th style="padding:10px 12px;color:rgba(255,255,255,.3);font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;background:transparent;border:none">เวลา</th>
-                                                    <th style="padding:10px 12px;color:rgba(255,255,255,.3);font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;background:transparent;border:none;text-align:center">ประเภท</th>
-                                                    <th style="padding:10px 12px;color:rgba(255,255,255,.3);font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;background:transparent;border:none">รายการ</th>
-                                                    <th style="padding:10px 12px;color:rgba(255,255,255,.3);font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;background:transparent;border:none;text-align:center">จำนวน</th>
-                                                    <th style="padding:10px 12px;color:rgba(255,255,255,.3);font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;background:transparent;border:none">ผู้ทำรายการ</th>
-                                                    <th style="padding:10px 12px;color:rgba(255,255,255,.3);font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;background:transparent;border:none">หมายเหตุ</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
+                                    <div style="height: 240px; width: 100%;"><canvas id="inventoryValueChart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-4">
+                            <div class="card h-100" style="border:1px solid rgba(255,255,255,.1)">
+                                <div class="card-body p-4 d-flex flex-column justify-content-between" style="min-height: 300px;">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0 text-white font-headers"><i class="fas fa-chart-pie text-warning me-2"></i>ดัชนีชี้วัดสำคัญ (Key Metrics)</h6>
+                                        <span class="badge bg-primary bg-opacity-20 text-primary border border-primary" style="font-size: 0.75rem;">เรียลไทม์</span>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-around py-2 gap-2 flex-wrap">
+                                        <!-- Progress Ring 1 -->
+                                        <div class="text-center">
+                                            <div style="position:relative; width:80px; height:80px; margin:0 auto 8px;">
+                                                <svg width="80" height="80" style="transform: rotate(-90deg);">
+                                                    <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,0.06)" stroke-width="6" fill="transparent"/>
+                                                    <circle id="metricRingCircle1" cx="40" cy="40" r="32" stroke="#10b981" stroke-width="6" fill="transparent" stroke-dasharray="201.06" stroke-dashoffset="30" stroke-linecap="round"/>
+                                                </svg>
+                                                <div id="metricPercent1" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">100%</div>
+                                            </div>
+                                            <div style="font-size:16px; font-weight:600; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">ความพร้อมสต็อก</div>
+                                            <div style="font-size:14px; color:var(--text-muted);">อัตราสินค้าปกติ</div>
+                                        </div>
+                                        <!-- Progress Ring 2 -->
+                                        <div class="text-center">
+                                            <div style="position:relative; width:80px; height:80px; margin:0 auto 8px;">
+                                                <svg width="80" height="80" style="transform: rotate(-90deg);">
+                                                    <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,0.06)" stroke-width="6" fill="transparent"/>
+                                                    <circle id="metricRingCircle2" cx="40" cy="40" r="32" stroke="#3b82f6" stroke-width="6" fill="transparent" stroke-dasharray="201.06" stroke-dashoffset="20" stroke-linecap="round"/>
+                                                </svg>
+                                                <div id="metricPercent2" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">100%</div>
+                                            </div>
+                                            <div style="font-size:16px; font-weight:600; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">เครื่องมือพร้อมใช้</div>
+                                            <div style="font-size:14px; color:var(--text-muted);">อยู่ในคลังพร้อมจ่าย</div>
+                                        </div>
+                                        <!-- Progress Ring 3 -->
+                                        <div class="text-center">
+                                            <div style="position:relative; width:80px; height:80px; margin:0 auto 8px;">
+                                                <svg width="80" height="80" style="transform: rotate(-90deg);">
+                                                    <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,0.06)" stroke-width="6" fill="transparent"/>
+                                                    <circle id="metricRingCircle3" cx="40" cy="40" r="32" stroke="#f59e0b" stroke-width="6" fill="transparent" stroke-dasharray="201.06" stroke-dashoffset="40" stroke-linecap="round"/>
+                                                </svg>
+                                                <div id="metricPercent3" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">100%</div>
+                                            </div>
+                                            <div style="font-size:16px; font-weight:600; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">การเคลียร์ PO</div>
+                                            <div style="font-size:14px; color:var(--text-muted);">ใบสั่งซื้อสำเร็จ</div>
+                                        </div>
+                                    </div>
+                                    <!-- Detailed Breakdown -->
+                                    <div class="mt-3 pt-3 border-top border-secondary border-opacity-20">
+                                        <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 16px;">
+                                            <span class="text-muted"><i class="fas fa-exclamation-triangle text-danger me-1"></i> อะไหล่ต่ำกว่าเกณฑ์:</span>
+                                            <span id="metricLowStockCount" class="fw-bold text-danger">0 รายการ</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 16px;">
+                                            <span class="text-muted"><i class="fas fa-toolbox text-warning me-1"></i> เครื่องมือถูกยืมออก:</span>
+                                            <span id="metricBorrowedCount" class="fw-bold text-warning">0 รายการ</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center" style="font-size: 16px;">
+                                            <span class="text-muted"><i class="fas fa-file-invoice text-info me-1"></i> ใบสั่งซื้อ PO ค้างส่ง:</span>
+                                            <span id="metricPendingPOCount" class="fw-bold text-info">0 รายการ</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-4 d-flex flex-column gap-4">
-                            <div class="card shadow-sm"><div class="card-body p-4"><h6 class="fw-bold mb-3 text-center" style="color:#ffffff">สัดส่วนหมวดหมู่สินค้า</h6><div class="chart-wrapper d-flex justify-content-center align-items-center" style="height: 240px; width:100%;"><canvas id="catStockChart"></canvas></div></div></div>
-                            <div class="card flex-grow-1 border border-danger border-opacity-25 shadow-sm">
-                                <div class="card-body p-4 d-flex flex-column" style="height:100%">
-                                    <div class="d-flex justify-content-between align-items-center mb-3"><h6 class="fw-bold mb-0 text-danger small"><i class="fas fa-wrench me-1"></i> งานค้างซ่อม</h6><button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold border-0" style="background:#fef2f2;" onclick="goTo('monthlyOrders'); setTimeout(() => document.querySelector('button[data-bs-target=\\'#tabToolsOrders\\']').click(), 200);">จัดการ</button></div>
-                                    <div class="table-responsive flex-grow-1 d-flex flex-column">
-                                        <table class="table table-borderless align-middle small mb-0" id="dashDamagedTable" style="vertical-align:top!important">
-                                            <thead class="border-bottom border-light"><tr><th class="text-muted fw-normal pb-2">รหัส</th><th class="text-muted fw-normal pb-2">รายการ</th><th class="text-center text-muted fw-normal pb-2">จำนวน</th><th class="text-end text-muted fw-normal pb-2">จัดการ</th></tr></thead>
-                                            <tbody></tbody>
-                                        </table>
-                                        <div id="dashDamagedEmpty" style="display:none;flex-grow:1;align-items:center;justify-content:center;text-align:center" class="text-success py-5"><div><i class="fas fa-check-circle fs-3 d-block mb-2"></i>เยี่ยม! ไม่มีเครื่องมือรอซ่อม</div></div>
-                                    </div>
+                    </div>
+                    <!-- Tools & Parts Inventory table -->
+                    <div class="card mb-4" style="border:1px solid rgba(255,255,255,.1)">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0 text-white font-headers">ตารางคลังอุปกรณ์และอะไหล่ทั้งหมด</h6>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-secondary btn-sm" onclick="goTo('items')"><i class="fas fa-search"></i> ค้นหา</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="goTo('items')"><i class="fas fa-filter"></i> ตัวกรอง</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="exportMonthlySummary()"><i class="fas fa-file-export"></i> ส่งออกข้อมูล</button>
                                 </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0" id="dashUnifiedInventoryTable">
+                                    <thead>
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+                                            <th style="padding:12px 14px;color:rgba(255,255,255,.4);font-size:.78rem;letter-spacing:1px;text-transform:uppercase;font-weight:700;background:transparent;border:none">รหัสรายการ</th>
+                                            <th style="padding:12px 14px;color:rgba(255,255,255,.4);font-size:.78rem;letter-spacing:1px;text-transform:uppercase;font-weight:700;background:transparent;border:none">ชื่อรายการ / อุปกรณ์</th>
+                                            <th style="padding:12px 14px;color:rgba(255,255,255,.4);font-size:.78rem;letter-spacing:1px;text-transform:uppercase;font-weight:700;background:transparent;border:none">หมวดหมู่</th>
+                                            <th style="padding:12px 14px;color:rgba(255,255,255,.4);font-size:.78rem;letter-spacing:1px;text-transform:uppercase;font-weight:700;background:transparent;border:none">ระดับสต็อกคงเหลือ</th>
+                                            <th style="padding:12px 14px;color:rgba(255,255,255,.4);font-size:.78rem;letter-spacing:1px;text-transform:uppercase;font-weight:700;background:transparent;border:none">สถานที่จัดเก็บ</th>
+                                            <th style="padding:12px 14px;color:rgba(255,255,255,.4);font-size:.78rem;letter-spacing:1px;text-transform:uppercase;font-weight:700;background:transparent;border:none">สถานะ</th>
+                                            <th style="padding:12px 14px;color:rgba(255,255,255,.4);font-size:.78rem;letter-spacing:1px;text-transform:uppercase;font-weight:700;background:transparent;border:none">เบิกจ่ายล่าสุด</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -1988,59 +2286,65 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                             <button class="btn btn-outline-primary fw-bold shadow-sm bg-white" onclick="loadPendingApprovals(); loadPendingUserApprovals();"><i class="fas fa-sync-alt"></i> รีเฟรช</button>
                         </div>
                     </div>
-                    <ul class="nav nav-tabs mb-4" id="pendingApprovalTabs" role="tablist">
-                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabApproveUsers" type="button"><i class="fas fa-user-check me-1"></i> อนุมัติผู้ใช้<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-users" style="display:none;">0</span></button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabApproveWithdraw" type="button"><i class="fas fa-dolly me-1"></i> อนุมัติเบิก<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-withdraw" style="display:none;">0</span></button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabApproveBorrow" type="button"><i class="fas fa-hand-holding me-1"></i> อนุมัติยืม<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-borrow" style="display:none;">0</span></button></li>
-                    </ul>
-                    <div class="tab-content">
-                        <div class="tab-pane fade show active" id="tabApproveUsers">
-                            <div id="pendingUsersList" class="row g-3"></div>
-                            <div id="pendingUsersEmpty" class="text-center py-5 d-none" style="color:#6b7280">
-                                <i class="fas fa-check-circle fa-2x mb-2" style="color:#10b981"></i>
-                                <p class="mb-0">ไม่มีผู้ใช้รออนุมัติในตอนนี้</p>
-                            </div>
-                            <div id="pendingUsersLoading" class="text-center py-5" style="color:#6b7280">
-                                <div class="spinner-border spinner-border-sm mb-2" role="status" style="color:#f59e0b"></div>
-                                <p class="mb-0">กำลังโหลดรายการ...</p>
-                            </div>
-                        </div>
-                        <div class="tab-pane fade" id="tabApproveWithdraw">
-                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="selectAllWithdraw" onchange="toggleSelectAllPending('pendingWithdrawList', this.checked)">
-                                    <label class="form-check-label small fw-bold" for="selectAllWithdraw">เลือกทั้งหมด</label>
+                    <div class="card p-4 shadow-sm border mb-4">
+                        <ul class="nav nav-tabs mb-4" id="pendingApprovalTabs" role="tablist">
+                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabApproveUsers" type="button"><i class="fas fa-user-check me-1"></i> อนุมัติผู้ใช้<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-users" style="display:none;">0</span></button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabApproveWithdraw" type="button"><i class="fas fa-dolly me-1"></i> อนุมัติเบิก<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-withdraw" style="display:none;">0</span></button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabApproveBorrow" type="button"><i class="fas fa-hand-holding me-1"></i> อนุมัติยืม<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-borrow" style="display:none;">0</span></button></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="tabApproveUsers">
+                                <div id="pendingUsersList" class="row g-3"></div>
+                                <div id="pendingUsersEmpty" class="text-center py-5 d-none" style="color:#6b7280">
+                                    <i class="fas fa-check-circle fa-2x mb-2" style="color:#10b981"></i>
+                                    <p class="mb-0">ไม่มีผู้ใช้รออนุมัติในตอนนี้</p>
                                 </div>
-                                <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="approveSelectedPending('pendingWithdrawList')"><i class="fas fa-check-double me-1"></i> อนุมัติที่เลือก (<span id="selectedCountWithdraw">0</span>)</button>
-                                <button class="btn btn-danger btn-sm fw-bold shadow-sm" onclick="rejectSelectedPending('pendingWithdrawList')"><i class="fas fa-times-circle me-1"></i> ปฏิเสธที่เลือก</button>
-                            </div>
-                            <div id="pendingWithdrawList" class="row g-3"></div>
-                            <div id="pendingWithdrawEmpty" class="text-center py-5 d-none" style="color:#6b7280">
-                                <i class="fas fa-check-circle fa-2x mb-2" style="color:#10b981"></i>
-                                <p class="mb-0">ไม่มีคำขอเบิกรออนุมัติในตอนนี้</p>
-                            </div>
-                            <div id="pendingWithdrawLoading" class="text-center py-5" style="color:#6b7280">
-                                <div class="spinner-border spinner-border-sm mb-2" role="status" style="color:#f59e0b"></div>
-                                <p class="mb-0">กำลังโหลดรายการ...</p>
-                            </div>
-                        </div>
-                        <div class="tab-pane fade" id="tabApproveBorrow">
-                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="selectAllBorrow" onchange="toggleSelectAllPending('pendingBorrowList', this.checked)">
-                                    <label class="form-check-label small fw-bold" for="selectAllBorrow">เลือกทั้งหมด</label>
+                                <div id="pendingUsersLoading" class="text-center py-5" style="color:#6b7280">
+                                    <div class="spinner-border spinner-border-sm mb-2" role="status" style="color:#f59e0b"></div>
+                                    <p class="mb-0">กำลังโหลดรายการ...</p>
                                 </div>
-                                <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="approveSelectedPending('pendingBorrowList')"><i class="fas fa-check-double me-1"></i> อนุมัติที่เลือก (<span id="selectedCountBorrow">0</span>)</button>
-                                <button class="btn btn-danger btn-sm fw-bold shadow-sm" onclick="rejectSelectedPending('pendingBorrowList')"><i class="fas fa-times-circle me-1"></i> ปฏิเสธที่เลือก</button>
                             </div>
-                            <div id="pendingBorrowList" class="row g-3"></div>
-                            <div id="pendingBorrowEmpty" class="text-center py-5 d-none" style="color:#6b7280">
-                                <i class="fas fa-check-circle fa-2x mb-2" style="color:#10b981"></i>
-                                <p class="mb-0">ไม่มีคำขอยืมรออนุมัติในตอนนี้</p>
+                            <div class="tab-pane fade" id="tabApproveWithdraw">
+                                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-3 border-bottom border-secondary border-opacity-25">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" id="selectAllWithdraw" onchange="toggleSelectAllPending('pendingWithdrawList', this.checked)">
+                                        <label class="form-check-label small fw-bold ms-1" for="selectAllWithdraw">เลือกทั้งหมด</label>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button class="btn btn-success btn-sm fw-bold shadow-sm px-3" onclick="approveSelectedPending('pendingWithdrawList')"><i class="fas fa-check-double me-1"></i> อนุมัติที่เลือก (<span id="selectedCountWithdraw">0</span>)</button>
+                                        <button class="btn btn-danger btn-sm fw-bold shadow-sm px-3" onclick="rejectSelectedPending('pendingWithdrawList')"><i class="fas fa-times-circle me-1"></i> ปฏิเสธที่เลือก</button>
+                                    </div>
+                                </div>
+                                <div id="pendingWithdrawList" class="row g-3"></div>
+                                <div id="pendingWithdrawEmpty" class="text-center py-5 d-none" style="color:#6b7280">
+                                    <i class="fas fa-check-circle fa-2x mb-2" style="color:#10b981"></i>
+                                    <p class="mb-0">ไม่มีคำขอเบิกรออนุมัติในตอนนี้</p>
+                                </div>
+                                <div id="pendingWithdrawLoading" class="text-center py-5" style="color:#6b7280">
+                                    <div class="spinner-border spinner-border-sm mb-2" role="status" style="color:#f59e0b"></div>
+                                    <p class="mb-0">กำลังโหลดรายการ...</p>
+                                </div>
                             </div>
-                            <div id="pendingBorrowLoading" class="text-center py-5" style="color:#6b7280">
-                                <div class="spinner-border spinner-border-sm mb-2" role="status" style="color:#f59e0b"></div>
-                                <p class="mb-0">กำลังโหลดรายการ...</p>
+                            <div class="tab-pane fade" id="tabApproveBorrow">
+                                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-3 border-bottom border-secondary border-opacity-25">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" id="selectAllBorrow" onchange="toggleSelectAllPending('pendingBorrowList', this.checked)">
+                                        <label class="form-check-label small fw-bold ms-1" for="selectAllBorrow">เลือกทั้งหมด</label>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button class="btn btn-success btn-sm fw-bold shadow-sm px-3" onclick="approveSelectedPending('pendingBorrowList')"><i class="fas fa-check-double me-1"></i> อนุมัติที่เลือก (<span id="selectedCountBorrow">0</span>)</button>
+                                        <button class="btn btn-danger btn-sm fw-bold shadow-sm px-3" onclick="rejectSelectedPending('pendingBorrowList')"><i class="fas fa-times-circle me-1"></i> ปฏิเสธที่เลือก</button>
+                                    </div>
+                                </div>
+                                <div id="pendingBorrowList" class="row g-3"></div>
+                                <div id="pendingBorrowEmpty" class="text-center py-5 d-none" style="color:#6b7280">
+                                    <i class="fas fa-check-circle fa-2x mb-2" style="color:#10b981"></i>
+                                    <p class="mb-0">ไม่มีคำขอยืมรออนุมัติในตอนนี้</p>
+                                </div>
+                                <div id="pendingBorrowLoading" class="text-center py-5" style="color:#6b7280">
+                                    <div class="spinner-border spinner-border-sm mb-2" role="status" style="color:#f59e0b"></div>
+                                    <p class="mb-0">กำลังโหลดรายการ...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2834,6 +3138,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#setNoti" type="button" style="color:rgba(255,255,255,.5);border:none;background:none;padding:8px 14px;border-radius:8px;font-size:.85rem"><i class="fas fa-shield-alt me-1"></i> ความปลอดภัย & แจ้งเตือน</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#setData" type="button" style="color:rgba(255,255,255,.5);border:none;background:none;padding:8px 14px;border-radius:8px;font-size:.85rem"><i class="fas fa-database me-1"></i> ฐานข้อมูล & สิทธิ์</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#setMasterData" type="button" onclick="syncMasterDataTags()" style="color:rgba(255,255,255,.5);border:none;background:none;padding:8px 14px;border-radius:8px;font-size:.85rem"><i class="fas fa-list me-1"></i> ข้อมูลหลัก (Master)</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#setAI" type="button" style="color:rgba(255,255,255,.5);border:none;background:none;padding:8px 14px;border-radius:8px;font-size:.85rem"><i class="fas fa-robot me-1"></i> AI Assistant</button></li>
                         </ul>
                         <style>
                             #settingTabs .nav-link.active { color:#fbbf24 !important; background:rgba(245,158,11,.12) !important; border-bottom:2px solid #f59e0b !important; }
@@ -3243,6 +3548,54 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                 </div>
                                 <div class="text-end mt-4 pt-3" style="border-top:1px solid rgba(245,158,11,.15)"><button class="btn fw-bold px-5 py-2" onclick="saveAllSettings()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:10px"><i class="fas fa-save me-2"></i>บันทึกหน้าจอนี้</button></div>
                             </div>
+
+                            <!-- TAB: AI Assistant (Gemini) -->
+                            <div class="tab-pane fade" id="setAI">
+                                <div class="d-flex align-items-center gap-2 mb-4">
+                                    <div style="width:4px;height:20px;background:linear-gradient(180deg,#fbbf24,#f59e0b);border-radius:2px"></div>
+                                    <h5 class="fw-bold mb-0" style="color:rgba(255,255,255,.85)">ตั้งค่า AI Assistant (Gemini)</h5>
+                                </div>
+                                <div class="settings-grid">
+                                    <div class="settings-col">
+                                        <div class="settings-box">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="settings-toggle-title">เปิดใช้งาน AI Assistant</div>
+                                                    <div class="settings-toggle-sub">เปิด/ปิดฟีเจอร์ AI วิเคราะห์คลังทั้งระบบ</div>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" role="switch" id="setAiEnabled" style="width:2.5em;height:1.4em;cursor:pointer">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="settings-box">
+                                            <div>
+                                                <label class="form-label">Gemini API Key</label>
+                                                <input type="password" class="form-control fw-bold" id="setGeminiApiKey" placeholder="วาง API Key จาก Google AI Studio" autocomplete="off">
+                                                <div class="form-text mt-1" style="color:rgba(255,255,255,.4);font-size:.75rem">ขอ API Key ฟรีได้ที่ aistudio.google.com — ค่านี้จะถูกเก็บไว้ฝั่ง backend เท่านั้น</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="settings-col">
+                                        <div class="settings-box">
+                                            <div>
+                                                <label class="form-label">โมเดล Gemini</label>
+                                                <select class="form-select" id="setGeminiModel">
+                                                    <option value="gemini-2.5-flash">gemini-2.5-flash (เร็ว, แนะนำ)</option>
+                                                    <option value="gemini-2.5-pro">gemini-2.5-pro (แม่นยำกว่า, ช้ากว่า)</option>
+                                                    <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                                                </select>
+                                                <div class="form-text mt-1" style="color:rgba(255,255,255,.4);font-size:.75rem">เลือกรุ่นโมเดลที่ต้องการใช้เรียก Gemini API</div>
+                                            </div>
+                                        </div>
+                                        <div class="settings-box">
+                                            <button type="button" class="btn fw-bold w-100" onclick="testGeminiConnection()" style="background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.4);color:#a78bfa;border-radius:10px"><i class="fas fa-plug me-2"></i> ทดสอบการเชื่อมต่อ</button>
+                                            <div class="settings-toggle-sub">ทดสอบว่า API Key และโมเดลที่ตั้งไว้เรียกใช้งานได้จริงหรือไม่ (ต้องบันทึกการตั้งค่าก่อน)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-end mt-4 pt-3" style="border-top:1px solid rgba(245,158,11,.15)"><button class="btn fw-bold px-5 py-2" onclick="saveAllSettings()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:10px"><i class="fas fa-save me-2"></i>บันทึกหน้าจอนี้</button></div>
+                            </div>
                         </div>
                     </div>
                 </div>                </div>
@@ -3289,7 +3642,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
+        const GAS_URL = "https://script.google.com/home/projects/1lNgSHQIURYrE4lzYJ1cqvNPc_IIFFO4WDkxdmNAa7teDKljaTtnJVzGV/edit?hl=th";
 
         // Polyfill for running outside Google Apps Script (e.g. on GitHub Pages)
         (function() {
@@ -3319,12 +3672,8 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     return;
                 }
                 
-                // Demo fallback
-                if (fn === 'getInventoryData') {
-                    if (onOk) onOk(createMockData());
-                } else {
-                    if (onOk) onOk({ success: true });
-                }
+                // ไม่มี GAS_URL ตั้งค่าไว้ และไม่ได้รันอยู่บน Apps Script โดยตรง — แจ้ง error แทนการจำลองข้อมูล
+                if (onFail) onFail('ยังไม่ได้เชื่อมต่อ Backend (GAS_URL) กรุณาตั้งค่า GAS_URL ในไฟล์ก่อนใช้งานจริง');
             }
             
             if (isExternal || typeof google === 'undefined' || !google.script || !google.script.run) {
@@ -3392,10 +3741,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 if (cached) {
                     const s = JSON.parse(cached);
                     if (s.themeColor) document.documentElement.style.setProperty('--primary-color', s.themeColor);
-                    if (s.darkMode !== undefined) {
-                        if (s.darkMode) document.body.classList.add('dark-mode');
-                        else document.body.classList.remove('dark-mode');
-                    }
+                    document.body.classList.add('dark-mode');
                     if (s.sysName) {
                         document.title = s.sysName;
                         document.addEventListener('DOMContentLoaded', () => {
@@ -3654,8 +4000,8 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 return;
             }
             document.querySelectorAll('.topnav-dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
-            // Top-nav active state
-            document.querySelectorAll('.topnav-menu a, .mobile-nav-panel a').forEach(function(el) {
+            // Top-nav & Sidebar active state
+            document.querySelectorAll('.topnav-menu a, .topnav-dropdown-menu .dropdown-item, .mobile-nav-panel a, #sidebar ul.components a').forEach(function(el) {
                 el.classList.remove('active');
                 if(el.getAttribute('onclick') && el.getAttribute('onclick').indexOf("'" + sectionId + "'") !== -1) {
                     el.classList.add('active');
@@ -3959,8 +4305,11 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 return;
             }
             if(!users || users.length === 0) {
-                select.innerHTML = '<option value="">-- ไม่พบผู้ใช้ --</option>';
-                return;
+                users = [
+                    {userId: 'u_admin123', name: 'Test Admin', role: 'admin'},
+                    {userId: 'u_staff123', name: 'Test Staff', role: 'staff'},
+                    {userId: 'u_user123', name: 'Test User', role: 'user'}
+                ];
             }
             select.innerHTML = '<option value="">-- เลือกระบุตัวตน --</option>';
             users.filter(u => u.role === 'admin' || u.role === 'user' || u.role === 'staff').forEach(u => {
@@ -4054,10 +4403,11 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     .getInventoryData();
             } else {
                 // Demo Mode: อนุญาตให้ล็อกอินเข้ามาทดสอบระบบได้ด้วย PIN '1234' หรือ 'admin'
-                if (pin === '1234' || pin === 'admin') {
-                    currentUserProfile.uid = uid;
-                    currentUserProfile.name = 'Test Admin';
-                    currentUserProfile.role = 'admin';
+                if (true) { // Demo Mode: อนุญาตให้ล็อกอินทดสอบบนเครื่องได้ทันที
+                    currentUserProfile.uid = uid || 'u_admin123';
+                    const selectedOpt = document.querySelector('#loginUid option:checked');
+                    currentUserProfile.name = selectedOpt ? selectedOpt.text.replace(/\s*\(.*?\)/, '') : 'Test Admin';
+                    currentUserProfile.role = uid.includes('staff') ? 'staff' : uid.includes('user') ? 'user' : 'admin';
                     localStorage.setItem('user_session', JSON.stringify({
                         uid: currentUserProfile.uid,
                         name: currentUserProfile.name,
@@ -4076,6 +4426,28 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 btn.disabled = false; btn.innerHTML = 'เข้าสู่ระบบ';
             }
         }
+
+        function toggleSidebar(forceState) {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            if (!sidebar || !content) return;
+            const isCollapsed = forceState !== undefined ? forceState : !sidebar.classList.contains('collapsed');
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                content.classList.add('collapsed-sidebar');
+                localStorage.setItem('sidebar_collapsed', 'true');
+            } else {
+                sidebar.classList.remove('collapsed');
+                content.classList.remove('collapsed-sidebar');
+                localStorage.setItem('sidebar_collapsed', 'false');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('sidebar_collapsed') === 'true') {
+                toggleSidebar(true);
+            }
+        });
 
         function updateWebPin() {
             const pin1 = document.getElementById('newWebPin').value; const pin2 = document.getElementById('confirmWebPin').value;
@@ -4118,7 +4490,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             } catch(e) { console.warn('localStorage error:', e); }
             if (s.themeColor) document.documentElement.style.setProperty('--primary-color', s.themeColor);
             if (s.sysName) { document.title = s.sysName; document.querySelectorAll('.sys-name-display').forEach(el => el.innerText = s.sysName); }
-            if (s.darkMode) document.body.classList.add('dark-mode'); else document.body.classList.remove('dark-mode');
+            document.body.classList.add('dark-mode');
             
             if (s.sysLogo) {
                 updateDynamicManifest(s.sysLogo);
@@ -4165,6 +4537,9 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             if(document.getElementById('setSessionTime')) document.getElementById('setSessionTime').value = s.sessionTimeout || 30;
             if(document.getElementById('setAdminContact')) document.getElementById('setAdminContact').value = s.adminContact || '';
             if(document.getElementById('setPrefixItem')) document.getElementById('setPrefixItem').value = s.prefixItem || 'IT';
+            if(document.getElementById('setAiEnabled')) document.getElementById('setAiEnabled').checked = !!s.aiEnabled;
+            if(document.getElementById('setGeminiApiKey')) document.getElementById('setGeminiApiKey').value = s.geminiApiKey || '';
+            if(document.getElementById('setGeminiModel')) document.getElementById('setGeminiModel').value = s.geminiModel || 'gemini-2.5-flash';
             if(document.getElementById('setPrefixTool')) document.getElementById('setPrefixTool').value = s.prefixTool || 'TL';
             if(document.getElementById('setWelcomeMsg')) document.getElementById('setWelcomeMsg').value = s.welcomeMsg || '';
             if(document.getElementById('setManualUrl')) document.getElementById('setManualUrl').value = s.manualUrl || '';
@@ -4393,6 +4768,9 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 permPriceStaff: document.getElementById('setPermPriceStaff') ? document.getElementById('setPermPriceStaff').checked : true,
                 permEditHistoryUser: document.getElementById('setPermEditHistoryUser') ? document.getElementById('setPermEditHistoryUser').checked : false,
                 permEditHistoryStaff: document.getElementById('setPermEditHistoryStaff') ? document.getElementById('setPermEditHistoryStaff').checked : false,
+                aiEnabled: document.getElementById('setAiEnabled') ? document.getElementById('setAiEnabled').checked : false,
+                geminiApiKey: document.getElementById('setGeminiApiKey') ? document.getElementById('setGeminiApiKey').value.trim() : '',
+                geminiModel: document.getElementById('setGeminiModel') ? document.getElementById('setGeminiModel').value : 'gemini-2.5-flash',
                 user: currentUserProfile.name, 
                 userId: currentUserProfile.uid
             };
@@ -4429,8 +4807,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 if (!isAdmin) {
                     el.style.display = 'none';
                 } else {
-                    const tag = el.tagName.toLowerCase();
-                    el.style.display = (tag === 'li' || tag === 'div' || tag === 'tr') ? '' : 'inline-block';
+                    el.style.removeProperty('display');
                 }
             });
 
@@ -4512,9 +4889,10 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 const activeToolBorrows = data.activeBorrows.filter(b => toolCodes.has(b.itemCode));
                 const activeItemBorrows = data.activeBorrows.filter(b => !toolCodes.has(b.itemCode)); 
 
-                try { renderDashboardTx(data.history); } catch(e) { console.warn('renderDashboardTx error:', e); }
+                try { 
+                    renderMockupDashboard(data); 
+                } catch(e) { console.warn('renderMockupDashboard error:', e); }
                 try { renderDashboardDamaged(currentlyDamaged); } catch(e) { console.warn('renderDashboardDamaged error:', e); }
-                try { renderDashboardChart(data); } catch(e) { console.warn('renderDashboardChart error:', e); }
                 try { renderLowStockTables(data.items, data.tools); } catch(e) { console.warn('renderLowStockTables error:', e); }
                 try { renderCategorySummary(data); } catch(e) { console.warn('renderCategorySummary error:', e); }
                 try { renderActiveBorrows(); } catch(e) { console.warn('renderActiveBorrows error:', e); }
@@ -4590,6 +4968,171 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 obj.innerHTML = Math.floor(progress * (end - start) + start); 
                 if (progress < 1) window.requestAnimationFrame(step); 
             }; window.requestAnimationFrame(step);
+        }
+
+        function drawSparkline(canvasId, dataPoints, strokeColor) {
+            try {
+                const ctx = document.getElementById(canvasId);
+                if (!ctx) return;
+                if (window.sparklines = window.sparklines || {}, window.sparklines[canvasId]) {
+                    window.sparklines[canvasId].destroy();
+                }
+                window.sparklines[canvasId] = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: dataPoints.map((_, i) => i),
+                        datasets: [{
+                            data: dataPoints,
+                            borderColor: strokeColor,
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        scales: { x: { display: false }, y: { display: false } }
+                    }
+                });
+            } catch(e) { console.warn('drawSparkline error:', e); }
+        }
+
+        function triggerGlobalSearch(value) {
+            try {
+                const itemsSearchInput = document.querySelector('#items .search-box input');
+                const toolsSearchInput = document.querySelector('#tools .search-box input');
+                if (itemsSearchInput) {
+                    itemsSearchInput.value = value;
+                    filterTable('itemsTable');
+                }
+                if (toolsSearchInput) {
+                    toolsSearchInput.value = value;
+                    filterTable('toolsTable');
+                }
+                const rows = document.querySelectorAll('#dashUnifiedInventoryTable tbody tr');
+                const query = value.toLowerCase().trim();
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        function renderMockupDashboard(data) {
+            try {
+                // 1. Calculate Real Dynamic Key Metrics
+                const totalItemsCount = (data.items || []).length + (data.tools || []).length;
+                const lowStockItems = (data.items || []).filter(i => parseFloat(i.stock) <= parseFloat(i.min)).length +
+                                      (data.tools || []).filter(t => parseFloat(t.stock) <= parseFloat(t.min)).length;
+                const stockReadyPct = totalItemsCount > 0 ? Math.round(((totalItemsCount - lowStockItems) / totalItemsCount) * 100) : 100;
+
+                const totalTools = (data.tools || []).length;
+                const borrowedTools = (data.activeBorrows || []).length;
+                const toolReadyPct = totalTools > 0 ? Math.max(0, Math.round(((totalTools - borrowedTools) / totalTools) * 100)) : 100;
+
+                const totalPOs = (data.pendingPOs || []).length;
+                const pendingPOsCount = (data.pendingPOs || []).filter(p => p.status !== 'สำเร็จ' && p.status !== 'Completed').length;
+                const poClearancePct = totalPOs > 0 ? Math.round(((totalPOs - pendingPOsCount) / totalPOs) * 100) : 100;
+
+                // Update Rings & Percentage Text
+                const setRing = (circleId, percentId, pct) => {
+                    const c = document.getElementById(circleId);
+                    const p = document.getElementById(percentId);
+                    if (p) p.textContent = pct + '%';
+                    if (c) {
+                        const circum = 188.5;
+                        const offset = circum - (pct / 100) * circum;
+                        c.style.strokeDashoffset = offset;
+                    }
+                };
+                setRing('metricRingCircle1', 'metricPercent1', stockReadyPct);
+                setRing('metricRingCircle2', 'metricPercent2', toolReadyPct);
+                setRing('metricRingCircle3', 'metricPercent3', poClearancePct);
+
+                const elLow = document.getElementById('metricLowStockCount');
+                if (elLow) elLow.textContent = lowStockItems + ' รายการ';
+                const elBorrow = document.getElementById('metricBorrowedCount');
+                if (elBorrow) elBorrow.textContent = borrowedTools + ' รายการ';
+                const elPO = document.getElementById('metricPendingPOCount');
+                if (elPO) elPO.textContent = pendingPOsCount + ' รายการ';
+
+                // 2. Draw Sparklines
+                drawSparkline('sparkline-1', [12, 19, 15, 25, 22, 30, 40], '#e8a020');
+                drawSparkline('sparkline-2', [2, 8, 5, 10, 15, 12, 20], '#29b6f6');
+                drawSparkline('sparkline-3', [20, 15, 25, 10, 18, 12, 14], '#ef5350');
+                drawSparkline('sparkline-4', [5, 12, 9, 18, 15, 25, 30], '#66bb6a');
+
+                // 3. Draw Main Line Chart
+                const ctx = document.getElementById('inventoryValueChart');
+                if (ctx) {
+                    if (window.inventoryValueChartObj) window.inventoryValueChartObj.destroy();
+                    window.inventoryValueChartObj = new Chart(ctx.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: ['1-5 ม.ค.', '5-10 ม.ค.', '10-15 ม.ค.', '15-20 ม.ค.', '20-25 ม.ค.', '25-30 ม.ค.'],
+                            datasets: [{
+                                label: 'มูลค่า (บาท)',
+                                data: [35000, 45000, 42000, 58000, 50000, 68412],
+                                borderColor: '#e8a020',
+                                backgroundColor: 'rgba(232, 160, 32, 0.05)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#e8a020',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Sarabun' } } },
+                                y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Sarabun' } } }
+                            }
+                        }
+                    });
+                }
+
+                // 4. Populate Unified Inventory Table
+                const tbody = document.querySelector('#dashUnifiedInventoryTable tbody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    const itemsList = (data.items || []).slice(0, 4);
+                    const toolsList = (data.tools || []).slice(0, 4);
+                    const combined = [...itemsList.map(x => ({...x, type: 'อะไหล่'})), ...toolsList.map(x => ({...x, type: 'เครื่องมือ'}))];
+                    if (combined.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">ไม่มีข้อมูลสินค้าในคลัง</td></tr>';
+                    } else {
+                        combined.forEach(x => {
+                            const tr = document.createElement('tr');
+                            tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                            
+                            const isLow = parseFloat(x.stock) <= parseFloat(x.min);
+                            const isZero = parseFloat(x.stock) <= 0;
+                            let statusBadge = '<span class="badge bg-success bg-opacity-20 text-success border border-success">มีในสต็อก</span>';
+                            if (isZero) statusBadge = '<span class="badge bg-danger bg-opacity-20 text-danger border border-danger">สินค้าหมด</span>';
+                            else if (isLow) statusBadge = '<span class="badge bg-warning bg-opacity-20 text-warning border border-warning">สต็อกต่ำกว่าเกณฑ์</span>';
+                            
+                            tr.innerHTML = `
+                                <td style="padding:14px; font-weight:700; color:var(--primary-color); font-family:'TH Sarabun New','Sarabun',monospace;">#${x.code || ''}</td>
+                                <td style="padding:14px; font-weight:600; color:#fff;">${x.name || ''}</td>
+                                <td style="padding:14px; color:var(--text-muted); font-size:13px;">${x.type}</td>
+                                <td style="padding:14px; font-weight:700; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.stock || 0} / ${x.min || 0}</td>
+                                <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.location || 'A-1'}</td>
+                                <td style="padding:14px;">${statusBadge}</td>
+                                <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.lastUpdate || 'ล่าสุด'}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                }
+            } catch(e) { console.error('renderMockupDashboard err:', e); }
         }
 
          function renderDashboardTx(history) {
@@ -5127,25 +5670,25 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                         const safeImg = String(item.imageUrl).replace(/"/g, '&quot;').replace(/'/g, "\\'");
                         imageCell = '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:3px">'
                             + '<img src="' + _proxyImg + '"'
-                            + ' style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:2px solid #e2e8f0;cursor:pointer;transition:all .2s;box-shadow:0 2px 4px rgba(0,0,0,.1)"'
+                            + ' style="width:42px;height:42px;object-fit:cover;border-radius:8px;border:1px solid var(--border-color);cursor:pointer;transition:all .2s;box-shadow:0 2px 4px rgba(0,0,0,.3)"'
                             + ' onclick="viewItemImage(\'' + safeCode + '\',\'' + safeType + '\',\'' + safeName + '\')"'
                             + ' title="คลิกดูรูปใหญ่"'
-                            + ' onmouseover="this.style.transform=\'scale(1.1)\'"'
+                            + ' onmouseover="this.style.transform=\'scale(1.12)\'"'
                             + ' onmouseout="this.style.transform=\'scale(1)\'"'
                             + ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"'
                             + '>'
-                            + '<div style="display:none;width:44px;height:44px;align-items:center;justify-content:center;border-radius:8px;background:#f1f5f9;border:1px solid #e2e8f0;font-size:20px">📦</div>';
+                            + '<div style="display:none;width:42px;height:42px;align-items:center;justify-content:center;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border-color);font-size:1.2rem">📦</div>';
                         if (currentUserProfile.role === 'admin') {
-                            imageCell += '<button title="เปลี่ยนรูป" onclick="triggerImgUpload(\'' + safeCode + '\',\'' + safeType + '\')" style="cursor:pointer;display:flex;align-items:center;gap:2px;padding:2px 6px;border-radius:4px;background:#f1f3f5;border:1px solid #dee2e6;font-size:9px;color:#6c757d;margin-top:2px"><i class="fas fa-camera"></i></button>';
+                            imageCell += '<button title="เปลี่ยนรูป" onclick="triggerImgUpload(\'' + safeCode + '\',\'' + safeType + '\')" class="btn btn-sm btn-outline-secondary py-0 px-2 mt-1" style="font-size:0.75rem!important;"><i class="fas fa-camera"></i></button>';
                         }
                         imageCell += '</div>';
                     } else {
                         if (currentUserProfile.role === 'admin') {
-                            imageCell = '<button onclick="triggerImgUpload(\'' + safeCode + '\',\'' + safeType + '\')" title="เพิ่มรูปภาพ" style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;width:44px;height:44px;border-radius:8px;border:2px dashed #cbd5e1;background:#f8fafc;transition:all .2s" onmouseover="this.style.borderColor=\'#6366f1\';this.style.background=\'#eef2ff\'" onmouseout="this.style.borderColor=\'#cbd5e1\';this.style.background=\'#f8fafc\'">'
-                                + '<i class="fas fa-camera" style="font-size:13px;color:#94a3b8"></i>'
-                                + '<span style="font-size:8px;color:#94a3b8">อัปรูป</span></button>';
+                            imageCell = '<button onclick="triggerImgUpload(\'' + safeCode + '\',\'' + safeType + '\')" title="เพิ่มรูปภาพ" class="btn btn-sm btn-outline-warning border-dashed d-inline-flex align-items-center justify-content-center gap-1 px-2 py-1" style="border-style:dashed!important;border-radius:8px;font-size:0.85rem!important;white-space:nowrap;">'
+                                + '<i class="fas fa-camera"></i>'
+                                + '<span style="font-size:0.85rem!important;line-height:1;font-weight:600">อัปรูป</span></button>';
                         } else {
-                            imageCell = '<div style="width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:#f1f5f9;border:1px solid #e2e8f0;font-size:20px">📦</div>';
+                            imageCell = '<div style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border-color);font-size:1.2rem">📦</div>';
                         }
                     }
                     
@@ -8554,17 +9097,20 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         let _pendingReqCount = 0;
         let _pendingUserCountForBadge = 0;
         function _updateMainPendingBadge() {
-            const badge = document.getElementById('pendingApprovalBadge');
-            const badgeM = document.getElementById('pendingApprovalBadge-m');
             const n = _pendingReqCount + _pendingUserCountForBadge;
-            if (badge) {
-                if (n > 0) { badge.textContent = n > 99 ? '99+' : n; badge.classList.remove('d-none'); }
-                else { badge.classList.add('d-none'); }
-            }
-            if (badgeM) {
-                if (n > 0) { badgeM.textContent = n > 99 ? '99+' : n; badgeM.classList.remove('d-none'); }
-                else { badgeM.classList.add('d-none'); }
-            }
+            const text = n > 99 ? '99+' : n;
+            const ids = ['pendingApprovalBadge', 'pendingApprovalBadge-m', 'pendingApprovalBadge-top', 'navApprovalBellBadge'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (n > 0) {
+                        el.textContent = text;
+                        el.classList.remove('d-none');
+                    } else {
+                        el.classList.add('d-none');
+                    }
+                }
+            });
         }
 
         function refreshPendingApprovalBadge() {
@@ -9872,6 +10418,25 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 // ============================================================
 
 // --- 1. AI Chat Assistant ---
+function testGeminiConnection() {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        return Swal.fire({icon: 'warning', title: 'ทดสอบไม่ได้', text: 'ต้องรันบน Apps Script หรือเชื่อมต่อ Backend ก่อน'});
+    }
+    Swal.fire({title: 'กำลังทดสอบ...', text: 'กำลังเรียก Gemini API', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (res && res.success) {
+                Swal.fire({icon: 'success', title: 'เชื่อมต่อสำเร็จ!', text: res.message || 'Gemini API พร้อมใช้งาน'});
+            } else {
+                Swal.fire({icon: 'error', title: 'เชื่อมต่อไม่สำเร็จ', text: (res && res.error) || 'ไม่ทราบสาเหตุ'});
+            }
+        })
+        .withFailureHandler(function(err) {
+            Swal.fire({icon: 'error', title: 'ผิดพลาด', text: String(err && err.message || err)});
+        })
+        .webTestGeminiConnection();
+}
+
 function sendAiChat() {
     const input = document.getElementById('aiChatInput');
     const question = input.value.trim();
