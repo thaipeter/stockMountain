@@ -1974,10 +1974,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 <div id="dashboard" class="section-view active">
                     <div class="d-flex justify-content-between align-items-end mb-4 pb-2 border-bottom border-light">
                         <div><h3 class="fw-bold mb-1 text-dark">แดชบอร์ดสรุปผล</h3><p class="text-muted small mb-0">ภาพรวมระบบคลังสินค้าประจำวัน</p></div>
-                        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
-                            <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="exportMonthlySummary()"><i class="fas fa-file-excel me-1"></i> ส่งออกสรุปรายเดือน</button>
-                            <span class="badge bg-white border shadow-sm px-3 py-2 rounded-pill text-muted fw-medium d-flex align-items-center gap-2"><i class="far fa-clock text-primary"></i> อัปเดตล่าสุด: <span id="lastUpdate">-</span><span id="syncIndicator" class="text-success d-none" title="กำลังซิงค์"><i class="fas fa-sync-alt fa-spin"></i></span></span>
-                        </div>
+
                     </div>
                     <!-- Statistics Cards with Sparklines -->
                     <div class="row g-2 mb-4">
@@ -4980,7 +4977,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 updateSelectedQRCount();
                 
                 const currentDateFormatted = getFormattedDate();
-                if (document.getElementById('lastUpdate')) document.getElementById('lastUpdate').innerText = currentDateFormatted;
+                
                 if (document.getElementById('dashFooterLastUpdate')) document.getElementById('dashFooterLastUpdate').innerText = currentDateFormatted;
                 if (document.getElementById('sysVersionDisplay')) document.getElementById('sysVersionDisplay').innerText = `v2.5.0 (${currentDateFormatted})`;
 
