@@ -4055,38 +4055,55 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
         }
 
         function goTo(sectionId) {
-            try { sessionStorage.setItem('last_section', sectionId); } catch(e) {}
-            const ADMIN_ONLY_SECTIONS = ['settings', 'archive'];
-            if (ADMIN_ONLY_SECTIONS.indexOf(sectionId) !== -1 && currentUserProfile.role !== 'admin') {
-                Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
-                return;
-            }
-            document.querySelectorAll('.topnav-dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
-            // Top-nav & Sidebar active state
-            document.querySelectorAll('.topnav-menu a, .topnav-dropdown-menu .dropdown-item, .mobile-nav-panel a, #sidebar ul.components a').forEach(function(el) {
-                el.classList.remove('active');
-                if(el.getAttribute('onclick') && el.getAttribute('onclick').indexOf("'" + sectionId + "'") !== -1) {
-                    el.classList.add('active');
+            try {
+                try { sessionStorage.setItem('last_section', sectionId); } catch(e) {}
+                const ADMIN_ONLY_SECTIONS = ['settings', 'archive'];
+                if (ADMIN_ONLY_SECTIONS.indexOf(sectionId) !== -1 && currentUserProfile.role !== 'admin') {
+                    Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
+                    return;
                 }
-            });
-            // ไฮไลท์ปุ่มกลุ่ม dropdown (คลังสินค้า / ระบบงาน) เมื่อ section ลูกถูกเลือก
-            document.querySelectorAll('.topnav-group .dropdown-toggle').forEach(function(toggle) {
-                var sections = (toggle.getAttribute('data-group-sections') || '').split(',');
-                toggle.classList.toggle('active-group', sections.indexOf(sectionId) !== -1);
-            });
-            // Section switch
-            document.querySelectorAll('.section-view').forEach(function(el) { el.classList.remove('active'); });
-            var targetSec = document.getElementById(sectionId);
-            if(targetSec) targetSec.classList.add('active');
-            if(sectionId === 'qrManagement') filterQRTable();
-            if(sectionId === 'history') { loadAuditFromServer(true); }
-            if(sectionId === 'monthlyOrders') { renderHistoryPOTableWithFilter(allData.pendingPOs); }
-            if(sectionId === 'settings') { setTimeout(function(){ syncMasterDataTags(); }, 50); }
-            if(sectionId === 'notes') { loadNotes(); }
-            if(sectionId === 'stockTakeMgmt') { loadStockTakeMgmt(); }
-            if(sectionId === 'pendingApprovals') { startPendingApprovalsPolling(); }
-            else { stopPendingApprovalsPolling(); }
-            if(sectionId === 'aiCenter') { /* AI Center loaded */ }
+                document.querySelectorAll('.topnav-dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+                
+                // Top-nav & Sidebar active state
+                document.querySelectorAll('.topnav-menu a, .topnav-dropdown-menu .dropdown-item, .mobile-nav-panel a, #sidebar ul.components a').forEach(function(el) {
+                    el.classList.remove('active');
+                    if(el.getAttribute('onclick') && el.getAttribute('onclick').indexOf("'" + sectionId + "'") !== -1) {
+                        el.classList.add('active');
+                    }
+                });
+                
+                // ไฮไลท์ปุ่มกลุ่ม dropdown เมื่อ section ลูกถูกเลือก
+                document.querySelectorAll('.topnav-group .dropdown-toggle').forEach(function(toggle) {
+                    var sections = (toggle.getAttribute('data-group-sections') || '').split(',');
+                    toggle.classList.toggle('active-group', sections.indexOf(sectionId) !== -1);
+                });
+
+                // Section switch
+                document.querySelectorAll('.section-view').forEach(function(el) { el.classList.remove('active'); });
+                var targetSec = document.getElementById(sectionId);
+                if(targetSec) {
+                    targetSec.classList.add('active');
+                } else {
+                    var dash = document.getElementById('dashboard');
+                    if(dash) dash.classList.add('active');
+                }
+
+                // Sub-system triggers wrapped safely
+                try {
+                    if(sectionId === 'qrManagement' && typeof filterQRTable === 'function') filterQRTable();
+                    if(sectionId === 'history' && typeof loadAuditFromServer === 'function') loadAuditFromServer(true);
+                    if(sectionId === 'monthlyOrders' && typeof renderHistoryPOTableWithFilter === 'function') renderHistoryPOTableWithFilter(allData.pendingPOs || []);
+                    if(sectionId === 'settings') { setTimeout(function(){ if(typeof syncMasterDataTags === 'function') syncMasterDataTags(); }, 50); }
+                    if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
+                    if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
+                    if(sectionId === 'pendingApprovals' && typeof startPendingApprovalsPolling === 'function') startPendingApprovalsPolling();
+                    else if(typeof stopPendingApprovalsPolling === 'function') stopPendingApprovalsPolling();
+                } catch(errSec) {
+                    console.warn('Section callback error:', errSec);
+                }
+            } catch(e) {
+                console.error('goTo error:', e);
+            }
         }
 
         /* ── เมนู Hamburger บนมือถือ ── */
@@ -4978,6 +4995,8 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 
                 const currentDateFormatted = getFormattedDate();
                 
+                const currentDateFormatted = getFormattedDate();
+                if (document.getElementById('lastUpdate')) document.getElementById('lastUpdate').innerText = currentDateFormatted;
                 if (document.getElementById('dashFooterLastUpdate')) document.getElementById('dashFooterLastUpdate').innerText = currentDateFormatted;
                 if (document.getElementById('sysVersionDisplay')) document.getElementById('sysVersionDisplay').innerText = `v2.5.0 (${currentDateFormatted})`;
 
@@ -9063,9 +9082,11 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 _auditCache.unshift(payload);
                 if (_auditCache.length > 500) _auditCache.pop();
 
-                // ส่งไป server แบบ async (ไม่รอ)
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                // ส่งไป server แบบ async (รองรับทั้ง GAS และ Web API)
+                if (typeof google !== 'undefined' && google.script && google.script.run && google.script.run.webWriteAudit) {
                     google.script.run.webWriteAudit(payload);
+                } else if (typeof webPost === 'function') {
+                    webPost('webWriteAudit', [payload]).catch(e => console.warn('Audit write error:', e));
                 }
             } catch(e) { console.warn('Audit write error:', e); }
         }
@@ -9086,28 +9107,34 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 }
             }
 
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run
-                    .withSuccessHandler(function(res) {
-                        if (res && res.success && res.logs) {
-                            if (!forceRefresh && hasCached && res.logs.length > 0) {
-                                // merge เฉพาะรายการที่ใหม่กว่า cache รายการแรก
-                                const latestCached = _auditCache[0]?.time || '';
-                                const newItems = res.logs.filter(l => l.time > latestCached);
-                                if (newItems.length > 0) {
-                                    _auditCache = [...newItems, ..._auditCache].slice(0, 500);
-                                }
-                            } else {
-                                _auditCache = res.logs;
-                            }
+            const handleAuditSuccess = function(res) {
+                if (res && res.success && res.logs) {
+                    if (!forceRefresh && hasCached && res.logs.length > 0) {
+                        const latestCached = _auditCache[0]?.time || '';
+                        const newItems = res.logs.filter(l => l.time > latestCached);
+                        if (newItems.length > 0) {
+                            _auditCache = [...newItems, ..._auditCache].slice(0, 500);
                         }
-                        filterAuditLog();
-                    })
-                    .withFailureHandler(function(err) {
-                        console.warn('Audit load error:', err);
-                        filterAuditLog();
-                    })
+                    } else {
+                        _auditCache = res.logs;
+                    }
+                }
+                filterAuditLog();
+            };
+            const handleAuditFailure = function(err) {
+                console.warn('Audit load error:', err);
+                filterAuditLog();
+            };
+
+            if (typeof google !== 'undefined' && google.script && google.script.run && google.script.run.webGetAuditLogs) {
+                google.script.run
+                    .withSuccessHandler(handleAuditSuccess)
+                    .withFailureHandler(handleAuditFailure)
                     .webGetAuditLogs(500);
+            } else if (typeof webPost === 'function') {
+                webPost('webGetAuditLogs', [500])
+                    .then(handleAuditSuccess)
+                    .catch(handleAuditFailure);
             } else {
                 filterAuditLog();
             }
@@ -9220,20 +9247,27 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }).then(r => {
                 if (r.isConfirmed) {
                     document.getElementById('loading').style.display = 'flex';
-                    if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    const handleClearSuccess = function(res) {
+                        document.getElementById('loading').style.display = 'none';
+                        if (res && !res.success) return Swal.fire({icon:'error', title:'ข้อผิดพลาด', text: res.error});
+                        _auditCache = [];
+                        loadAuditFromServer(true);
+                        Swal.fire({ icon:'success', title:'ล้างแล้ว', timer:1500, showConfirmButton:false });
+                    };
+                    const handleClearFailure = function(err) {
+                        document.getElementById('loading').style.display = 'none';
+                        Swal.fire({icon:'error', title:'ข้อผิดพลาด', text: String(err && err.message || err)});
+                    };
+
+                    if (typeof google !== 'undefined' && google.script && google.script.run && google.script.run.webClearAuditLog) {
                         google.script.run
-                            .withSuccessHandler(function(res) {
-                                document.getElementById('loading').style.display = 'none';
-                                if (!res.success) return Swal.fire({icon:'error', title:'ข้อผิดพลาด', text: res.error});
-                                _auditCache = [];
-                                loadAuditFromServer(true);
-                                Swal.fire({ icon:'success', title:'ล้างแล้ว', timer:1500, showConfirmButton:false });
-                            })
-                            .withFailureHandler(function(err) {
-                                document.getElementById('loading').style.display = 'none';
-                                Swal.fire({icon:'error', title:'ข้อผิดพลาด', text: String(err)});
-                            })
+                            .withSuccessHandler(handleClearSuccess)
+                            .withFailureHandler(handleClearFailure)
                             .webClearAuditLog(currentUserProfile.name);
+                    } else if (typeof webPost === 'function') {
+                        webPost('webClearAuditLog', [currentUserProfile.name])
+                            .then(handleClearSuccess)
+                            .catch(handleClearFailure);
                     } else {
                         document.getElementById('loading').style.display = 'none';
                         _auditCache = [];
