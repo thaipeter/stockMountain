@@ -3813,6 +3813,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
         }
 
         let allData = { items: [], tools: [], history: [], activeBorrows: [], pendingPOs: [], users: [], settings: {} };
+        let lastDataSnapshot = null; // ใช้เทียบว่าข้อมูลรอบใหม่ต่างจากรอบก่อนจริงหรือไม่ ก่อนจะวาดหน้าใหม่ตอน auto-refresh
         let charts = {};
         let adjustModal, addPOModal, editPOModal, txModal, addBorrowModal, damageModal, repairModal, newItemModal, editItemModal, qrActionModal, changePinModal;
         let sessionTimer;
@@ -3987,6 +3988,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 autoRefreshTimer = setInterval(() => { 
                     if(document.body.classList.contains('modal-open')) return;
                     if(isFetchingData) return;
+                    if(document.activeElement && document.activeElement.id === 'globalNavSearch') return; // อย่ารีเฟรชขณะกำลังพิมพ์ค้นหา
                     loadData(true); 
                 }, sec * 1000);
             }
@@ -4834,7 +4836,22 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             });
         }
 
-        function onDataLoaded(data) {
+        function onDataLoaded(data, isSilentRefresh) {
+            // ถ้าเป็นการรีเฟรชแบบเงียบ (auto-refresh) และข้อมูลเหมือนเดิมทุกประการ ให้ข้ามการวาดหน้าใหม่ทั้งหมด
+            // เพื่อไม่ให้ช่องค้นหา/ตำแหน่งสกอลล์/สถานะ UI ต่างๆ ถูกรีเซ็ตทั้งที่ไม่มีข้อมูลใหม่จริง
+            if (isSilentRefresh) {
+                try {
+                    const snapshot = JSON.stringify({
+                        items: data.items, tools: data.tools, history: data.history,
+                        activeBorrows: data.activeBorrows, pendingPOs: data.pendingPOs, users: data.users
+                    });
+                    if (lastDataSnapshot !== null && snapshot === lastDataSnapshot) {
+                        allData = data; // ยังอัพเดทตัวแปรข้อมูลไว้เผื่อใช้ที่อื่น แต่ไม่แตะ DOM/UI เลย
+                        return;
+                    }
+                    lastDataSnapshot = snapshot;
+                } catch(e) { /* ถ้าเทียบไม่ได้ ให้วาดใหม่ตามปกติเพื่อความปลอดภัย */ }
+            }
             // โหลดโน้ตทันทีหลัง login / refresh
             setTimeout(function(){ loadNotes(); }, 300);
             setTimeout(function(){ refreshPendingApprovalBadge(); }, 300);
@@ -4891,7 +4908,6 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
                 try { 
                     renderMockupDashboard(data); 
-                    if (lastGlobalSearchValue) filterDashUnifiedInventoryTable(lastGlobalSearchValue);
                 } catch(e) { console.warn('renderMockupDashboard error:', e); }
                 try { renderDashboardDamaged(currentlyDamaged); } catch(e) { console.warn('renderDashboardDamaged error:', e); }
                 try { renderLowStockTables(data.items, data.tools); } catch(e) { console.warn('renderLowStockTables error:', e); }
@@ -4934,7 +4950,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     } else { 
                         const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.add('d-none'); 
                     }
-                    onDataLoaded(data);
+                    onDataLoaded(data, isSilent);
                 }).withFailureHandler((e) => {
                     isFetchingData = false;
                     if(!isSilent) {
@@ -4953,7 +4969,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     } else { 
                         const syncInd = document.getElementById('syncIndicator'); if(syncInd) syncInd.classList.add('d-none'); 
                     }
-                    onDataLoaded(allData); 
+                    onDataLoaded(allData, isSilent); 
                 }, 500);
             }
         }
@@ -5002,15 +5018,63 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
         }
 
         let lastGlobalSearchValue = '';
+        let lastDashboardData = null; // เก็บข้อมูลล่าสุดไว้ เพื่อให้ค้นหาได้จากข้อมูลทั้งหมด ไม่ใช่แค่ตัวอย่าง 8 แถวที่โชว์
+
+        function buildDashUnifiedRows(data, query) {
+            const q = (query || '').toLowerCase().trim();
+            const itemsList = (data.items || []).map(x => ({...x, type: 'อะไหล่'}));
+            const toolsList = (data.tools || []).map(x => ({...x, type: 'เครื่องมือ'}));
+            let combined = [...itemsList, ...toolsList];
+            if (q) {
+                // มีคำค้นหา: ค้นจากข้อมูลทั้งหมดในคลัง ไม่ใช่แค่ตัวอย่าง 4+4 รายการแรก
+                combined = combined.filter(x => `${x.code || ''} ${x.name || ''} ${x.location || ''}`.toLowerCase().includes(q));
+                return { rows: combined.slice(0, 50), truncated: combined.length > 50, total: combined.length, searching: true };
+            }
+            // ไม่มีคำค้นหา: โชว์ตัวอย่าง 4 อะไหล่ + 4 เครื่องมือ เหมือนเดิม
+            return { rows: [...itemsList.slice(0, 4), ...toolsList.slice(0, 4)], truncated: false, total: combined.length, searching: false };
+        }
+
+        function renderDashUnifiedRows(data, query) {
+            const tbody = document.querySelector('#dashUnifiedInventoryTable tbody');
+            if (!tbody) return;
+            const { rows, truncated, searching } = buildDashUnifiedRows(data, query);
+            tbody.innerHTML = '';
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">${searching ? 'ไม่พบรายการที่ค้นหา' : 'ไม่มีข้อมูลสินค้าในคลัง'}</td></tr>`;
+                return;
+            }
+            rows.forEach(x => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+
+                const isLow = parseFloat(x.stock) <= parseFloat(x.min);
+                const isZero = parseFloat(x.stock) <= 0;
+                let statusBadge = '<span class="badge bg-success bg-opacity-20 text-success border border-success">มีในสต็อก</span>';
+                if (isZero) statusBadge = '<span class="badge bg-danger bg-opacity-20 text-danger border border-danger">สินค้าหมด</span>';
+                else if (isLow) statusBadge = '<span class="badge bg-warning bg-opacity-20 text-warning border border-warning">สต็อกต่ำกว่าเกณฑ์</span>';
+
+                tr.innerHTML = `
+                    <td style="padding:14px; font-weight:700; color:var(--primary-color); font-family:'TH Sarabun New','Sarabun',monospace;">#${x.code || ''}</td>
+                    <td style="padding:14px; font-weight:600; color:#fff;">${x.name || ''}</td>
+                    <td style="padding:14px; color:var(--text-muted); font-size:13px;">${x.type}</td>
+                    <td style="padding:14px; font-weight:700; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.stock || 0} / ${x.min || 0}</td>
+                    <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.location || 'A-1'}</td>
+                    <td style="padding:14px;">${statusBadge}</td>
+                    <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.lastUpdate || 'ล่าสุด'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            if (truncated) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="7" class="text-center py-2 text-muted small">แสดง 50 รายการแรกที่ตรงกับคำค้นหา — พิมพ์ให้เจาะจงขึ้นเพื่อผลลัพธ์ที่แคบลง</td>`;
+                tbody.appendChild(tr);
+            }
+        }
 
         function filterDashUnifiedInventoryTable(value) {
             try {
-                const rows = document.querySelectorAll('#dashUnifiedInventoryTable tbody tr');
-                const query = (value || '').toLowerCase().trim();
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(query) ? '' : 'none';
-                });
+                lastGlobalSearchValue = value;
+                if (lastDashboardData) renderDashUnifiedRows(lastDashboardData, value);
             } catch(e) { console.error(e); }
         }
 
@@ -5163,39 +5227,9 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     });
                 }
 
-                // 4. Populate Unified Inventory Table
-                const tbody = document.querySelector('#dashUnifiedInventoryTable tbody');
-                if (tbody) {
-                    tbody.innerHTML = '';
-                    const itemsList = (data.items || []).slice(0, 4);
-                    const toolsList = (data.tools || []).slice(0, 4);
-                    const combined = [...itemsList.map(x => ({...x, type: 'อะไหล่'})), ...toolsList.map(x => ({...x, type: 'เครื่องมือ'}))];
-                    if (combined.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">ไม่มีข้อมูลสินค้าในคลัง</td></tr>';
-                    } else {
-                        combined.forEach(x => {
-                            const tr = document.createElement('tr');
-                            tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
-                            
-                            const isLow = parseFloat(x.stock) <= parseFloat(x.min);
-                            const isZero = parseFloat(x.stock) <= 0;
-                            let statusBadge = '<span class="badge bg-success bg-opacity-20 text-success border border-success">มีในสต็อก</span>';
-                            if (isZero) statusBadge = '<span class="badge bg-danger bg-opacity-20 text-danger border border-danger">สินค้าหมด</span>';
-                            else if (isLow) statusBadge = '<span class="badge bg-warning bg-opacity-20 text-warning border border-warning">สต็อกต่ำกว่าเกณฑ์</span>';
-                            
-                            tr.innerHTML = `
-                                <td style="padding:14px; font-weight:700; color:var(--primary-color); font-family:'TH Sarabun New','Sarabun',monospace;">#${x.code || ''}</td>
-                                <td style="padding:14px; font-weight:600; color:#fff;">${x.name || ''}</td>
-                                <td style="padding:14px; color:var(--text-muted); font-size:13px;">${x.type}</td>
-                                <td style="padding:14px; font-weight:700; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.stock || 0} / ${x.min || 0}</td>
-                                <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.location || 'A-1'}</td>
-                                <td style="padding:14px;">${statusBadge}</td>
-                                <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.lastUpdate || 'ล่าสุด'}</td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    }
-                }
+                // 4. Populate Unified Inventory Table (ค้นหาได้จากข้อมูลทั้งหมด ไม่ใช่แค่ตัวอย่าง)
+                lastDashboardData = data;
+                renderDashUnifiedRows(data, lastGlobalSearchValue);
             } catch(e) { console.error('renderMockupDashboard err:', e); }
         }
 
