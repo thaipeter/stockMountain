@@ -1120,6 +1120,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="mb-4">
                     <select class="form-select form-select-lg mb-3 text-center fw-bold" id="loginUid">
+                        <option value="" disabled selected>-- เลือกชื่อผู้ใช้งาน --</option>
                         <option value="u_admin123">Test Admin (Admin)</option>
                         <option value="u_staff123">Test Staff (Staff)</option>
                         <option value="u_user123">Test User (User)</option>
@@ -4509,6 +4510,8 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             if (typeof populateLoginUsers === 'function') {
                 populateLoginUsers(allData.users);
             }
+            const uSel = document.getElementById('loginUid');
+            if (uSel) uSel.value = '';
 
             // ล้าง section ที่เปิดอยู่
             document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
@@ -4925,15 +4928,15 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     {userId: 'u_user123', name: 'Test User', role: 'user'}
                 ];
             }
-            select.innerHTML = '';
-            users.filter(u => u.role === 'admin' || u.role === 'user' || u.role === 'staff').forEach((u, idx) => {
+            select.innerHTML = '<option value="" disabled selected>-- เลือกชื่อผู้ใช้งาน --</option>';
+            users.filter(u => u.role === 'admin' || u.role === 'user' || u.role === 'staff').forEach((u) => {
                 let opt = document.createElement('option');
                 opt.value = u.userId;
                 const label = u.role === 'admin' ? ' (Admin)' : u.role === 'staff' ? ' (Staff)' : ' (User)';
                 opt.text = u.name + label;
-                if (idx === 0) opt.selected = true;
                 select.appendChild(opt);
             });
+            select.value = "";
         }
 
 
