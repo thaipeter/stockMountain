@@ -498,7 +498,7 @@
 }
 
 .login-card{background:#141414;color:var(--text-main);padding:40px 36px;border-radius:var(--radius-md);box-shadow:0 0 0 1px #2a2a2a,0 40px 80px rgba(0,0,0,.8);width:100%;max-width:380px;text-align:center}
-.login-card::before{content:'C-FACTORY WMS';display:block;font-size:.65rem;font-weight:700;letter-spacing:4px;color:var(--primary-color);margin-bottom:24px}
+.login-card::before{display:none!important}
 .login-card .form-control{background:#0d0d0d;border:1px solid #2a2a2a;color:#b0b0b0;text-align:center;letter-spacing:6px;font-size:1.4rem}
 .login-card .form-control:focus{border-color:var(--primary-color);background:#111}
 .ts-wrapper .ts-dropdown{z-index:9999!important;border-radius:var(--radius-md);box-shadow:var(--shadow-lg);border:1px solid #333;background:#161616;color:#b0b0b0}
@@ -1115,7 +1115,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 <img src="" alt="Logo" class="sys-logo-display mx-auto" style="max-width:90px; border-radius: 16px; box-shadow: var(--shadow-md); margin-bottom: 20px; display:none;">
                 <i class="fas fa-layer-group text-theme sys-icon-display" style="font-size: 3.5rem; margin-bottom: 15px;"></i>
                 <h3 class="fw-bold text-dark sys-name-display mt-2">คลังอะไหล่เมาท์เทน</h3>
-                <p class="text-muted small fw-medium mt-1">Smart Inventory Workspace</p>
+                
             </div>
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="mb-4">
@@ -4289,8 +4289,18 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     if (s.sysLogo) {
                         updateDynamicManifest(s.sysLogo);
                         document.addEventListener('DOMContentLoaded', () => {
-                            document.querySelectorAll('.sys-logo-display').forEach(el => { el.src = s.sysLogo; el.style.display = 'block'; });
-                            document.querySelectorAll('.sys-icon-display').forEach(el => { el.style.display = 'none'; });
+                            const logoSrc = (typeof getFullImgUrl === 'function') ? getFullImgUrl(s.sysLogo) : s.sysLogo;
+                            if (logoSrc) {
+                                document.querySelectorAll('.sys-logo-display').forEach(el => {
+                                    el.src = logoSrc;
+                                    el.style.display = 'block';
+                                    el.onerror = function() {
+                                        this.style.display = 'none';
+                                        document.querySelectorAll('.sys-icon-display').forEach(icon => icon.style.display = 'inline-block');
+                                    };
+                                });
+                                document.querySelectorAll('.sys-icon-display').forEach(el => { el.style.display = 'none'; });
+                            }
                         });
                     } else {
                         document.addEventListener('DOMContentLoaded', () => {
@@ -5167,8 +5177,18 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             
             if (s.sysLogo) {
                 updateDynamicManifest(s.sysLogo);
-                document.querySelectorAll('.sys-logo-display').forEach(el => { el.src = s.sysLogo; el.style.display = 'block'; });
-                document.querySelectorAll('.sys-icon-display').forEach(el => { el.style.display = 'none'; });
+                const logoSrc = getFullImgUrl(s.sysLogo);
+                if (logoSrc) {
+                    document.querySelectorAll('.sys-logo-display').forEach(el => {
+                        el.src = logoSrc;
+                        el.style.display = 'block';
+                        el.onerror = function() {
+                            this.style.display = 'none';
+                            document.querySelectorAll('.sys-icon-display').forEach(icon => icon.style.display = 'inline-block');
+                        };
+                    });
+                    document.querySelectorAll('.sys-icon-display').forEach(el => { el.style.display = 'none'; });
+                }
             } else {
                 document.querySelectorAll('.sys-logo-display').forEach(el => { el.style.display = 'none'; });
                 document.querySelectorAll('.sys-icon-display').forEach(el => { el.style.display = 'inline-block'; });
@@ -8823,10 +8843,18 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     appendDiagnosticLog('WARNING', '🏷️ รหัสสินค้าไม่สมบูรณ์ (Missing Item Code)', `พบรายการสินค้าที่ไม่ได้ระบุรหัส (Code) จำนวน <b>${noCode}</b> รายการ ทำให้สแกนบาร์โค้ดไม่ได้`);
                 }
 
-                // 1.5. QR Web App (indexqr.html) Health Check
-                const pendingCount = (allData.pending || []).length || 0;
+                // 1.5. QR Web App (indexqr.html) Real Health Check
+                let localPendings = [];
+                try {
+                    localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
+                } catch(e) {}
+                const allPendings = [...(allData.pending || []), ...(allData.pendingWithdraws || []), ...localPendings];
+                const pendingCount = allPendings.length;
+
                 if (pendingCount > 0) {
-                    appendDiagnosticLog('WARNING', '📲 รายการค้างอนุมัติจากหน้า QR (indexqr.html)', `พบรายการขอเบิก/ยืมที่ส่งมาจากหน้า <b>indexqr.html</b> ค้างรออนุมัติจำนวน <b>${pendingCount}</b> รายการ`);
+                    issueCount++;
+                    const sampleCodes = allPendings.slice(0, 3).map(p => (p.itemName || p.itemCode || p.code || 'อะไหล่')).join(', ');
+                    appendDiagnosticLog('WARNING', '📲 รายการค้างอนุมัติจากหน้า QR (indexqr.html)', `พบรายการขอเบิก/ยืมที่ส่งมาจากหน้า <b>indexqr.html</b> ค้างรออนุมัติจำนวน <b>${pendingCount}</b> รายการ (เช่น ${sampleCodes}) — กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อกดอนุมัติการเบิก!`);
                 } else {
                     appendDiagnosticLog('SUCCESS', '📲 ระบบ QR Web App (indexqr.html)', 'หน้า indexqr.html พร้อมใช้งาน ไม่มีรายการค้างรออนุมัติ');
                 }
@@ -8877,6 +8905,20 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     }
                 }
 
+                const badgeEl = document.getElementById('healthStatusBadge');
+                if (badgeEl) {
+                    if (issueCount > 0) {
+                        badgeEl.style.background = 'rgba(239,68,68,.18)';
+                        badgeEl.style.color = '#f87171';
+                        badgeEl.style.border = '1px solid rgba(239,68,68,.4)';
+                        badgeEl.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> FOUND ${issueCount} ANOMALIES (พบจุดแจ้งเตือน ${issueCount} รายการ)`;
+                    } else {
+                        badgeEl.style.background = 'rgba(34,197,94,.15)';
+                        badgeEl.style.color = '#4ade80';
+                        badgeEl.style.border = '1px solid rgba(34,197,94,.3)';
+                        badgeEl.innerHTML = `<i class="fas fa-heartbeat me-1"></i> STATUS: OK (ปกติ 100%)`;
+                    }
+                }
                 if (spin) spin.style.display = 'none';
                 if (search) search.style.display = 'inline-block';
             }, 600);
