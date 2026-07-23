@@ -3342,7 +3342,6 @@ function loadMineApproval() {
     mineData.pendingApproval = (res && res.success) ? (res.items || []) : [];
     renderMineApproval();
     _updateApprovalBellBadge();
-    // ถ้ามีรายการที่หายไปจากลิสต์ (เมื่อเทียบกับรอบก่อน) แปลว่าแอดมินเพิ่งอนุมัติ/ปฏิเสธไป — เช็คผลแล้วแจ้งเตือนในแอปทันที (ไม่เปลืองโควต้า LINE)
     const newIds = (mineData.pendingApproval || []).map(it => it.reqId);
     const disappeared = prevIds.filter(id => !newIds.includes(id));
     if (disappeared.length && me && me.uid) {
@@ -3352,7 +3351,6 @@ function loadMineApproval() {
           if (!disappeared.includes(d.reqId)) return;
           if (d.status === 'approved') {
             Swal.fire({icon:'success', title:'✅ อนุมัติแล้ว', text:`"${d.itemName}" x${d.qty} ได้รับการอนุมัติแล้วครับ`, timer:3500, showConfirmButton:false, background:'#1a1f2e', color:'#c0c0c0'});
-            // โหลดรายการยืม/ประวัติใหม่ทันที ไม่งั้นของที่เพิ่งอนุมัติจะไม่ขึ้นในแท็บ "คนยืม" จนกว่าจะรีเฟรชเอง
             loadMineData();
           } else if (d.status === 'rejected') {
             Swal.fire({icon:'error', title:'❌ ถูกปฏิเสธ', text:`"${d.itemName}" x${d.qty} ถูกปฏิเสธครับ`, timer:3500, showConfirmButton:false, background:'#1a1f2e', color:'#c0c0c0'});
@@ -3360,7 +3358,24 @@ function loadMineApproval() {
         });
       }, () => {});
     }
-  }, () => { renderMineApproval(); });
+  }, err => {
+    // ★ Demo/Offline fallback — อ่าน localStorage เพื่อแสดงรายการค้างรออนุมัติที่เคยบันทึกไว้จริง
+    const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
+    if (isDemo || err === 'no GAS' || err === 'demo mode') {
+      try {
+        const saved = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
+        // กรองเฉพาะรายการของ user ที่ login อยู่
+        const myItems = saved.filter(it => it.userId === me.uid || !it.userId);
+        mineData.pendingApproval = myItems;
+      } catch(e) {
+        mineData.pendingApproval = [];
+      }
+    } else {
+      mineData.pendingApproval = [];
+    }
+    renderMineApproval();
+    _updateApprovalBellBadge();
+  });
 }
 
 function renderMineApproval() {
@@ -3411,7 +3426,21 @@ function cancelMyPendingRequest(reqId) {
         Swal.fire({icon: 'error', title: 'ยกเลิกไม่สำเร็จ', text: (res && res.error) || '', background: '#1a1f2e', color: '#c0c0c0'});
       }
     }, err => {
-      Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: String(err), background: '#1a1f2e', color: '#c0c0c0'});
+      // ★ Demo/Offline fallback — ลบรายการออกจาก localStorage + memory ได้เลย
+      const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
+      if (isDemo || err === 'no GAS' || err === 'demo mode') {
+        try {
+          let saved = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
+          saved = saved.filter(it => it.reqId !== reqId);
+          localStorage.setItem('demo_pending_withdraws', JSON.stringify(saved));
+        } catch(e) {}
+        mineData.pendingApproval = (mineData.pendingApproval || []).filter(it => it.reqId !== reqId);
+        renderMineApproval();
+        _updateApprovalBellBadge();
+        Swal.fire({icon: 'success', title: 'ยกเลิกแล้ว', timer: 1300, showConfirmButton: false, background: '#1a1f2e', color: '#c0c0c0'});
+      } else {
+        Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: String(err), background: '#1a1f2e', color: '#c0c0c0'});
+      }
     });
   });
 }
@@ -3498,6 +3527,14 @@ function buildDemoMineData() {
   const d2 = new Date(now); d2.setDate(d2.getDate()-5);
   const d3 = new Date(now); d3.setDate(d3.getDate()-10);
   const d4 = new Date(now); d4.setDate(d4.getDate()-20);
+
+  // ★ อ่าน pendingApproval จาก localStorage ที่เคยบันทึกไว้จริง ๆ
+  let savedPending = [];
+  try {
+    const raw = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
+    savedPending = raw.filter(it => it.userId === me.uid || !it.userId);
+  } catch(e) {}
+
   return {
     history: [
       { txId:'TX001', itemName:'น้ำมันหล่อลื่น 68', itemCode:'OL-003', qty:2, unit:'ลิตร', type:'เบิก', date: fmt(d1), remark:'บำรุงรักษา' },
@@ -3507,7 +3544,11 @@ function buildDemoMineData() {
     ],
     activeBorrows: [
       { reqId:'BW001', itemName:'ประแจปากตาย 13', itemCode:'TL-001', qty:1, unit:'อัน', borrowDate: fmt(d4), daysAgo: 20 },
-    ]
+    ],
+    pendingApproval: savedPending,
+    borrows: [],
+    retro: [],
+    retroPending: []
   };
 }
 
