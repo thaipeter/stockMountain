@@ -4296,7 +4296,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                             if (u) {
                                 currentUserProfile.uid = uid;
                                 currentUserProfile.name = u.name;
-                                currentUserProfile.role = u.role;
+                                currentUserProfile.role = String(u.role || '').trim().toLowerCase();
                                 document.getElementById('loginScreen').style.display = 'none';
                                 
                                 // โหลดข้อมูลคลังสินค้าต่อทันที
@@ -4441,7 +4441,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     currentUserProfile.uid = uid;
                     if (_inventoryData && _inventoryData.users) {
                         const u = _inventoryData.users.find(x => x.userId === uid);
-                        if (u) { currentUserProfile.name = u.name; currentUserProfile.role = u.role; }
+                        if (u) { currentUserProfile.name = u.name; currentUserProfile.role = String(u.role || '').trim().toLowerCase(); }
                     }
                     localStorage.setItem('user_session', JSON.stringify({
                         uid: currentUserProfile.uid,
@@ -5005,7 +5005,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
                 applySettingsUI(allData.settings);
                 
-                if (currentUserProfile.uid && allData.users) { let u = allData.users.find(x => x.userId === currentUserProfile.uid); if (u) { currentUserProfile.name = u.name; currentUserProfile.role = u.role; } }
+                if (currentUserProfile.uid && allData.users) { let u = allData.users.find(x => x.userId === currentUserProfile.uid); if (u) { currentUserProfile.name = u.name; currentUserProfile.role = String(u.role || '').trim().toLowerCase(); } }
 
                 const profileDisplay = document.getElementById('userProfileName'); if(profileDisplay) profileDisplay.innerText = currentUserProfile.name;
                 const pinNameDisplay = document.getElementById('pinUserNameDisplay'); if(pinNameDisplay) pinNameDisplay.innerText = currentUserProfile.name;
