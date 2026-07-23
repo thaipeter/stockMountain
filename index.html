@@ -1107,6 +1107,25 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
     .badge { white-space: normal; }
 }
 </style>
+
+<style>
+#loginUid {
+    background-color: #161922 !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    cursor: pointer;
+}
+#loginUid option {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    padding: 12px !important;
+    font-size: 1rem !important;
+}
+#loginUid option[disabled] {
+    color: rgba(255,255,255,0.45) !important;
+}
+</style>
+
 </head>
 <body class="dark-mode">
     <div id="loginScreen" class="login-overlay" style="display: flex;">
@@ -4968,14 +4987,19 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
         function handleLogin(e) {
             e.preventDefault();
             let uid = document.getElementById('loginUid').value;
-            if (!uid) {
-                const sel = document.getElementById('loginUid');
-                if (sel && sel.options.length > 0) {
-                    sel.selectedIndex = 0;
-                    uid = sel.value;
+            if (!uid || uid === '' || uid === 'null') {
+                const errEl = document.getElementById('loginError');
+                if (errEl) {
+                    errEl.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> กรุณาเลือกชื่อผู้ใช้งานก่อนเข้าสู่ระบบ!';
+                    errEl.classList.remove('d-none');
                 }
+                const sel = document.getElementById('loginUid');
+                if (sel) {
+                    sel.classList.add('glow-red');
+                    sel.focus();
+                }
+                return;
             }
-            if (!uid) uid = 'u_admin123';
             const pin = document.getElementById('loginPin').value;
             const btn = document.querySelector('#loginForm button');
 
