@@ -8848,59 +8848,89 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             appendDiagnosticLog('INFO', '🤖 AI DIAGNOSTIC BOT INITIATED', 'กำลังเริ่มสแกนตรวจสอบความผิดปกติและสุขภาพของระบบ WMS ทั้งหมด...');
 
             setTimeout(() => {
-                // 1. Stock Anomalies Check
+                // ═══ 1. Stock Anomalies Check ═══
                 const items = allData.items || [];
                 const tools = allData.tools || [];
+                const allStock = [...items, ...tools];
                 let negStock = 0, noCode = 0;
+                const negStockNames = [];
+                const noCodeNames = [];
 
-                [...items, ...tools].forEach(item => {
-                    if (parseFloat(item.stock) < 0) negStock++;
-                    if (!item.code || String(item.code).trim() === '') noCode++;
+                allStock.forEach(item => {
+                    if (parseFloat(item.stock) < 0) {
+                        negStock++;
+                        negStockNames.push(`${item.name || 'ไม่มีชื่อ'} (${item.code || '?'}) สต็อก: ${item.stock}`);
+                    }
+                    if (!item.code || String(item.code).trim() === '') {
+                        noCode++;
+                        noCodeNames.push(item.name || 'ไม่มีชื่อ');
+                    }
                 });
 
                 if (negStock > 0) {
                     issueCount++;
-                    appendDiagnosticLog('CRITICAL', '⚠️ สต็อกติดลบผิดปกติ (Stock Anomaly)', `พบรายการสินค้า/เครื่องมือที่มีสต็อกติดลบจำนวน <b>${negStock}</b> รายการ กรุณาตรวจสอบและปรับปรุงสต็อกด่วน`);
+                    appendDiagnosticLog('CRITICAL', '⚠️ สต็อกติดลบผิดปกติ (Stock Anomaly)', `พบรายการสินค้า/เครื่องมือที่มีสต็อกติดลบจำนวน <b>${negStock}</b> รายการ:<br>• ${negStockNames.slice(0, 5).join('<br>• ')}${negStock > 5 ? '<br>...และอีก ' + (negStock - 5) + ' รายการ' : ''}`);
+                } else {
+                    appendDiagnosticLog('SUCCESS', '📦 สต็อกสินค้าปกติ', `ตรวจสินค้า/เครื่องมือทั้งหมด <b>${allStock.length}</b> รายการ ไม่พบสต็อกติดลบ`);
                 }
                 if (noCode > 0) {
                     issueCount++;
-                    appendDiagnosticLog('WARNING', '🏷️ รหัสสินค้าไม่สมบูรณ์ (Missing Item Code)', `พบรายการสินค้าที่ไม่ได้ระบุรหัส (Code) จำนวน <b>${noCode}</b> รายการ ทำให้สแกนบาร์โค้ดไม่ได้`);
+                    appendDiagnosticLog('WARNING', '🏷️ รหัสสินค้าไม่สมบูรณ์ (Missing Item Code)', `พบรายการสินค้าที่ไม่ได้ระบุรหัส (Code) จำนวน <b>${noCode}</b> รายการ:<br>• ${noCodeNames.slice(0, 5).join('<br>• ')}${noCode > 5 ? '<br>...และอีก ' + (noCode - 5) + ' รายการ' : ''}`);
                 }
 
-                // 1.5. QR Web App (indexqr.html) Real Health Check
+                // ═══ 1.5. QR Web App — ตรวจรายการค้างรออนุมัติจริง ═══
                 let localPendings = [];
                 try {
                     localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
                 } catch(e) {}
+                // รวมข้อมูลจากทุกแหล่ง: GAS + localStorage
                 const allPendings = [...(allData.pending || []), ...(allData.pendingWithdraws || []), ...localPendings];
                 const pendingCount = allPendings.length;
 
                 if (pendingCount > 0) {
                     issueCount++;
-                    const sampleCodes = allPendings.slice(0, 3).map(p => (p.itemName || p.itemCode || p.code || 'อะไหล่')).join(', ');
-                    appendDiagnosticLog('WARNING', '📲 รายการค้างอนุมัติจากหน้า QR (indexqr.html)', `พบรายการขอเบิก/ยืมที่ส่งมาจากหน้า <b>indexqr.html</b> ค้างรออนุมัติจำนวน <b>${pendingCount}</b> รายการ (เช่น ${sampleCodes}) — กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อกดอนุมัติการเบิก!`);
+                    // แสดงรายละเอียดทุกรายการ
+                    const detailLines = allPendings.map((p, i) => {
+                        const name = p.itemName || p.name || 'ไม่ทราบชื่อ';
+                        const code = p.itemCode || p.code || '?';
+                        const qty = p.qty || '?';
+                        const user = p.user || p.userId || '';
+                        const date = p.date || '';
+                        const status = p.status || 'รออนุมัติ';
+                        return `${i+1}. <b>${name}</b> (${code}) x${qty} — ${user} ${date} [${status}]`;
+                    });
+                    appendDiagnosticLog('WARNING', `📲 รายการค้างรออนุมัติ ${pendingCount} รายการ`, `พบรายการขอเบิก/ยืมค้างรออนุมัติ:<br>${detailLines.join('<br>')}<br><br>👉 กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อกดอนุมัติ/ปฏิเสธ!`);
                 } else {
                     appendDiagnosticLog('SUCCESS', '📲 ระบบ QR Web App (indexqr.html)', 'หน้า indexqr.html พร้อมใช้งาน ไม่มีรายการค้างรออนุมัติ');
                 }
 
-                // 2. User & Permission Check
+                // ═══ 2. User & Permission Check ═══
                 const users = allData.users || [];
                 let noPin = 0, noRole = 0;
+                const noPinNames = [];
+                const noRoleNames = [];
                 users.forEach(u => {
-                    if (!u.pin && u.role !== 'admin') noPin++;
-                    if (!u.role) noRole++;
+                    if (!u.pin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid || '?'); }
+                    if (!u.role) { noRole++; noRoleNames.push(u.name || u.uid || '?'); }
                 });
 
                 if (noRole > 0) {
                     issueCount++;
-                    appendDiagnosticLog('WARNING', '👤 ระดับสิทธิ์ไม่ถูกต้อง (Role Anomaly)', `พบบัญชีผู้ใช้ที่ไม่มีการระบุ Role จำนวน <b>${noRole}</b> บัญชี`);
+                    appendDiagnosticLog('WARNING', '👤 ระดับสิทธิ์ไม่ถูกต้อง (Role Anomaly)', `พบบัญชีผู้ใช้ที่ไม่มีการระบุ Role จำนวน <b>${noRole}</b> บัญชี:<br>• ${noRoleNames.join(', ')}`);
+                }
+                if (noPin > 0) {
+                    appendDiagnosticLog('INFO', '🔐 ผู้ใช้ไม่มี PIN', `ผู้ใช้ ${noPin} คนยังไม่ได้ตั้ง PIN: ${noPinNames.slice(0, 5).join(', ')}${noPin > 5 ? '...' : ''}`);
+                }
+                if (users.length > 0 && noRole === 0) {
+                    appendDiagnosticLog('SUCCESS', '👤 บัญชีผู้ใช้ปกติ', `ตรวจผู้ใช้ทั้งหมด <b>${users.length}</b> บัญชี ทุกคนมี Role ครบถ้วน`);
                 }
 
-                // 3. API & Notification Token Check
+                // ═══ 3. API & Notification Token Check ═══
                 const setLineToken = document.getElementById('setLineToken') ? document.getElementById('setLineToken').value : '';
                 const setGeminiKey = document.getElementById('setGeminiKey') ? document.getElementById('setGeminiKey').value : '';
 
                 if (!setLineToken && isGAS) {
+                    issueCount++;
                     appendDiagnosticLog('WARNING', '🔔 ไม่ได้ตั้งค่า LINE Notify Token', 'ยังไม่ได้กรอก LINE Token ระบบจะไม่สามารถส่งข้อความแจ้งเตือนเข้ากลุ่ม LINE ได้');
                 } else if (setLineToken) {
                     appendDiagnosticLog('SUCCESS', '🔔 LINE Notify Token พร้อมใช้งาน', 'ตั้งค่าโทเค็น LINE สำเร็จ ระบบพร้อมส่งการแจ้งเตือนทันที');
@@ -8912,51 +8942,172 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     appendDiagnosticLog('SUCCESS', '🤖 AI Gemini Custom Key', 'เชื่อมต่อ Custom Gemini API Key เรียบร้อยแล้ว');
                 }
 
-                // Overall Health Status Badge update
-                const badge = document.getElementById('healthStatusBadge');
-                if (badge) {
-                    if (issueCount === 0) {
-                        badge.style.background = 'rgba(34,197,94,.15)';
-                        badge.style.color = '#4ade80';
-                        badge.style.borderColor = 'rgba(34,197,94,.3)';
-                        badge.innerHTML = '<i class="fas fa-heartbeat me-1"></i> STATUS: OK (ระบบปกติ 100%)';
-                        appendDiagnosticLog('SUCCESS', '✅ SYSTEM HEALTH 100% OK', 'ไม่พบความผิดปกติร้ายแรงในระบบ การเชื่อมต่อและฐานข้อมูลทำงานได้ราบรื่นสมบูรณ์แบบ');
-                    } else {
-                        badge.style.background = 'rgba(239,68,68,.15)';
-                        badge.style.color = '#f87171';
-                        badge.style.borderColor = 'rgba(239,68,68,.3)';
-                        badge.innerHTML = `<i class="fas fa-triangle-exclamation me-1"></i> FOUND ${issueCount} ANOMALIES`;
-                    }
+                // ═══ 4. ตรวจสอบข้อมูล PO ค้าง ═══
+                const pendingPOs = (allData.pendingPOs || []).filter(p => p.status !== 'รับแล้ว' && p.status !== 'ยกเลิก');
+                if (pendingPOs.length > 0) {
+                    appendDiagnosticLog('INFO', '📋 PO ที่ยังไม่รับ', `มี PO ค้างรับของ <b>${pendingPOs.length}</b> รายการ`);
                 }
 
-                const badgeEl = document.getElementById('healthStatusBadge');
-                if (badgeEl) {
-                    if (issueCount > 0) {
-                        badgeEl.style.background = 'rgba(239,68,68,.18)';
-                        badgeEl.style.color = '#f87171';
-                        badgeEl.style.border = '1px solid rgba(239,68,68,.4)';
-                        badgeEl.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> FOUND ${issueCount} ANOMALIES (พบจุดแจ้งเตือน ${issueCount} รายการ)`;
-                    } else {
-                        badgeEl.style.background = 'rgba(34,197,94,.15)';
-                        badgeEl.style.color = '#4ade80';
-                        badgeEl.style.border = '1px solid rgba(34,197,94,.3)';
-                        badgeEl.innerHTML = `<i class="fas fa-heartbeat me-1"></i> STATUS: OK (ปกติ 100%)`;
+                // ═══ 5. ตรวจ localStorage ขนาด ═══
+                try {
+                    let totalKB = 0;
+                    for (let k in localStorage) {
+                        if (localStorage.hasOwnProperty(k)) {
+                            totalKB += ((localStorage[k].length + k.length) * 2) / 1024;
+                        }
                     }
+                    if (totalKB > 4000) {
+                        issueCount++;
+                        appendDiagnosticLog('WARNING', '💾 พื้นที่ LocalStorage ใกล้เต็ม', `ใช้ไปแล้ว <b>${totalKB.toFixed(0)} KB</b> / 5,120 KB — ข้อมูลอาจสูญหาย`);
+                    } else {
+                        appendDiagnosticLog('SUCCESS', '💾 พื้นที่เก็บข้อมูลปกติ', `LocalStorage ใช้ไป <b>${totalKB.toFixed(0)} KB</b> / 5,120 KB`);
+                    }
+                } catch(e) {}
+
+                // ═══ Overall Health Badge ═══
+                _updateDiagBadge(issueCount);
+
+                if (issueCount === 0) {
+                    appendDiagnosticLog('SUCCESS', '✅ SYSTEM HEALTH 100% OK', 'ไม่พบความผิดปกติร้ายแรงในระบบ การเชื่อมต่อและฐานข้อมูลทำงานได้ราบรื่นสมบูรณ์แบบ');
+                } else {
+                    appendDiagnosticLog('INFO', `📊 สรุปผลการสแกน`, `พบจุดแจ้งเตือนทั้งหมด <b>${issueCount}</b> รายการ — กรุณาตรวจสอบและแก้ไข`);
                 }
+
                 if (spin) spin.style.display = 'none';
                 if (search) search.style.display = 'inline-block';
             }, 600);
         }
 
+        function _updateDiagBadge(issueCount) {
+            const badgeEl = document.getElementById('healthStatusBadge');
+            if (!badgeEl) return;
+            if (issueCount > 0) {
+                badgeEl.style.background = 'rgba(239,68,68,.18)';
+                badgeEl.style.color = '#f87171';
+                badgeEl.style.border = '1px solid rgba(239,68,68,.4)';
+                badgeEl.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> FOUND ${issueCount} ANOMALIES (พบจุดแจ้งเตือน ${issueCount} รายการ)`;
+            } else {
+                badgeEl.style.background = 'rgba(34,197,94,.15)';
+                badgeEl.style.color = '#4ade80';
+                badgeEl.style.border = '1px solid rgba(34,197,94,.3)';
+                badgeEl.innerHTML = '<i class="fas fa-heartbeat me-1"></i> STATUS: OK (ระบบปกติ 100%)';
+            }
+        }
+
+        // ═══ ปุ่มตรวจเฉพาะจุด ═══
         function checkStockAnomaliesOnly() {
-            runSystemHealthCheck();
+            const consoleEl = document.getElementById('diagnosticChatConsole');
+            if (consoleEl) consoleEl.innerHTML = '';
+            const timeEl = document.getElementById('diagLastRunTime');
+            if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('th-TH');
+            let issueCount = 0;
+
+            appendDiagnosticLog('INFO', '📦 เริ่มสแกนสต็อก...', 'ตรวจสอบสินค้า/เครื่องมือทั้งหมดในระบบ');
+            
+            setTimeout(() => {
+                const allStock = [...(allData.items || []), ...(allData.tools || [])];
+                let negStock = 0, noCode = 0, zeroStock = 0;
+                const negList = [], noCodeList = [], zeroList = [];
+
+                allStock.forEach(item => {
+                    const stock = parseFloat(item.stock);
+                    if (stock < 0) { negStock++; negList.push(`${item.name} (${item.code}) = ${item.stock}`); }
+                    if (stock === 0) { zeroStock++; zeroList.push(item.name || item.code); }
+                    if (!item.code || String(item.code).trim() === '') { noCode++; noCodeList.push(item.name || 'ไม่มีชื่อ'); }
+                });
+
+                if (negStock > 0) { issueCount++; appendDiagnosticLog('CRITICAL', '⚠️ สต็อกติดลบ', `<b>${negStock}</b> รายการ:<br>• ${negList.slice(0,10).join('<br>• ')}`); }
+                if (noCode > 0) { issueCount++; appendDiagnosticLog('WARNING', '🏷️ ไม่มีรหัสสินค้า', `<b>${noCode}</b> รายการ: ${noCodeList.slice(0,5).join(', ')}`); }
+                if (zeroStock > 0) { appendDiagnosticLog('INFO', '📭 สต็อกเป็น 0', `<b>${zeroStock}</b> รายการหมดสต็อก: ${zeroList.slice(0,5).join(', ')}${zeroStock > 5 ? '...' : ''}`); }
+                if (issueCount === 0) appendDiagnosticLog('SUCCESS', '✅ สต็อกปกติทั้งหมด', `ตรวจ <b>${allStock.length}</b> รายการ ไม่พบปัญหา`);
+
+                // ตรวจ pending ด้วย
+                let localPendings = [];
+                try { localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || []; } catch(e) {}
+                const allPendings = [...(allData.pending || []), ...(allData.pendingWithdraws || []), ...localPendings];
+                if (allPendings.length > 0) {
+                    issueCount++;
+                    const lines = allPendings.map((p, i) => `${i+1}. <b>${p.itemName || p.name || '?'}</b> (${p.itemCode || p.code || '?'}) x${p.qty || '?'} — ${p.user || ''} [${p.status || 'รออนุมัติ'}]`);
+                    appendDiagnosticLog('WARNING', `📲 ค้างรออนุมัติ ${allPendings.length} รายการ`, lines.join('<br>'));
+                }
+
+                _updateDiagBadge(issueCount);
+            }, 400);
         }
+
         function checkApiConnectionsOnly() {
-            if (typeof testGeminiConnection === 'function') testGeminiConnection();
-            runSystemHealthCheck();
+            const consoleEl = document.getElementById('diagnosticChatConsole');
+            if (consoleEl) consoleEl.innerHTML = '';
+            const timeEl = document.getElementById('diagLastRunTime');
+            if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('th-TH');
+            let issueCount = 0;
+
+            appendDiagnosticLog('INFO', '🔌 เริ่มตรวจสอบการเชื่อมต่อ...', 'ตรวจสอบ API & LINE Token');
+
+            setTimeout(() => {
+                const setLineToken = document.getElementById('setLineToken') ? document.getElementById('setLineToken').value : '';
+                const setGeminiKey = document.getElementById('setGeminiKey') ? document.getElementById('setGeminiKey').value : '';
+
+                // GAS Connection
+                if (isGAS) {
+                    appendDiagnosticLog('SUCCESS', '🌐 Google Apps Script', 'เชื่อมต่อ GAS ได้ปกติ');
+                } else {
+                    appendDiagnosticLog('INFO', '🌐 Google Apps Script', 'ไม่ได้เชื่อมต่อ GAS — ทำงานในโหมดออฟไลน์/Demo');
+                }
+
+                if (!setLineToken && isGAS) {
+                    issueCount++;
+                    appendDiagnosticLog('WARNING', '🔔 LINE Notify Token', 'ยังไม่ได้ตั้งค่า — ระบบจะไม่ส่งแจ้งเตือนเข้า LINE');
+                } else if (setLineToken) {
+                    appendDiagnosticLog('SUCCESS', '🔔 LINE Notify Token', `Token ตั้งค่าแล้ว: ${setLineToken.substring(0, 8)}...`);
+                }
+
+                if (setGeminiKey) {
+                    appendDiagnosticLog('SUCCESS', '🤖 Gemini API Key', `Custom Key: ${setGeminiKey.substring(0, 8)}...`);
+                } else {
+                    appendDiagnosticLog('INFO', '🤖 Gemini API Key', 'ใช้ Default Key ของระบบ');
+                }
+
+                if (typeof testGeminiConnection === 'function') testGeminiConnection();
+                _updateDiagBadge(issueCount);
+            }, 400);
         }
+
         function checkUsersHealthOnly() {
-            runSystemHealthCheck();
+            const consoleEl = document.getElementById('diagnosticChatConsole');
+            if (consoleEl) consoleEl.innerHTML = '';
+            const timeEl = document.getElementById('diagLastRunTime');
+            if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('th-TH');
+            let issueCount = 0;
+
+            appendDiagnosticLog('INFO', '👥 เริ่มตรวจสอบบัญชีผู้ใช้...', 'ตรวจสอบ Role, PIN, สิทธิ์');
+
+            setTimeout(() => {
+                const users = allData.users || [];
+                let noPin = 0, noRole = 0, adminCount = 0;
+                const noPinNames = [], noRoleNames = [], adminNames = [];
+
+                users.forEach(u => {
+                    if (!u.pin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid); }
+                    if (!u.role) { noRole++; noRoleNames.push(u.name || u.uid); }
+                    if (u.role === 'admin') { adminCount++; adminNames.push(u.name || u.uid); }
+                });
+
+                appendDiagnosticLog('INFO', '📊 สรุปผู้ใช้', `ผู้ใช้ทั้งหมด <b>${users.length}</b> คน | Admin <b>${adminCount}</b> คน (${adminNames.join(', ')})`);
+
+                if (noRole > 0) {
+                    issueCount++;
+                    appendDiagnosticLog('WARNING', '👤 ไม่มี Role', `<b>${noRole}</b> คน: ${noRoleNames.join(', ')}`);
+                }
+                if (noPin > 0) {
+                    appendDiagnosticLog('INFO', '🔐 ไม่มี PIN', `<b>${noPin}</b> คน: ${noPinNames.slice(0, 8).join(', ')}${noPin > 8 ? '...' : ''}`);
+                }
+
+                if (issueCount === 0) {
+                    appendDiagnosticLog('SUCCESS', '✅ บัญชีผู้ใช้ปกติ', 'ทุกคนมี Role ครบถ้วน');
+                }
+                _updateDiagBadge(issueCount);
+            }, 400);
         }
 
 
