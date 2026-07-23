@@ -4511,11 +4511,19 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 }
             } catch(e) {}
 
+            // ★ เก็บ users จริงไว้ก่อน reset allData → เพื่อไม่ให้ dropdown กลายเป็น demo
+            const savedUsers = (allData.users && allData.users.length > 0) ? [...allData.users] : [];
+
             localStorage.removeItem('user_session');
             if (typeof createMockData === 'function') {
                 allData = createMockData();
             } else {
                 allData = { items: [], tools: [], history: [], activeBorrows: [], pendingPOs: [], users: [], settings: {} };
+            }
+
+            // ★ คืน users จริงกลับเข้า allData เพื่อให้ dropdown แสดงชื่อจริง ไม่ใช่ demo
+            if (savedUsers.length > 0) {
+                allData.users = savedUsers;
             }
 
             const loginScr = document.getElementById('loginScreen');
