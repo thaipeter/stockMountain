@@ -1264,7 +1264,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!restored) {
-      show('loginScreen'); document.getElementById('appWrap').classList.remove('visible');
+      populateUsers(allData.users || []); show('loginScreen'); document.getElementById('appWrap').classList.remove('visible');
       populateUsers(allData.users || []);
     }
     startUserPoll();
@@ -1495,7 +1495,7 @@ function doLogin() {
   const btn = document.getElementById('loginBtn');
   btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...';
   
-  const isDemo = !GAS_URL && typeof google === 'undefined';
+  const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
   if (isDemo) {
     btn.textContent = 'เข้าสู่ระบบ';
     if (pin === '1234' || pin === 'admin') {
@@ -2274,7 +2274,7 @@ function renderList(mode, kw, cat) {
       : '<span style="font-size:18px">📦</span>';
       
     const imgClickHtml = imgUrl
-      ? '<div style="position:relative;width:56px;height:56px;overflow:hidden;border-radius:10px;background:var(--surface);border:1px solid var(--border2);flex-shrink:0;cursor:zoom-in" onclick="event.stopPropagation();showItemGallery(\'' + item.code + '\',\'' + esc(item.name) + '\')">'        + '<img src="' + imgUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'        + (item.images && item.images.length > 1 ? '<div style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:1px 4px;border-radius:6px">' + item.images.length + '</div>' : '')        + '<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:22px">📦</div></div>'      : '<div style="width:56px;height:56px;border-radius:10px;background:var(--surface);border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px">📦</div>';
+      ? '<div style="position:relative;width:76px;height:76px;overflow:hidden;border-radius:10px;background:var(--surface);border:1px solid var(--border2);flex-shrink:0;cursor:zoom-in" onclick="event.stopPropagation();showItemGallery(\'' + item.code + '\',\'' + esc(item.name) + '\')">'        + '<img src="' + imgUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'        + (item.images && item.images.length > 1 ? '<div style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:1px 4px;border-radius:6px">' + item.images.length + '</div>' : '')        + '<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:22px">📦</div></div>'      : '<div style="width:76px;height:76px;border-radius:10px;background:var(--surface);border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px">📦</div>';
       
     const badgeHtml = isDamaged 
       ? '<div style="font-size:10px;font-weight:700;color:var(--red);background:var(--red-dim);padding:2px 6px;border-radius:4px;width:fit-content;margin-top:2px"><i class="fas fa-heart-broken"></i> ชำรุด/ส่งซ่อม</div>'
@@ -2953,27 +2953,71 @@ function executeSubmitCart(mode, signatureBase64) {
     user: me.name, uid: me.uid, remark
   }));
   
-  callGAS('webBatchTransaction', [payloads, signatureBase64], res => {
+  const handleSuccess = (pendingN) => {
     btn.disabled = false;
     btn.innerHTML = mode === 'withdraw' ? '<i class="fas fa-check"></i> ยืนยันเบิก' : '<i class="fas fa-clipboard-check"></i> ยืนยันการยืม';
     closeSheet(mode === 'withdraw' ? 'sheetWithdraw' : 'sheetBorrow');
     if (mode === 'withdraw') { withdrawCart = []; document.getElementById('withdrawSearch').value = ''; document.getElementById('wRemark').value = ''; }
     else                     { borrowCart = [];   document.getElementById('borrowSearch').value = '';  document.getElementById('bRemark').value = ''; }
     updateCartBar(mode);
-    const pendingN = (res && res.pendingCount) || payloads.length;
     Swal.fire({
       icon: 'success',
       title: 'ส่งคำขอแล้ว!',
-      text: `ส่งคำขอ${typeText} ${pendingN} รายการเรียบร้อย รอแอดมินกดอนุมัติในไลน์ก่อน ของจะถูกกันไว้ให้ระหว่างนี้`,
+      text: `ส่งคำขอ${typeText} ${pendingN} รายการเรียบร้อย รอแอดมินกดอนุมัติ ของจะถูกกันไว้ให้ระหว่างนี้`,
       confirmButtonColor: '#4f46e5',
       background: '#1a1f2e', color: '#e2e8f0'
     });
+    renderList(mode, ''); renderReturnList();
+    renderMineApproval();
+  };
+
+  callGAS('webBatchTransaction', [payloads, signatureBase64], res => {
+    handleSuccess((res && res.pendingCount) || payloads.length);
     callGAS('getInventoryData', [], d => { allData = d; renderList(mode, ''); renderReturnList(); }, null);
     loadMineApproval();
   }, err => {
-    btn.disabled = false;
-    btn.innerHTML = mode === 'withdraw' ? '<i class="fas fa-check"></i> ยืนยันเบิก' : '<i class="fas fa-clipboard-check"></i> ยืนยันการยืม';
-    showToast('เกิดข้อผิดพลาด: ' + err, 'error');
+    const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
+    if (isDemo || err === 'no GAS' || err === 'demo mode') {
+      // โหมดตัวอย่าง / ออฟไลน์ → สร้างรายการค้างรออนุมัติลง localStorage เพื่อให้ระบบสแกนตรวจได้จริง
+      const nowStr = new Date().toLocaleDateString('th-TH', {day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+      const newPendings = cart.map((item, idx) => ({
+        reqId: 'REQ_' + Date.now() + '_' + idx,
+        type: typeText,
+        itemCode: item.code,
+        itemName: item.name,
+        qty: item.qty,
+        user: me.name,
+        userId: me.uid,
+        date: nowStr,
+        remark: remark || 'เบิกผ่านหน้า QR Web App',
+        status: 'รออนุมัติ',
+        imageUrl: item.imageUrl
+      }));
+      if (!mineData.pendingApproval) mineData.pendingApproval = [];
+      mineData.pendingApproval.push(...newPendings);
+      
+      try {
+        let existingLocal = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
+        existingLocal.push(...newPendings);
+        localStorage.setItem('demo_pending_withdraws', JSON.stringify(existingLocal));
+      } catch(e) {}
+      
+      handleSuccess(payloads.length);
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = mode === 'withdraw' ? '<i class="fas fa-check"></i> ยืนยันเบิก' : '<i class="fas fa-clipboard-check"></i> ยืนยันการยืม';
+      Swal.fire({
+        icon: 'error',
+        title: 'เกิดข้อผิดพลาดในการบันทึก!',
+        html: `<div class="text-start small">
+                 <div class="text-danger fw-bold mb-2">❌ ไม่สามารถบันทึกรายการได้ในขั้นตอนส่งข้อมูล:</div>
+                 <div>• สาเหตุ: <b>${esc(err)}</b></div>
+                 <div>• กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต หรือติดต่อผู้ดูแลระบบ</div>
+               </div>`,
+        confirmButtonColor: '#ef4444',
+        background: '#1a1f2e', color: '#e2e8f0'
+      });
+    }
   });
 }
 
@@ -3255,7 +3299,7 @@ function loadMineData() {
     // GAS ไม่ตอบ / timeout / ไม่มี GAS → ใช้ demo
     mineLoading = false;
     if (icon) icon.style.animation = '';
-    const isDemo = !GAS_URL && typeof google === 'undefined';
+    const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
     if (isDemo || err === 'no GAS' || err === 'demo mode') {
       mineData = buildDemoMineData();
     } else {
@@ -3333,9 +3377,9 @@ function renderMineApproval() {
   list.innerHTML = items.map(it => {
     const typeIcon = it.type === 'ยืม' ? '🤝' : '📦';
     const imgTag = it.imageUrl
-      ? `<img src="${it.imageUrl}" alt="${esc(it.itemName)}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-         <div style="width:44px;height:44px;border-radius:10px;background:rgba(251,191,36,.12);display:none;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${typeIcon}</div>`
-      : `<div style="width:44px;height:44px;border-radius:10px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${typeIcon}</div>`;
+      ? `<img src="${it.imageUrl}" alt="${esc(it.itemName)}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+         <div style="width:64px;height:64px;border-radius:10px;background:rgba(251,191,36,.12);display:none;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${typeIcon}</div>`
+      : `<div style="width:64px;height:64px;border-radius:10px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${typeIcon}</div>`;
     return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(251,191,36,.3);border-radius:14px;margin-bottom:8px">
       ${imgTag}
       <div style="flex:1;min-width:0">
@@ -3434,7 +3478,7 @@ function renderMineRetro() {
     html += done.map(it => {
       const reason = esc(it.remark.split(' (เบิกย้อนหลัง')[0]);
       return `<div class="hist-card" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;margin-bottom:8px">
-        <div style="width:44px;height:44px;border-radius:10px;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">✅</div>
+        <div style="width:64px;height:64px;border-radius:10px;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">✅</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;color:#fff;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(it.itemName)}</div>
           <div style="font-size:.75rem;color:rgba(255,255,255,.45);margin-top:2px">${esc(it.itemCode)} • ${it.qty} ชิ้น • ${esc(it.date)}</div>
@@ -3499,9 +3543,9 @@ function renderMineHistory() {
     const _hImgUrl = getProxyImgUrl(h.imageUrl);
     const _hImgFull = getFullImgUrl(h.imageUrl) || _hImgUrl;
     const imgHtml = _hImgUrl
-      ? `<img src="${_hImgUrl}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.1);cursor:zoom-in" onclick="event.stopPropagation();viewImg('${_hImgFull}','${esc(h.itemName)}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-        + `<div style="display:none;width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.06);align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${h.type==='เบิก'?'📦':h.type==='รับเข้า'?'📥':h.type==='คืน'?'↩️':'🔧'}</div>`
-      : `<div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${h.type==='เบิก'?'📦':h.type==='รับเข้า'?'📥':h.type==='คืน'?'↩️':'🔧'}</div>`;
+      ? `<img src="${_hImgUrl}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.1);cursor:zoom-in" onclick="event.stopPropagation();viewImg('${_hImgFull}','${esc(h.itemName)}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        + `<div style="display:none;width:64px;height:64px;border-radius:10px;background:rgba(255,255,255,.06);align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${h.type==='เบิก'?'📦':h.type==='รับเข้า'?'📥':h.type==='คืน'?'↩️':'🔧'}</div>`
+      : `<div style="width:64px;height:64px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${h.type==='เบิก'?'📦':h.type==='รับเข้า'?'📥':h.type==='คืน'?'↩️':'🔧'}</div>`;
       
     const escName = esc(h.itemName).replace(/'/g, "\\'");
     const escCode = esc(h.itemCode).replace(/'/g, "\\'");
@@ -3536,8 +3580,8 @@ function renderMineBorrows() {
     const color = isOverdue ? '#f87171' : '#fbbf24';
     const badgeText = isOverdue ? `⚠️ เกิน ${days} วัน` : `${days} วันที่แล้ว`;
     const imgHtml = b.imageUrl
-      ? `<img src="${esc(b.imageUrl)}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.1)" onerror="this.style.display='none'">`
-      : `<div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">🔧</div>`;
+      ? `<img src="${esc(b.imageUrl)}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.1)" onerror="this.style.display='none'">`
+      : `<div style="width:64px;height:64px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">🔧</div>`;
     return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.04);border:1px solid ${isOverdue?'rgba(248,113,113,.3)':'rgba(255,255,255,.08)'};border-radius:14px;margin-bottom:8px${isOverdue?';box-shadow:0 0 0 1px rgba(248,113,113,.15)':''}">
       ${imgHtml}
       <div style="flex:1;min-width:0">
