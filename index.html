@@ -10538,9 +10538,13 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (!list.length) { listEl.innerHTML = ''; emptyEl.classList.remove('d-none'); return; }
             emptyEl.classList.add('d-none');
             listEl.innerHTML = list.map(function(r) {
-                const isWithdraw = r.type === 'เบิก';
-                const badgeColor = isWithdraw ? '#ef4444' : '#f59e0b';
-                const badgeText  = isWithdraw ? '📤 เบิก' : '🛠️ ยืม';
+                const typeBadgeMap = {
+                    'เบิก': { color: '#ef4444', text: '📤 ขอเบิก' },
+                    'ยืม': { color: '#f59e0b', text: '🛠️ ขอยืม' },
+                    'คืน': { color: '#3b82f6', text: '↩️ ขอคืนอะไหล่' },
+                    'แจ้งชำรุด': { color: '#dc2626', text: '⚠️ แจ้งชำรุด' }
+                };
+                const badgeInfo = typeBadgeMap[r.type] || { color: '#6b7280', text: r.type || 'คำขอ' };
                 let dateStr = '-';
                 try { dateStr = r.date ? new Date(r.date).toLocaleString('th-TH') : '-'; } catch(e) {}
                 return `
@@ -10550,7 +10554,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             <div class="form-check">
                                 <input class="form-check-input pending-select-cb" type="checkbox" value="${r.reqId}" onchange="onPendingCheckboxChange('${listElId}')">
                             </div>
-                            <span class="badge" style="background:${badgeColor};color:#fff;font-size:.7rem">${badgeText}</span>
+                            <span class="badge" style="background:${badgeInfo.color};color:#fff;font-size:.7rem">${badgeInfo.text}</span>
                             <span class="small pc-sub">${dateStr}</span>
                         </div>
                         <div class="d-flex gap-3 align-items-center mb-3">
@@ -11377,8 +11381,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const items = stMgmtState.items.filter(i => !kw || i.name.toLowerCase().includes(kw) || i.code.toLowerCase().includes(kw));
             if (!items.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4" style="color:#6b7280">ไม่พบสินค้า</td></tr>'; return; }
             tbody.innerHTML = items.map(function(it) {
+                const liveDiff = it.counted ? (Number(it.countedQty) - Number(it.systemStock || 0)) : null;
                 const diffHtml = it.counted
-                    ? (it.diff === 0 ? '<span style="color:#22c55e">ตรง</span>' : '<span style="color:' + (it.diff > 0 ? '#22c55e' : '#ef4444') + '">' + (it.diff > 0 ? '+' : '') + it.diff + '</span>')
+                    ? (liveDiff === 0 ? '<span style="color:#22c55e">ตรง</span>' : '<span style="color:' + (liveDiff > 0 ? '#22c55e' : '#ef4444') + '">' + (liveDiff > 0 ? '+' : '') + liveDiff + '</span>')
                     : '<span style="color:#6b7280">-</span>';
                 return '<tr style="border-bottom:1px solid #232838">'
                     + '<td><div class="fw-bold" style="font-size:13px">' + it.name.replace(/</g,'&lt;') + '</div><div style="font-size:11px;color:#6b7280">' + it.code + '</div></td>'
