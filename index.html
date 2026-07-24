@@ -1594,13 +1594,13 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                             <table class="table table-sm align-middle mb-0" id="newItemsTable">
                                 <thead class="bg-light border-bottom">
                                     <tr class="small fw-bold text-muted">
-                                        <th style="width:13%">รหัส <span class="text-danger">*</span></th>
-                                        <th style="width:19%">ชื่อรายการ <span class="text-danger">*</span></th>
-                                        <th style="width:12%">ตำแหน่ง</th>
-                                        <th style="width:9%">หน่วย <span class="text-danger">*</span></th>
-                                        <th style="width:7%">Min</th>
-                                        <th style="width:7%">จำนวน <span class="text-danger">*</span></th>
-                                        <th style="width:13%" class="text-center"><i class="fas fa-camera me-1"></i>รูปภาพ</th>
+                                        <th style="width:18%">รหัส <span class="text-danger">*</span></th>
+                                        <th style="width:20%">ชื่อรายการ <span class="text-danger">*</span></th>
+                                        <th style="width:11%">ตำแหน่ง</th>
+                                        <th style="width:8%">หน่วย <span class="text-danger">*</span></th>
+                                        <th style="width:7%">MIN</th>
+                                        <th style="width:9%">จำนวน <span class="text-danger">*</span></th>
+                                        <th style="width:19%" class="text-center"><i class="fas fa-camera me-1"></i>รูปภาพ</th>
                                         <th style="width:8%" class="text-center">ลบ</th>
                                     </tr>
                                 </thead>
@@ -2444,7 +2444,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     <div class="table-container p-0">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle" id="txTable">
-                                <thead><tr><th width="13%">วันเวลา</th><th width="9%" class="text-center">ประเภท</th><th width="22%">รายละเอียดรายการ</th><th width="9%" class="text-end">จำนวน</th><th width="13%" class="text-center">ผู้ทำรายการ</th><th width="22%">หมายเหตุ</th><th width="12%" class="text-center">ใบเบิก</th></tr></thead>
+                                <thead><tr><th width="15%" style="white-space:nowrap">วันเวลา</th><th width="9%" class="text-center">ประเภท</th><th width="21%">รายละเอียดรายการ</th><th width="9%" class="text-end">จำนวน</th><th width="13%" class="text-center">ผู้ทำรายการ</th><th width="21%">หมายเหตุ</th><th width="12%" class="text-center">ใบเบิก</th></tr></thead>
                                 <tbody></tbody>
                             </table>
                         </div>
@@ -2461,7 +2461,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 </style>
                 <div id="pendingApprovals" class="section-view">
                     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                        <div><h3 class="fw-bold mb-1">รายการรออนุมัติ</h3><p class="text-muted small mb-0">แบ่งเป็น 3 หมวด: อนุมัติผู้ใช้งานใหม่ / อนุมัติคำขอเบิก / อนุมัติคำขอยืม (ถ้าพลาดจากไลน์ มาอนุมัติที่นี่ได้เหมือนกัน)</p></div>
+                        <div><h3 class="fw-bold mb-1">รายการรออนุมัติ</h3><p class="text-muted small mb-0">อนุมัติคำขอจาก QR/LINE: อนุมัติผู้ใช้งานใหม่ / คำขอเบิก / คำขอยืม-คืน-แจ้งชำรุด</p></div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-outline-danger fw-bold shadow-sm bg-white" onclick="clearAllPendingRequests()"><i class="fas fa-broom"></i> ล้างคำขอค้างทั้งหมด</button>
                             <button class="btn btn-outline-primary fw-bold shadow-sm bg-white" onclick="loadPendingApprovals(); loadPendingUserApprovals();"><i class="fas fa-sync-alt"></i> รีเฟรช</button>
@@ -2471,7 +2471,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                         <ul class="nav nav-tabs mb-4" id="pendingApprovalTabs" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabApproveUsers" type="button"><i class="fas fa-user-check me-1"></i> อนุมัติผู้ใช้<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-users" style="display:none;">0</span></button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabApproveWithdraw" type="button"><i class="fas fa-dolly me-1"></i> อนุมัติเบิก<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-withdraw" style="display:none;">0</span></button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabApproveBorrow" type="button"><i class="fas fa-hand-holding me-1"></i> อนุมัติยืม<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-borrow" style="display:none;">0</span></button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabApproveBorrow" type="button"><i class="fas fa-hand-holding me-1"></i> อนุมัติยืม / คืน / ชำรุด<span class="badge bg-danger rounded-pill ms-2" id="badge-pending-borrow" style="display:none;">0</span></button></li>
                         </ul>
                         <div class="tab-content">
                             <div class="tab-pane fade show active" id="tabApproveUsers">
@@ -5332,14 +5332,33 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             setupAutoRefresh(s);
         }
 
-        function syncMasterDataTags() {
+        window.masterTagsUserModified = false;
+
+        function syncMasterDataTags(forceInit) {
             const catInput = document.getElementById('setCategories');
             const locInput = document.getElementById('setLocations');
+            if (!catInput || !locInput) return;
 
             const allList = (allData.items || []).concat(allData.tools || []);
 
-            // --- Categories: รวม settings + ดึง unique จาก items & tools จริง ---
-            if (catInput) {
+            // แสกนรหัสสินค้าเดิมหา prefix ประจำหมวดหมู่สินค้าอัตโนมัติ (เช่น หมวดเครื่องเป่า รหัสขึ้นด้วย BL- -> BL)
+            const autoDetectedPrefixMap = {};
+            allList.forEach(item => {
+                const cat = String(item.category || '').trim();
+                const codeStr = String(item.code || '').trim().toUpperCase();
+                if (cat && codeStr) {
+                    const match = codeStr.match(/^([A-Z]+(?:-[A-Z]+)*)-\d+$/);
+                    if (match) {
+                        const prefix = match[1];
+                        if (!autoDetectedPrefixMap[cat]) {
+                            autoDetectedPrefixMap[cat] = prefix;
+                        }
+                    }
+                }
+            });
+
+            if (!window.masterTagsUserModified || forceInit) {
+                // --- Categories: รวม settings + ดึง unique จาก items & tools จริง + รหัสย่ออัตโนมัติ ---
                 const savedCats = (allData.settings?.categories || '')
                     .split(',').map(s => s.trim()).filter(s => s);
 
@@ -5348,7 +5367,6 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                            .filter(s => s && s !== 'undefined')
                 )];
 
-                // เก็บ prefix mapping จาก settings (format "ชื่อ:PREFIX") ไว้ก่อน
                 const prefixMap = {};
                 savedCats.forEach(s => {
                     if (s.includes(':')) {
@@ -5357,22 +5375,26 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     }
                 });
 
-                // รวม category ทั้งหมด (ใส่ prefix mapping กลับถ้ามี)
+                // เติม autoDetectedPrefixMap สำหรับหมวดหมู่ที่ยังไม่มี prefix
+                Object.keys(autoDetectedPrefixMap).forEach(catName => {
+                    if (!prefixMap[catName]) {
+                        prefixMap[catName] = autoDetectedPrefixMap[catName];
+                    }
+                });
+
                 const allCatNames = [...new Set([
                     ...savedCats.map(s => s.includes(':') ? s.split(':')[0].trim() : s),
                     ...sheetCats
                 ])].sort();
 
-                const combined = allCatNames.map(name =>
+                const combinedCats = allCatNames.map(name =>
                     prefixMap[name] ? `${name}:${prefixMap[name]}` : name
                 );
 
-                catInput.value = combined.join(', ');
+                catInput.value = combinedCats.join(', ');
                 if (allData.settings) allData.settings.categories = catInput.value;
-            }
 
-            // --- Locations: รวม settings + ดึง unique จาก items & tools จริง ---
-            if (locInput) {
+                // --- Locations ---
                 const savedLocs = (allData.settings?.locations || '')
                     .split(',').map(s => s.trim()).filter(s => s);
 
@@ -5381,73 +5403,87 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                            .filter(s => s && s !== 'undefined')
                 )];
 
-                const combined = [...new Set([...savedLocs, ...sheetLocs])].sort();
-                locInput.value = combined.join(', ');
+                const combinedLocs = [...new Set([...savedLocs, ...sheetLocs])].sort();
+                locInput.value = combinedLocs.join(', ');
                 if (allData.settings) allData.settings.locations = locInput.value;
             }
 
-            if (catInput) renderTagChips('category', catInput.value);
-            if (locInput) renderTagChips('location', locInput.value);
+            renderTagChips('category', catInput.value, autoDetectedPrefixMap);
+            renderTagChips('location', locInput.value);
         }
-     function renderTagChips(type, csvString) {
-    const containerId = type === 'category' ? 'categoriesTagContainer' : 'locationsTagContainer';
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = '';
-    const items = csvString.split(',').map(s => s.trim()).filter(s => s !== '');
-    if (items.length === 0) { 
-        container.innerHTML = '<span class="text-muted small opacity-50 py-1">ยังไม่มีรายการ...</span>'; 
-        return; 
-    }
 
-    items.forEach(item => {
-        const chip = document.createElement('span');
-        const safeItem = item.replace(/'/g, "\\'");
+        function renderTagChips(type, csvString, autoPrefixMap) {
+            const containerId = type === 'category' ? 'categoriesTagContainer' : 'locationsTagContainer';
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            const items = csvString.split(',').map(s => s.trim()).filter(s => s !== '');
+            if (items.length === 0) { 
+                container.innerHTML = '<span class="text-muted small opacity-50 py-1">ยังไม่มีรายการ...</span>'; 
+                return; 
+            }
 
-        if (type === 'category' && item.includes(':')) {
-            // มี prefix mapping เช่น "เครื่องเป่า:BL"
-            const [catName, catPrefix] = item.split(':');
-            chip.className = 'tag-chip';
-            chip.innerHTML = `
-                <i class="fas fa-tag" style="font-size:0.7rem;opacity:0.7;"></i>
-                ${catName.trim()}
-                <span class="badge bg-dark font-monospace ms-1 px-2" style="font-size:0.7rem;">${catPrefix.trim()}</span>
-                <button type="button" class="tag-chip-remove" onclick="removeTagChip('${type}','${safeItem}')">×</button>
-            `;
-        } else if (type === 'location') {
-            chip.className = 'tag-chip tag-location';
-            chip.innerHTML = `
-                <i class="fas fa-map-marker-alt" style="font-size:0.7rem;opacity:0.7;"></i>
-                ${item}
-                <button type="button" class="tag-chip-remove" onclick="removeTagChip('${type}','${safeItem}')">×</button>
-            `;
-        } else {
-            chip.className = 'tag-chip';
-            chip.innerHTML = `
-                <i class="fas fa-tag" style="font-size:0.7rem;opacity:0.7;"></i>
-                ${item}
-                <button type="button" class="tag-chip-remove" onclick="removeTagChip('${type}','${safeItem}')">×</button>
-            `;
+            items.forEach(item => {
+                const chip = document.createElement('span');
+                const safeItem = item.replace(/'/g, "\\'");
+
+                if (type === 'category') {
+                    let catName = item;
+                    let catPrefix = '';
+                    if (item.includes(':')) {
+                        const parts = item.split(':');
+                        catName = parts[0].trim();
+                        catPrefix = parts[1].trim();
+                    } else if (autoPrefixMap && autoPrefixMap[catName]) {
+                        catPrefix = autoPrefixMap[catName];
+                    }
+
+                    chip.className = 'tag-chip';
+                    const prefixBadgeHtml = catPrefix ? `<span class="badge bg-dark font-monospace ms-1 px-2" style="font-size:0.75rem;border:1px solid rgba(251,191,36,.4);color:#fbbf24">${catPrefix}</span>` : '';
+                    chip.innerHTML = `
+                        <i class="fas fa-tag" style="font-size:0.7rem;opacity:0.7;"></i>
+                        <span class="fw-bold me-1">${catName}</span>
+                        ${prefixBadgeHtml}
+                        <button type="button" class="tag-chip-remove ms-2" onclick="removeTagChip('category','${safeItem}')" title="ลบหมวดหมู่นี้">×</button>
+                    `;
+                } else {
+                    chip.className = 'tag-chip tag-location';
+                    chip.innerHTML = `
+                        <i class="fas fa-map-marker-alt" style="font-size:0.7rem;opacity:0.7;"></i>
+                        <span class="fw-bold">${item}</span>
+                        <button type="button" class="tag-chip-remove ms-2" onclick="removeTagChip('location','${safeItem}')" title="ลบตำแหน่งนี้">×</button>
+                    `;
+                }
+                container.appendChild(chip);
+            });
         }
-        container.appendChild(chip);
-    });
-}
-
-        
 
         function removeTagChip(type, itemToRemove) {
             const hiddenInputId = type === 'category' ? 'setCategories' : 'setLocations';
             const hiddenInput = document.getElementById(hiddenInputId);
             if (!hiddenInput) return;
-            const updated = hiddenInput.value.split(',').map(s => s.trim()).filter(s => s && s !== itemToRemove);
+
+            const targetName = itemToRemove.includes(':') ? itemToRemove.split(':')[0].trim() : itemToRemove.trim();
+            const updated = hiddenInput.value.split(',').map(s => s.trim()).filter(s => {
+                if (!s) return false;
+                const name = s.includes(':') ? s.split(':')[0].trim() : s;
+                return name !== targetName && s !== itemToRemove;
+            });
+
             hiddenInput.value = updated.join(', ');
+            window.masterTagsUserModified = true;
+
+            if (type === 'category' && allData.settings) allData.settings.categories = hiddenInput.value;
+            if (type === 'location' && allData.settings) allData.settings.locations = hiddenInput.value;
+
             renderTagChips(type, hiddenInput.value);
         }
 
         function addTagFromInput(type) {
             const inputId = type === 'category' ? 'categoryTagInput' : 'locationTagInput';
             const hiddenInputId = type === 'category' ? 'setCategories' : 'setLocations';
-            const inputEl = document.getElementById(inputId); const hiddenInput = document.getElementById(hiddenInputId);
+            const inputEl = document.getElementById(inputId); 
+            const hiddenInput = document.getElementById(hiddenInputId);
             if (!inputEl || !hiddenInput) return;
 
             const newItems = inputEl.value.split(',').map(s => s.trim()).filter(s => s);
@@ -5458,12 +5494,21 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
             newItems.forEach(item => {
                 const itemName = item.includes(':') ? item.split(':')[0].trim() : item;
-                if (!currentNames.includes(itemName)) { current.push(item); currentNames.push(itemName); }
+                if (!currentNames.includes(itemName)) { 
+                    current.push(item); 
+                    currentNames.push(itemName); 
+                }
             });
 
             hiddenInput.value = current.join(', ');
+            window.masterTagsUserModified = true;
+
+            if (type === 'category' && allData.settings) allData.settings.categories = hiddenInput.value;
+            if (type === 'location' && allData.settings) allData.settings.locations = hiddenInput.value;
+
             renderTagChips(type, hiddenInput.value);
-            inputEl.value = ''; inputEl.focus();
+            inputEl.value = ''; 
+            inputEl.focus();
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -5556,8 +5601,17 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             document.getElementById('loading').style.display = 'flex';
             const handleSaveSettingsRes = function(res) {
                 document.getElementById('loading').style.display = 'none';
-                if(res && !res.success) { Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); } 
-                else { writeAudit('SETTINGS', `บันทึกการตั้งค่าระบบ — ชื่อ: ${payload.sysName} | ธีม: ${payload.themeColor}`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'บันทึกการตั้งค่าสำเร็จ!', timer: 2000, showConfirmButton: false}); allData.settings = { ...allData.settings, ...payload }; applySettingsUI(allData.settings); loadData(true); }
+                if(res && !res.success) { 
+                    Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
+                } else { 
+                    writeAudit('SETTINGS', `บันทึกการตั้งค่าระบบ — ชื่อ: ${payload.sysName} | ธีม: ${payload.themeColor}`); 
+                    Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'บันทึกการตั้งค่าสำเร็จ!', timer: 2000, showConfirmButton: false}); 
+                    allData.settings = { ...allData.settings, ...payload }; 
+                    window.masterTagsUserModified = false;
+                    try { localStorage.setItem('allData_settings', JSON.stringify(allData.settings)); } catch(e){}
+                    applySettingsUI(allData.settings); 
+                    loadData(true); 
+                }
             };
             const handleSaveSettingsErr = function(err) {
                 document.getElementById('loading').style.display = 'none';
@@ -5574,6 +5628,8 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     writeAudit('SETTINGS', `บันทึกการตั้งค่าระบบ (Demo) — ชื่อ: ${payload.sysName}`); 
                     Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'บันทึกการตั้งค่าสำเร็จ!', timer: 2000, showConfirmButton: false}); 
                     allData.settings = { ...allData.settings, ...payload }; 
+                    window.masterTagsUserModified = false;
+                    try { localStorage.setItem('allData_settings', JSON.stringify(allData.settings)); } catch(e){}
                     applySettingsUI(allData.settings); 
                 }, 500); 
             }
@@ -6221,7 +6277,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 let safeAction = String(log.action || '').replace(/'/g, "\\'");
                 slipBtn = `<button class="btn btn-xs btn-outline-primary py-1 px-2 fw-bold" style="font-size:0.72rem; border-radius: 6px;" onclick="viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>`;
             }
-            tr.innerHTML = `<td><small class="text-muted font-monospace bg-light px-2 py-1 rounded">${log.time}</small></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${iconClass} me-1"></i> ${displayAction}</span></td><td class="fw-bold">${log.itemName} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${log.code}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount} <span class="text-muted fw-normal small ms-1">${log.unit||''}</span></td><td class="text-center text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${displayUser}</td><td><small class="text-muted">${remarkText}</small></td><td class="text-center">${slipBtn}</td>`;
+            tr.innerHTML = `<td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${log.time}</span></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${iconClass} me-1"></i> ${displayAction}</span></td><td class="fw-bold">${log.itemName} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${log.code}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount} <span class="text-muted fw-normal small ms-1">${log.unit||''}</span></td><td class="text-center text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${displayUser}</td><td><small class="text-muted">${remarkText}</small></td><td class="text-center">${slipBtn}</td>`;
             tbody.appendChild(tr);
         });
     } catch(e) { console.error(e); }
@@ -6398,7 +6454,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                         slipBtn = `<button class="btn btn-xs btn-outline-primary py-1 px-2 fw-bold" style="font-size:0.72rem; border-radius: 6px;" onclick="viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>`;
                     }
 
-                    tr.innerHTML = `<td><small class="text-muted font-monospace bg-light px-2 py-1 rounded">${log.time.split(' ')[1] || log.time}</small> <span class="d-block small text-muted mt-1" style="font-size:0.7em">${log.time.split(' ')[0]}</span></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${icon} me-1"></i> ${displayAction}</span></td><td class="fw-bold text-dark">${log.itemName} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${log.code}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount}</td><td class="text-center text-muted fw-bold">${log.balance || '-'}</td><td class="text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${displayUser}</td><td><small class="text-muted">${remarkText}</small></td><td class="text-center">${slipBtn}</td>`;
+                    tr.innerHTML = `<td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${log.time}</span></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${icon} me-1"></i> ${displayAction}</span></td><td class="fw-bold text-dark">${log.itemName} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${log.code}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount}</td><td class="text-center text-muted fw-bold">${log.balance || '-'}</td><td class="text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${displayUser}</td><td><small class="text-muted">${remarkText}</small></td><td class="text-center">${slipBtn}</td>`;
                     tbody.appendChild(tr);
                 });
             } catch(e) { console.error(e); }
@@ -7711,90 +7767,93 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         }
 
         function addNewItemRow() {
-    const tbody = document.getElementById('newItemsTableBody');
-    window.newItemRowCounter = (window.newItemRowCounter || 0) + 1;
-    const rowId = 'row_' + window.newItemRowCounter + '_' + Math.random().toString(36).substr(2, 9);
-    
-    // 1. ดึงประเภทและหมวดหมู่ปัจจุบันมาเตรียมใช้
-    const type = document.getElementById('newItemType').value;
-    const category = document.getElementById('newItemCat').value.trim();
-    
-    // 2. ดึงรหัสสินค้าที่มีอยู่แล้วทั้งหมดบนจอ
-    const currentCodesInModal = [];
-    document.querySelectorAll('#newItemsTableBody [data-code-input]').forEach(input => {
-        if (input.value.trim() !== '') {
-            currentCodesInModal.push(input.value.trim().toUpperCase());
-        }
-    });
-    
-    // 3. เจนรหัสถัดไปที่แท้จริง (ไม่ซ้ำกับแถวอื่นบนจอ)
-    const nextGeneratedCode = getNextCodeForWeb(type, category, currentCodesInModal);
-
-    const row = document.createElement('tr');
-    row.id = rowId;
-    row.innerHTML = `
-        <td>
-            <div class="input-group input-group-sm">
-                <input type="text" class="form-control shadow-sm fw-bold text-primary" data-code-input value="${nextGeneratedCode}" placeholder="AUTO" readonly style="cursor: pointer;">
-                <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="autoGenerateCodeForRow('${rowId}')"><i class="fas fa-magic me-1"></i>Auto</button>
-            </div>
-        </td>
-        <td>
-            <input type="text" class="form-control form-control-sm shadow-sm fw-bold" data-name-input placeholder="ชื่อรายการ" required>
-        </td>
-        <td>
-            <input type="text" class="form-control form-control-sm shadow-sm" data-location-input list="locationOptions" placeholder="ตำแหน่ง">
-        </td>
-        <td>
-            <input type="text" class="form-control form-control-sm shadow-sm text-center" data-unit-input placeholder="หน่วย" required>
-        </td>
-        <td>
-            <input type="number" class="form-control form-control-sm shadow-sm text-center" data-min-input min="0" step="any" value="0">
-        </td>
-        <td>
-            <input type="number" class="form-control form-control-sm shadow-sm text-center fw-bold text-success" data-qty-input min="0" step="any" placeholder="จำนวน" required>
-        </td>
-        <td class="text-center">
-            <div class="d-flex flex-column align-items-center gap-1">
-                <div data-img-preview-${rowId} style="width:40px;height:40px;border-radius:6px;border:1px dashed #ccc;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f8f9fa;cursor:pointer" title="คลิกเพื่อเลือกรูป" onclick="document.getElementById('imgInp_${rowId}').click()">
-                    <i class="fas fa-camera text-muted" style="font-size:14px"></i>
-                </div>
-                <input type="file" id="imgInp_${rowId}" accept="image/*" style="display:none" onchange="previewNewItemImage(this,'${rowId}')">
-                <small data-img-status-${rowId} class="text-muted" style="font-size:9px;line-height:1.2"></small>
-            </div>
-        </td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-danger" onclick="removeNewItemRow('${rowId}')"><i class="fas fa-trash"></i></button>
-        </td>
-    `;
-    tbody.appendChild(row);
-    const nameInp = row.querySelector('[data-name-input]');
-    if (nameInp) {
-        nameInp.addEventListener('input', validateNewItemNames);
-    }
-}
-
-       function autoGenerateCodeForRow(rowId) {
-    const row = document.getElementById(rowId);
-    if (!row) return;
-    const type = document.getElementById('newItemType').value;
-    const category = document.getElementById('newItemCat').value.trim();
-    if (!type || !category) return Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: 'เลือกประเภทและหมวดหมู่ก่อน'});
-    
-    // ดึงรหัสที่ใช้อยู่ในแถวอื่นๆ ทั้งหมดบนจอขณะนั้น มารวมคำนวณด้วย
-    const currentCodesInModal = [];
-    document.querySelectorAll('#newItemsTableBody tr').forEach(r => {
-        if (r.id !== rowId) {
-            const inp = r.querySelector('[data-code-input]');
-            if (inp && inp.value.trim() !== '') {
-                currentCodesInModal.push(inp.value.trim().toUpperCase());
+            const tbody = document.getElementById('newItemsTableBody');
+            window.newItemRowCounter = (window.newItemRowCounter || 0) + 1;
+            const rowId = 'row_' + window.newItemRowCounter + '_' + Math.random().toString(36).substr(2, 9);
+            
+            const row = document.createElement('tr');
+            row.id = rowId;
+            row.innerHTML = `
+                <td>
+                    <div class="input-group input-group-sm flex-nowrap" style="min-width: 135px;">
+                        <input type="text" class="form-control shadow-sm fw-bold text-primary px-2" data-code-input value="" placeholder="AUTO" readonly style="cursor: pointer; font-size: 0.85rem; min-width: 80px;">
+                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold px-2" style="font-size: 0.75rem; white-space: nowrap;" onclick="autoGenerateCodeForRow('${rowId}')" title="เจนรหัสใหม่อัตโนมัติ"><i class="fas fa-magic me-1"></i>Auto</button>
+                    </div>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm shadow-sm fw-bold" data-name-input placeholder="ชื่อรายการ" required>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm shadow-sm" data-location-input list="locationOptions" placeholder="ตำแหน่ง">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm shadow-sm text-center" data-unit-input placeholder="หน่วย" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm shadow-sm text-center" data-min-input min="0" step="any" value="0">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm shadow-sm text-center fw-bold text-success" data-qty-input min="0" step="any" placeholder="จำนวน" required>
+                </td>
+                <td class="text-center">
+                    <div class="d-flex flex-column align-items-center gap-1">
+                        <div data-img-preview-${rowId} style="width:40px;height:40px;border-radius:6px;border:1px dashed #ccc;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f8f9fa;cursor:pointer" title="คลิกเพื่อเลือกรูป" onclick="document.getElementById('imgInp_${rowId}').click()">
+                            <i class="fas fa-camera text-muted" style="font-size:14px"></i>
+                        </div>
+                        <input type="file" id="imgInp_${rowId}" accept="image/*" style="display:none" onchange="previewNewItemImage(this,'${rowId}')">
+                        <small data-img-status-${rowId} class="text-muted" style="font-size:9px;line-height:1.2"></small>
+                    </div>
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeNewItemRow('${rowId}')"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            autoGenerateCodeForRow(rowId);
+            const nameInp = row.querySelector('[data-name-input]');
+            if (nameInp) {
+                nameInp.addEventListener('input', validateNewItemNames);
             }
         }
-    });
 
-    const code = getNextCodeForWeb(type, category, currentCodesInModal);
-    row.querySelector('[data-code-input]').value = code;
-}
+        function autoGenerateCodeForRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            const type = document.getElementById('newItemType').value;
+            const category = document.getElementById('newItemCat').value.trim();
+            if (!type || !category) return Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: 'เลือกประเภทและหมวดหมู่ก่อน'});
+            
+            const rows = Array.from(document.querySelectorAll('#newItemsTableBody tr'));
+            const rowIndex = rows.indexOf(row);
+            if (rowIndex < 0) return;
+
+            // ดึงรหัสตั้งต้นที่ใช้ได้จากฐานข้อมูล (DB)
+            const baseCode = getNextCodeForWeb(type, category, []);
+            const match = baseCode.match(/^([A-Z]+(?:-[A-Z]+)*-)(\d+)$/i);
+            if (!match) {
+                const inp = row.querySelector('[data-code-input]');
+                if (inp) { inp.value = baseCode; inp.title = baseCode; }
+                return;
+            }
+
+            const prefix = match[1].toUpperCase();
+            const startNum = parseInt(match[2], 10);
+            const padLen = match[2].length;
+
+            let countBefore = 0;
+            for (let i = 0; i < rowIndex; i++) {
+                countBefore++;
+            }
+
+            const targetNum = startNum + countBefore;
+            const finalCode = `${prefix}${String(targetNum).padStart(padLen, '0')}`;
+
+            const input = row.querySelector('[data-code-input]');
+            if (input) {
+                input.value = finalCode;
+                input.title = finalCode;
+            }
+        }
 
 
         function removeNewItemRow(rowId) {
@@ -10217,7 +10276,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const deviceText = log.device || log.ua || 'Web';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><small class="font-monospace text-muted bg-light px-2 py-1 rounded d-inline-block">${log.time}</small></td>
+                    <td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${log.time}</span></td>
                     <td class="text-center"><span class="badge ${meta.badge} px-2 py-2 w-100"><i class="fas ${meta.icon} me-1"></i>${meta.label}</span></td>
                     <td>
                         <div class="fw-bold text-dark small">${log.user}${roleBadge}</div>
@@ -10477,45 +10536,29 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 wLoading.classList.remove('d-none'); bLoading.classList.remove('d-none');
             }
 
-            const errHtml = function(msg) {
-                return '<div class="col-12 text-center py-4" style="color:#ef4444">'
-                     + '<i class="fas fa-triangle-exclamation fa-2x mb-2"></i>'
-                     + '<p class="mb-1">โหลดรายการไม่สำเร็จ ลองกดปุ่ม "รีเฟรช" ด้านบนอีกครั้ง</p>'
-                     + (msg ? '<p class="small mb-0" style="opacity:.7">' + String(msg) + '</p>' : '')
-                     + '</div>';
+            const getLocalPendings = function() {
+                try { return JSON.parse(localStorage.getItem('demo_pending_withdraws')) || []; } catch(e) { return []; }
             };
 
-            if (typeof google === 'undefined' || !google.script || !google.script.run) {
+            const isDemo = (!window.GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
+
+            if (isDemo) {
                 wLoading.classList.add('d-none'); bLoading.classList.add('d-none');
-                wEmpty.classList.add('d-none'); bEmpty.classList.add('d-none');
-                wList.innerHTML = errHtml('google.script.run ไม่พร้อมใช้งาน (ไม่ได้เปิดผ่านหน้าเว็บแอปที่ถูกต้อง)');
-                bList.innerHTML = errHtml('google.script.run ไม่พร้อมใช้งาน (ไม่ได้เปิดผ่านหน้าเว็บแอปที่ถูกต้อง)');
+                renderPendingApprovals(getLocalPendings());
                 return;
             }
 
-            const giveUp = function(reason) {
-                console.warn('loadPendingApprovals failed:', reason);
+            callGAS('webGetPendingWebRequests', [], function(res) {
                 wLoading.classList.add('d-none'); bLoading.classList.add('d-none');
-                wEmpty.classList.add('d-none'); bEmpty.classList.add('d-none');
-                wList.innerHTML = errHtml(reason);
-                bList.innerHTML = errHtml(reason);
-            };
-
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    if (!res || !res.success) {
-                        if (retryCount < 2) { setTimeout(function() { loadPendingApprovals(silent, retryCount + 1); }, 800); return; }
-                        giveUp(res && res.error);
-                        return;
-                    }
-                    wLoading.classList.add('d-none'); bLoading.classList.add('d-none');
-                    renderPendingApprovals(res.data || []);
-                })
-                .withFailureHandler(function(err) {
-                    if (retryCount < 2) { setTimeout(function() { loadPendingApprovals(silent, retryCount + 1); }, 800); return; }
-                    giveUp(err);
-                })
-                .webGetPendingWebRequests();
+                if (res && res.success && res.data) {
+                    renderPendingApprovals(res.data);
+                } else {
+                    renderPendingApprovals(getLocalPendings());
+                }
+            }, function(err) {
+                wLoading.classList.add('d-none'); bLoading.classList.add('d-none');
+                renderPendingApprovals(getLocalPendings());
+            });
         }
 
 
@@ -10695,48 +10738,81 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 
         function approvePendingReq(reqId) {
             Swal.fire({
-                title: 'อนุมัติคำขอนี้?', text: 'ระบบจะตัดสต็อกจริงทันทีหลังกดอนุมัติ',
+                title: 'อนุมัติคำขอนี้?', text: 'ระบบจะปรับสต็อกจริงทันทีหลังกดอนุมัติ',
                 icon: 'question', showCancelButton: true,
                 confirmButtonColor: '#10b981', cancelButtonColor: '#64748b',
                 confirmButtonText: 'อนุมัติ', cancelButtonText: 'ยกเลิก'
             }).then(function(result) {
                 if (!result.isConfirmed) return;
                 document.getElementById('loading').style.display = 'flex';
-                google.script.run
-                    .withSuccessHandler(function(res) {
-                        document.getElementById('loading').style.display = 'none';
-                        if (!res || !res.success) return Swal.fire({icon: 'error', title: 'ผิดพลาด', text: (res && res.error) || 'ไม่สำเร็จ'});
-                        Swal.fire({icon: 'success', title: 'อนุมัติแล้ว', timer: 1500, showConfirmButton: false});
-                        // เอาการ์ดออกจากหน้าจอทันที ไม่ต้องโหลดรายการที่มีอยู่แล้วซ้ำ
-                        removePendingCardsFromDOM('pendingWithdrawList', [reqId]);
-                        removePendingCardsFromDOM('pendingBorrowList', [reqId]);
-                        refreshPendingApprovalBadge();
-                    })
-                    .withFailureHandler(function(err) { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'error', title: 'ผิดพลาด', text: String(err)}); })
-                    .webApprovePendingRequest({ reqId: reqId, adminUid: currentUserProfile.uid, adminName: currentUserProfile.name });
+
+                const onDone = function(res) {
+                    document.getElementById('loading').style.display = 'none';
+                    if (!res || res.success === false) return Swal.fire({icon: 'error', title: 'ผิดพลาด', text: (res && res.error) || 'ไม่สำเร็จ'});
+                    Swal.fire({icon: 'success', title: 'อนุมัติเรียบร้อย', timer: 1500, showConfirmButton: false});
+                    removePendingCardsFromDOM('pendingWithdrawList', [reqId]);
+                    removePendingCardsFromDOM('pendingBorrowList', [reqId]);
+                    refreshPendingApprovalBadge();
+                    loadPendingApprovals();
+                };
+
+                if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webApprovePendingRequest === 'function') {
+                    google.script.run
+                        .withSuccessHandler(onDone)
+                        .withFailureHandler(function(err) { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'error', title: 'ผิดพลาด', text: String(err)}); })
+                        .webApprovePendingRequest({ reqId: reqId, adminUid: currentUserProfile.uid, adminName: currentUserProfile.name });
+                } else {
+                    // Offline / file:/// / Demo Mode
+                    let localPendings = [];
+                    try { localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || []; } catch(e) {}
+                    const target = localPendings.find(r => String(r.reqId) === String(reqId));
+                    if (target) {
+                        const item = (allData.items || []).find(i => i.code === (target.itemCode || target.code));
+                        if (item) {
+                            if (target.type === 'คืน') item.stock = (Number(item.stock) || 0) + Number(target.qty);
+                            else item.stock = Math.max(0, (Number(item.stock) || 0) - Number(target.qty));
+                        }
+                    }
+                    localPendings = localPendings.filter(r => String(r.reqId) !== String(reqId));
+                    try { localStorage.setItem('demo_pending_withdraws', JSON.stringify(localPendings)); } catch(e) {}
+                    onDone({ success: true });
+                }
             });
         }
 
         function rejectPendingReq(reqId) {
             Swal.fire({
-                title: 'ปฏิเสธคำขอนี้?', text: 'ของที่กันไว้จะถูกปล่อยคืนทันที ไม่มีการตัดสต็อก',
+                title: 'ปฏิเสธคำขอนี้?', text: 'คำขอจะถูกยกเลิกทันที ไม่มีการปรับสต็อก',
                 icon: 'warning', showCancelButton: true,
                 confirmButtonColor: '#ef4444', cancelButtonColor: '#64748b',
                 confirmButtonText: 'ปฏิเสธ', cancelButtonText: 'ยกเลิก'
             }).then(function(result) {
                 if (!result.isConfirmed) return;
                 document.getElementById('loading').style.display = 'flex';
-                google.script.run
-                    .withSuccessHandler(function(res) {
-                        document.getElementById('loading').style.display = 'none';
-                        if (!res || !res.success) return Swal.fire({icon: 'error', title: 'ผิดพลาด', text: (res && res.error) || 'ไม่สำเร็จ'});
-                        Swal.fire({icon: 'success', title: 'ปฏิเสธแล้ว', timer: 1500, showConfirmButton: false});
-                        removePendingCardsFromDOM('pendingWithdrawList', [reqId]);
-                        removePendingCardsFromDOM('pendingBorrowList', [reqId]);
-                        refreshPendingApprovalBadge();
-                    })
-                    .withFailureHandler(function(err) { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'error', title: 'ผิดพลาด', text: String(err)}); })
-                    .webRejectPendingRequest({ reqId: reqId, adminUid: currentUserProfile.uid, adminName: currentUserProfile.name });
+
+                const onDone = function(res) {
+                    document.getElementById('loading').style.display = 'none';
+                    if (!res || res.success === false) return Swal.fire({icon: 'error', title: 'ผิดพลาด', text: (res && res.error) || 'ไม่สำเร็จ'});
+                    Swal.fire({icon: 'success', title: 'ปฏิเสธแล้ว', timer: 1500, showConfirmButton: false});
+                    removePendingCardsFromDOM('pendingWithdrawList', [reqId]);
+                    removePendingCardsFromDOM('pendingBorrowList', [reqId]);
+                    refreshPendingApprovalBadge();
+                    loadPendingApprovals();
+                };
+
+                if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webRejectPendingRequest === 'function') {
+                    google.script.run
+                        .withSuccessHandler(onDone)
+                        .withFailureHandler(function(err) { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'error', title: 'ผิดพลาด', text: String(err)}); })
+                        .webRejectPendingRequest({ reqId: reqId, adminUid: currentUserProfile.uid, adminName: currentUserProfile.name });
+                } else {
+                    // Offline / file:/// / Demo Mode
+                    let localPendings = [];
+                    try { localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || []; } catch(e) {}
+                    localPendings = localPendings.filter(r => String(r.reqId) !== String(reqId));
+                    try { localStorage.setItem('demo_pending_withdraws', JSON.stringify(localPendings)); } catch(e) {}
+                    onDone({ success: true });
+                }
             });
         }
 
@@ -11094,22 +11170,16 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 
                 const payload = { year: year, month: month, userName: currentUserProfile ? currentUserProfile.name : 'Web', userId: currentUserProfile ? currentUserProfile.uid : '-' };
 
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run
-                        .withSuccessHandler(function(res) {
-                            if (res && res.success) {
-                                Swal.fire({ icon: 'success', title: 'Archive สำเร็จ!', html: '<div style="color:#e0e0e0">สร้าง <b style="color:#22c55e">' + res.archiveName + '</b><br>รวม <b>' + res.totalRows + '</b> รายการ</div>', background: '#1a2230', color: '#e0e0e0' });
-                                loadArchiveList();
-                            } else {
-                                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res ? res.error : 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' });
-                            }
-                        })
-                        .withFailureHandler(function(err) { Swal.fire({ icon: 'error', title: 'Error', text: String(err), background: '#1a2230', color: '#e0e0e0' }); })
-                        .webArchiveMonth(payload);
-                } else {
-                    Swal.close();
-                    Swal.fire({ icon: 'info', title: 'Demo Mode', text: 'ฟีเจอร์นี้ใช้งานได้เฉพาะบน Google Apps Script จริงเท่านั้น', background: '#1a2230', color: '#e0e0e0' });
-                }
+                callGAS('webArchiveMonth', [payload], function(res) {
+                    if (res && res.success) {
+                        Swal.fire({ icon: 'success', title: 'Archive สำเร็จ!', html: '<div style="color:#e0e0e0">สร้าง <b style="color:#22c55e">' + (res.archiveName || 'ArchiveSheet') + '</b><br>รวม <b>' + (res.totalRows || 0) + '</b> รายการ</div>', background: '#1a2230', color: '#e0e0e0' });
+                        loadArchiveList();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res ? res.error : 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' });
+                    }
+                }, function(err) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: String(err), background: '#1a2230', color: '#e0e0e0' });
+                });
             });
         }
 
@@ -11520,22 +11590,16 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }).then(function(result) {
                 if (!result.isConfirmed) return;
                 Swal.fire({ title: 'กำลังกู้คืน...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run
-                        .withSuccessHandler(function(res) {
-                            if (res && res.success) {
-                                Swal.fire({ icon: 'success', title: 'กู้คืนสำเร็จ!', text: 'นำข้อมูล ' + res.restoredRows + ' รายการกลับเข้า Logs แล้ว', background: '#1a2230', color: '#e0e0e0' });
-                                loadArchiveList();
-                            } else {
-                                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res ? res.error : 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' });
-                            }
-                        })
-                        .withFailureHandler(function(err) { Swal.fire({ icon: 'error', title: 'Error', text: String(err), background: '#1a2230', color: '#e0e0e0' }); })
-                        .webRestoreArchive(archiveName, currentUserProfile ? currentUserProfile.uid : '-');
-                } else {
-                    Swal.close();
-                    Swal.fire({ icon: 'info', title: 'Demo Mode', text: 'ฟีเจอร์นี้ใช้งานได้เฉพาะบน Google Apps Script จริงเท่านั้น', background: '#1a2230', color: '#e0e0e0' });
-                }
+                callGAS('webRestoreArchive', [archiveName, currentUserProfile ? currentUserProfile.uid : '-'], function(res) {
+                    if (res && res.success) {
+                        Swal.fire({ icon: 'success', title: 'กู้คืนสำเร็จ!', text: 'นำข้อมูล ' + (res.restoredRows || 0) + ' รายการกลับเข้า Logs แล้ว', background: '#1a2230', color: '#e0e0e0' });
+                        loadArchiveList();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res ? res.error : 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' });
+                    }
+                }, function(err) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: String(err), background: '#1a2230', color: '#e0e0e0' });
+                });
             });
         }
 
