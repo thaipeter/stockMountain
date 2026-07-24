@@ -11179,20 +11179,41 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         function _stEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function(ch) { var map = {"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}; return map[ch]; }); }
 
         function loadStockTakeDiffs() {
-            if (!(typeof google !== 'undefined' && google.script && google.script.run)) return;
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    if (!res || !res.success) return;
-                    stMgmtState.diffs = res.diffs || [];
-                    renderStockTakeDiffList();
-                    const unresolved = (res.diffs || []).filter(d => !d.resolved).length;
-                    const badge = document.getElementById('stDiffCountBadge');
-                    if (badge) {
-                        if (unresolved > 0) { badge.textContent = unresolved; badge.classList.remove('d-none'); }
-                        else { badge.classList.add('d-none'); }
-                    }
-                })
-                .webGetStockTakeDiffs({ role: currentUserProfile.role, sessionId: stMgmtState.sessionId });
+            if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webGetStockTakeDiffs === 'function') {
+                google.script.run
+                    .withSuccessHandler(function(res) {
+                        if (!res || !res.success) return;
+                        stMgmtState.diffs = res.diffs || [];
+                        renderStockTakeDiffList();
+                        const unresolved = (res.diffs || []).filter(d => !d.resolved).length;
+                        const badge = document.getElementById('stDiffCountBadge');
+                        if (badge) {
+                            if (unresolved > 0) { badge.textContent = unresolved; badge.classList.remove('d-none'); }
+                            else { badge.classList.add('d-none'); }
+                        }
+                    })
+                    .webGetStockTakeDiffs({ role: currentUserProfile.role, sessionId: stMgmtState.sessionId });
+            } else {
+                // Fallback Mode: สร้าง diffs จาก stMgmtState.items ที่นับและมีส่วนต่าง != 0
+                stMgmtState.diffs = (stMgmtState.items || [])
+                    .filter(i => i.counted && i.diff !== 0)
+                    .map(i => ({
+                        itemCode: i.code,
+                        itemName: i.name,
+                        systemStock: i.systemStock,
+                        countedQty: i.countedQty,
+                        diff: i.diff,
+                        unit: i.unit,
+                        resolved: false
+                    }));
+                renderStockTakeDiffList();
+                const unresolved = (stMgmtState.diffs || []).filter(d => !d.resolved).length;
+                const badge = document.getElementById('stDiffCountBadge');
+                if (badge) {
+                    if (unresolved > 0) { badge.textContent = unresolved; badge.classList.remove('d-none'); }
+                    else { badge.classList.add('d-none'); }
+                }
+            }
         }
 
         function renderStockTakeDiffList() {
@@ -11389,14 +11410,13 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (!stMgmtState.counts) stMgmtState.counts = {};
                 stMgmtState.counts[code] = val;
                 
-                // อัปเดตสต็อกจริงใน memory ด้วย
                 const targetItem = (allData.items || []).find(i => i.code === code);
                 const sysStock = targetItem ? Number(targetItem.stock || 0) : 0;
                 const diff = val - sysStock;
                 
                 Swal.fire({
                     icon: 'success', 
-                    title: diff === 0 ? 'ยอดตรง บันทึกแล้ว' : 'ปรับยอด ' + (diff > 0 ? '+' : '') + diff + ' แล้ว', 
+                    title: diff === 0 ? 'ยอดตรง บันทึกแล้ว' : 'บันทึกยอดนับแล้ว (ส่วนต่าง ' + (diff > 0 ? '+' : '') + diff + ')', 
                     timer: 1200, 
                     showConfirmButton: false
                 });
