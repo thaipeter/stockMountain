@@ -449,7 +449,7 @@
 .search-box input::placeholder{color:#444}
 .search-box i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#444;font-size:.85rem}
 .category-select{border-radius:var(--radius-md);min-width:180px;background:#0d0d0d;border:1px solid #2a2a2a;color:#b0b0b0}
-        .tag-chip-container{display:flex;flex-wrap:wrap;gap:8px;min-height:42px;background:#f8fafc;border:1px solid var(--border-color);border-radius:10px;padding:8px}body.dark-mode .tag-chip-container{background:#0f172a}.tag-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.85rem;font-weight:600;background:#e0e7ff;color:#4338ca;border:1px solid #c7d2fe;box-shadow:0 1px 2px rgba(0,0,0,.05)}.tag-chip.tag-location{background:#fee2e2;color:#b91c1c;border-color:#fecaca}.tag-chip-remove{cursor:pointer;font-size:1.1rem;opacity:.6;background:0 0;border:none;padding:0;color:inherit;transition:.2s}.tag-chip-remove:hover{opacity:1;transform:scale(1.1)}
+        .tag-chip-container{display:flex;flex-wrap:wrap;align-items:flex-start;align-content:flex-start;gap:8px;min-height:80px;background:#f8fafc;border:1px solid var(--border-color);border-radius:10px;padding:12px}body.dark-mode .tag-chip-container{background:#0f172a}.tag-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.85rem;font-weight:600;background:#e0e7ff;color:#4338ca;border:1px solid #c7d2fe;box-shadow:0 1px 2px rgba(0,0,0,.05)}.tag-chip.tag-location{background:#fee2e2;color:#b91c1c;border-color:#fecaca}.tag-chip-remove{cursor:pointer;font-size:1.1rem;opacity:.6;background:0 0;border:none;padding:0;color:inherit;transition:.2s}.tag-chip-remove:hover{opacity:1;transform:scale(1.1)}
         .section-view{display:none;animation:slideUpFade .4s cubic-bezier(.16,1,.3,1);background:var(--light-bg)}.section-view.active{display:block;background:var(--light-bg)}@keyframes slideUpFade{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
         .loading-overlay,.login-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;justify-content:center;align-items:center;flex-direction:column}
 .loading-overlay{background:transparent;isolation:isolate}
@@ -3520,26 +3520,11 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                           <span class="badge" style="background:rgba(96,165,250,.15);color:#93c5fd;border:1px solid rgba(96,165,250,.3);font-size:.7rem">System Spec v2.5</span>
                                       </div>
 
-                                      <!-- Active Users & Drive Storage Metrics Row -->
+                                      <!-- Drive Storage Metrics Row -->
+                                      <!-- ผู้ใช้งานทั้งหมดในระบบ ย้ายไปแสดงที่ Dashboard/Footer (#footerUserBadgeCount) แล้ว เอาการ์ดซ้ำออกจากหน้านี้ -->
                                       <div class="row g-3 mb-3">
-                                          <!-- Metric 1: Total Active Users -->
-                                          <div class="col-12 col-sm-6">
-                                              <div class="p-3 rounded-3 d-flex align-items-center gap-3" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)">
-                                                  <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                                                      <i class="fas fa-users-gear" style="color:#fbbf24;font-size:1.25rem"></i>
-                                                  </div>
-                                                  <div>
-                                                      <div style="font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.5px" class="fw-bold">ผู้ใช้งานทั้งหมดในระบบ</div>
-                                                      <div class="d-flex align-items-baseline gap-2">
-                                                          <span class="fw-bold fs-4 text-white" id="sysTotalUserCount">3</span>
-                                                          <span style="font-size:.75rem;color:rgba(255,255,255,.5)">บัญชีผู้ใช้</span>
-                                                      </div>
-                                                  </div>
-                                              </div>
-                                          </div>
-
-                                          <!-- Metric 2: Google Drive Storage Usage -->
-                                          <div class="col-12 col-sm-6">
+                                          <!-- Metric: Google Drive Storage Usage -->
+                                          <div class="col-12">
                                               <div class="p-3 rounded-3" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)">
                                                   <div class="d-flex align-items-center justify-content-between mb-1">
                                                       <div class="d-flex align-items-center gap-2">
@@ -5358,14 +5343,9 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
             });
 
             if (!window.masterTagsUserModified || forceInit) {
-                // --- Categories: รวม settings + ดึง unique จาก items & tools จริง + รหัสย่ออัตโนมัติ ---
+                // --- Categories: ใช้ savedCats เป็นหลัก หากเคยตั้งค่าไว้แล้ว จะไม่ดึงหมวดที่ลบไปแล้วกลับมา ---
                 const savedCats = (allData.settings?.categories || '')
                     .split(',').map(s => s.trim()).filter(s => s);
-
-                const sheetCats = [...new Set(
-                    allList.map(i => String(i.category || '').trim())
-                           .filter(s => s && s !== 'undefined')
-                )];
 
                 const prefixMap = {};
                 savedCats.forEach(s => {
@@ -5375,35 +5355,46 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                     }
                 });
 
-                // เติม autoDetectedPrefixMap สำหรับหมวดหมู่ที่ยังไม่มี prefix
                 Object.keys(autoDetectedPrefixMap).forEach(catName => {
                     if (!prefixMap[catName]) {
                         prefixMap[catName] = autoDetectedPrefixMap[catName];
                     }
                 });
 
-                const allCatNames = [...new Set([
-                    ...savedCats.map(s => s.includes(':') ? s.split(':')[0].trim() : s),
-                    ...sheetCats
-                ])].sort();
+                let finalCatNames = [];
+                if (savedCats.length > 0) {
+                    finalCatNames = savedCats.map(s => s.includes(':') ? s.split(':')[0].trim() : s);
+                } else {
+                    const sheetCats = [...new Set(
+                        allList.map(i => String(i.category || '').trim())
+                               .filter(s => s && s !== 'undefined')
+                    )];
+                    finalCatNames = sheetCats;
+                }
 
-                const combinedCats = allCatNames.map(name =>
+                const combinedCats = [...new Set(finalCatNames)].sort().map(name =>
                     prefixMap[name] ? `${name}:${prefixMap[name]}` : name
                 );
 
                 catInput.value = combinedCats.join(', ');
                 if (allData.settings) allData.settings.categories = catInput.value;
 
-                // --- Locations ---
+                // --- Locations: ใช้ savedLocs เป็นหลัก หากเคยตั้งค่าไว้แล้ว จะไม่ดึงตำแหน่งที่ลบไปแล้วกลับมา ---
                 const savedLocs = (allData.settings?.locations || '')
                     .split(',').map(s => s.trim()).filter(s => s);
 
-                const sheetLocs = [...new Set(
-                    allList.map(i => String(i.location || '').trim())
-                           .filter(s => s && s !== 'undefined')
-                )];
+                let finalLocs = [];
+                if (savedLocs.length > 0) {
+                    finalLocs = savedLocs;
+                } else {
+                    const sheetLocs = [...new Set(
+                        allList.map(i => String(i.location || '').trim())
+                               .filter(s => s && s !== 'undefined')
+                    )];
+                    finalLocs = sheetLocs;
+                }
 
-                const combinedLocs = [...new Set([...savedLocs, ...sheetLocs])].sort();
+                const combinedLocs = [...new Set(finalLocs)].sort();
                 locInput.value = combinedLocs.join(', ');
                 if (allData.settings) allData.settings.locations = locInput.value;
             }
@@ -9019,27 +9010,17 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 }
 
                 // ═══ 1.5. QR Web App — ตรวจรายการค้างรออนุมัติจริง ═══
+                // ใช้ตัวนับจริงจากระบบ (อัปเดตโดย refreshPendingApprovalBadge()) แทน allData.pending ที่ backend ไม่เคยส่งมา
                 let localPendings = [];
                 try {
                     localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
                 } catch(e) {}
-                // รวมข้อมูลจากทุกแหล่ง: GAS + localStorage
-                const allPendings = [...(allData.pending || []), ...(allData.pendingWithdraws || []), ...localPendings];
-                const pendingCount = allPendings.length;
+                const realPendingCount = (typeof _pendingReqCount === 'number' ? _pendingReqCount : 0) + (typeof _pendingUserCountForBadge === 'number' ? _pendingUserCountForBadge : 0);
+                const pendingCount = realPendingCount + localPendings.length;
 
                 if (pendingCount > 0) {
                     issueCount++;
-                    // แสดงรายละเอียดทุกรายการ
-                    const detailLines = allPendings.map((p, i) => {
-                        const name = p.itemName || p.name || 'ไม่ทราบชื่อ';
-                        const code = p.itemCode || p.code || '?';
-                        const qty = p.qty || '?';
-                        const user = p.user || p.userId || '';
-                        const date = p.date || '';
-                        const status = p.status || 'รออนุมัติ';
-                        return `${i+1}. <b>${name}</b> (${code}) x${qty} — ${user} ${date} [${status}]`;
-                    });
-                    appendDiagnosticLog('WARNING', `📲 รายการค้างรออนุมัติ ${pendingCount} รายการ`, `พบรายการขอเบิก/ยืมค้างรออนุมัติ:<br>${detailLines.join('<br>')}<br><br>👉 กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อกดอนุมัติ/ปฏิเสธ!`);
+                    appendDiagnosticLog('WARNING', `📲 รายการค้างรออนุมัติ ${pendingCount} รายการ`, `พบคำขอเบิก/ยืม และ/หรือผู้ใช้ QR ใหม่ที่ยังไม่อนุมัติ<br><br>👉 กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อกดอนุมัติ/ปฏิเสธ!`);
                 } else {
                     appendDiagnosticLog('SUCCESS', '📲 ระบบ QR Web App (indexqr.html)', 'หน้า indexqr.html พร้อมใช้งาน ไม่มีรายการค้างรออนุมัติ');
                 }
@@ -9050,7 +9031,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const noPinNames = [];
                 const noRoleNames = [];
                 users.forEach(u => {
-                    if (!u.pin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid || '?'); }
+                    if (!u.hasPin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid || '?'); }
                     if (!u.role) { noRole++; noRoleNames.push(u.name || u.uid || '?'); }
                 });
 
@@ -9066,8 +9047,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 }
 
                 // ═══ 3. API & Notification Token Check ═══
-                const setLineToken = document.getElementById('setLineToken') ? document.getElementById('setLineToken').value : '';
-                const setGeminiKey = document.getElementById('setGeminiKey') ? document.getElementById('setGeminiKey').value : '';
+                const setLineToken = document.getElementById('setChannelToken') ? document.getElementById('setChannelToken').value : '';
+                const setGeminiKey = document.getElementById('setGeminiApiKey') ? document.getElementById('setGeminiApiKey').value : '';
 
                 if (!setLineToken && isGAS) {
                     issueCount++;
@@ -9161,14 +9142,14 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (zeroStock > 0) { appendDiagnosticLog('INFO', '📭 สต็อกเป็น 0', `<b>${zeroStock}</b> รายการหมดสต็อก: ${zeroList.slice(0,5).join(', ')}${zeroStock > 5 ? '...' : ''}`); }
                 if (issueCount === 0) appendDiagnosticLog('SUCCESS', '✅ สต็อกปกติทั้งหมด', `ตรวจ <b>${allStock.length}</b> รายการ ไม่พบปัญหา`);
 
-                // ตรวจ pending ด้วย
+                // ตรวจ pending ด้วย — ใช้ตัวนับจริงจากระบบ (อัปเดตโดย refreshPendingApprovalBadge()) แทน allData.pending ที่ backend ไม่เคยส่งมา
                 let localPendings = [];
                 try { localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || []; } catch(e) {}
-                const allPendings = [...(allData.pending || []), ...(allData.pendingWithdraws || []), ...localPendings];
-                if (allPendings.length > 0) {
+                const realPendingCount = (typeof _pendingReqCount === 'number' ? _pendingReqCount : 0) + (typeof _pendingUserCountForBadge === 'number' ? _pendingUserCountForBadge : 0);
+                const pendingTotal = realPendingCount + localPendings.length;
+                if (pendingTotal > 0) {
                     issueCount++;
-                    const lines = allPendings.map((p, i) => `${i+1}. <b>${p.itemName || p.name || '?'}</b> (${p.itemCode || p.code || '?'}) x${p.qty || '?'} — ${p.user || ''} [${p.status || 'รออนุมัติ'}]`);
-                    appendDiagnosticLog('WARNING', `📲 ค้างรออนุมัติ ${allPendings.length} รายการ`, lines.join('<br>'));
+                    appendDiagnosticLog('WARNING', `📲 ค้างรออนุมัติ ${pendingTotal} รายการ`, `พบคำขอเบิก/ยืม และ/หรือผู้ใช้ QR ใหม่ที่ยังไม่อนุมัติ — 👉 กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อตรวจสอบและกดอนุมัติ/ปฏิเสธ`);
                 }
 
                 _updateDiagBadge(issueCount);
@@ -9185,8 +9166,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             appendDiagnosticLog('INFO', '🔌 เริ่มตรวจสอบการเชื่อมต่อ...', 'ตรวจสอบ API & LINE Token');
 
             setTimeout(() => {
-                const setLineToken = document.getElementById('setLineToken') ? document.getElementById('setLineToken').value : '';
-                const setGeminiKey = document.getElementById('setGeminiKey') ? document.getElementById('setGeminiKey').value : '';
+                const setLineToken = document.getElementById('setChannelToken') ? document.getElementById('setChannelToken').value : '';
+                const setGeminiKey = document.getElementById('setGeminiApiKey') ? document.getElementById('setGeminiApiKey').value : '';
 
                 // GAS Connection
                 if (isGAS) {
@@ -9228,7 +9209,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const noPinNames = [], noRoleNames = [], adminNames = [];
 
                 users.forEach(u => {
-                    if (!u.pin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid); }
+                    if (!u.hasPin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid); }
                     if (!u.role) { noRole++; noRoleNames.push(u.name || u.uid); }
                     if (u.role === 'admin') { adminCount++; adminNames.push(u.name || u.uid); }
                 });
