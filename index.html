@@ -3520,11 +3520,26 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                                           <span class="badge" style="background:rgba(96,165,250,.15);color:#93c5fd;border:1px solid rgba(96,165,250,.3);font-size:.7rem">System Spec v2.5</span>
                                       </div>
 
-                                      <!-- Drive Storage Metrics Row -->
-                                      <!-- ผู้ใช้งานทั้งหมดในระบบ ย้ายไปแสดงที่ Dashboard/Footer (#footerUserBadgeCount) แล้ว เอาการ์ดซ้ำออกจากหน้านี้ -->
+                                      <!-- Active Users & Drive Storage Metrics Row -->
                                       <div class="row g-3 mb-3">
-                                          <!-- Metric: Google Drive Storage Usage -->
-                                          <div class="col-12">
+                                          <!-- Metric 1: Total Active Users -->
+                                          <div class="col-12 col-sm-6">
+                                              <div class="p-3 rounded-3 d-flex align-items-center gap-3" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)">
+                                                  <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                                                      <i class="fas fa-users-gear" style="color:#fbbf24;font-size:1.25rem"></i>
+                                                  </div>
+                                                  <div>
+                                                      <div style="font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.5px" class="fw-bold">ผู้ใช้งานทั้งหมดในระบบ</div>
+                                                      <div class="d-flex align-items-baseline gap-2">
+                                                          <span class="fw-bold fs-4 text-white" id="sysTotalUserCount">3</span>
+                                                          <span style="font-size:.75rem;color:rgba(255,255,255,.5)">บัญชีผู้ใช้</span>
+                                                      </div>
+                                                  </div>
+                                              </div>
+                                          </div>
+
+                                          <!-- Metric 2: Google Drive Storage Usage -->
+                                          <div class="col-12 col-sm-6">
                                               <div class="p-3 rounded-3" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)">
                                                   <div class="d-flex align-items-center justify-content-between mb-1">
                                                       <div class="d-flex align-items-center gap-2">
@@ -9010,17 +9025,27 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 }
 
                 // ═══ 1.5. QR Web App — ตรวจรายการค้างรออนุมัติจริง ═══
-                // ใช้ตัวนับจริงจากระบบ (อัปเดตโดย refreshPendingApprovalBadge()) แทน allData.pending ที่ backend ไม่เคยส่งมา
                 let localPendings = [];
                 try {
                     localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
                 } catch(e) {}
-                const realPendingCount = (typeof _pendingReqCount === 'number' ? _pendingReqCount : 0) + (typeof _pendingUserCountForBadge === 'number' ? _pendingUserCountForBadge : 0);
-                const pendingCount = realPendingCount + localPendings.length;
+                // รวมข้อมูลจากทุกแหล่ง: GAS + localStorage
+                const allPendings = [...(allData.pending || []), ...(allData.pendingWithdraws || []), ...localPendings];
+                const pendingCount = allPendings.length;
 
                 if (pendingCount > 0) {
                     issueCount++;
-                    appendDiagnosticLog('WARNING', `📲 รายการค้างรออนุมัติ ${pendingCount} รายการ`, `พบคำขอเบิก/ยืม และ/หรือผู้ใช้ QR ใหม่ที่ยังไม่อนุมัติ<br><br>👉 กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อกดอนุมัติ/ปฏิเสธ!`);
+                    // แสดงรายละเอียดทุกรายการ
+                    const detailLines = allPendings.map((p, i) => {
+                        const name = p.itemName || p.name || 'ไม่ทราบชื่อ';
+                        const code = p.itemCode || p.code || '?';
+                        const qty = p.qty || '?';
+                        const user = p.user || p.userId || '';
+                        const date = p.date || '';
+                        const status = p.status || 'รออนุมัติ';
+                        return `${i+1}. <b>${name}</b> (${code}) x${qty} — ${user} ${date} [${status}]`;
+                    });
+                    appendDiagnosticLog('WARNING', `📲 รายการค้างรออนุมัติ ${pendingCount} รายการ`, `พบรายการขอเบิก/ยืมค้างรออนุมัติ:<br>${detailLines.join('<br>')}<br><br>👉 กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อกดอนุมัติ/ปฏิเสธ!`);
                 } else {
                     appendDiagnosticLog('SUCCESS', '📲 ระบบ QR Web App (indexqr.html)', 'หน้า indexqr.html พร้อมใช้งาน ไม่มีรายการค้างรออนุมัติ');
                 }
@@ -9031,7 +9056,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const noPinNames = [];
                 const noRoleNames = [];
                 users.forEach(u => {
-                    if (!u.hasPin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid || '?'); }
+                    if (!u.pin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid || '?'); }
                     if (!u.role) { noRole++; noRoleNames.push(u.name || u.uid || '?'); }
                 });
 
@@ -9047,8 +9072,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 }
 
                 // ═══ 3. API & Notification Token Check ═══
-                const setLineToken = document.getElementById('setChannelToken') ? document.getElementById('setChannelToken').value : '';
-                const setGeminiKey = document.getElementById('setGeminiApiKey') ? document.getElementById('setGeminiApiKey').value : '';
+                const setLineToken = document.getElementById('setLineToken') ? document.getElementById('setLineToken').value : '';
+                const setGeminiKey = document.getElementById('setGeminiKey') ? document.getElementById('setGeminiKey').value : '';
 
                 if (!setLineToken && isGAS) {
                     issueCount++;
@@ -9142,14 +9167,14 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (zeroStock > 0) { appendDiagnosticLog('INFO', '📭 สต็อกเป็น 0', `<b>${zeroStock}</b> รายการหมดสต็อก: ${zeroList.slice(0,5).join(', ')}${zeroStock > 5 ? '...' : ''}`); }
                 if (issueCount === 0) appendDiagnosticLog('SUCCESS', '✅ สต็อกปกติทั้งหมด', `ตรวจ <b>${allStock.length}</b> รายการ ไม่พบปัญหา`);
 
-                // ตรวจ pending ด้วย — ใช้ตัวนับจริงจากระบบ (อัปเดตโดย refreshPendingApprovalBadge()) แทน allData.pending ที่ backend ไม่เคยส่งมา
+                // ตรวจ pending ด้วย
                 let localPendings = [];
                 try { localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || []; } catch(e) {}
-                const realPendingCount = (typeof _pendingReqCount === 'number' ? _pendingReqCount : 0) + (typeof _pendingUserCountForBadge === 'number' ? _pendingUserCountForBadge : 0);
-                const pendingTotal = realPendingCount + localPendings.length;
-                if (pendingTotal > 0) {
+                const allPendings = [...(allData.pending || []), ...(allData.pendingWithdraws || []), ...localPendings];
+                if (allPendings.length > 0) {
                     issueCount++;
-                    appendDiagnosticLog('WARNING', `📲 ค้างรออนุมัติ ${pendingTotal} รายการ`, `พบคำขอเบิก/ยืม และ/หรือผู้ใช้ QR ใหม่ที่ยังไม่อนุมัติ — 👉 กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อตรวจสอบและกดอนุมัติ/ปฏิเสธ`);
+                    const lines = allPendings.map((p, i) => `${i+1}. <b>${p.itemName || p.name || '?'}</b> (${p.itemCode || p.code || '?'}) x${p.qty || '?'} — ${p.user || ''} [${p.status || 'รออนุมัติ'}]`);
+                    appendDiagnosticLog('WARNING', `📲 ค้างรออนุมัติ ${allPendings.length} รายการ`, lines.join('<br>'));
                 }
 
                 _updateDiagBadge(issueCount);
@@ -9166,8 +9191,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             appendDiagnosticLog('INFO', '🔌 เริ่มตรวจสอบการเชื่อมต่อ...', 'ตรวจสอบ API & LINE Token');
 
             setTimeout(() => {
-                const setLineToken = document.getElementById('setChannelToken') ? document.getElementById('setChannelToken').value : '';
-                const setGeminiKey = document.getElementById('setGeminiApiKey') ? document.getElementById('setGeminiApiKey').value : '';
+                const setLineToken = document.getElementById('setLineToken') ? document.getElementById('setLineToken').value : '';
+                const setGeminiKey = document.getElementById('setGeminiKey') ? document.getElementById('setGeminiKey').value : '';
 
                 // GAS Connection
                 if (isGAS) {
@@ -9209,7 +9234,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const noPinNames = [], noRoleNames = [], adminNames = [];
 
                 users.forEach(u => {
-                    if (!u.hasPin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid); }
+                    if (!u.pin && u.role !== 'admin') { noPin++; noPinNames.push(u.name || u.uid); }
                     if (!u.role) { noRole++; noRoleNames.push(u.name || u.uid); }
                     if (u.role === 'admin') { adminCount++; adminNames.push(u.name || u.uid); }
                 });
@@ -11186,7 +11211,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     .withFailureHandler(function(err) { 
                         tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-danger small">โหลดไม่สำเร็จ: ' + err + '</td></tr>'; 
                     })
-                    .webGetStockTakeProgress({ role: currentUserProfile.role, userName: currentUserProfile.name });
+                    .webGetStockTakeProgress({ role: currentUserProfile.role, userName: currentUserProfile.name, adminUid: currentUserProfile.userId || currentUserProfile.uid || '-' });
             } else {
                 // Fallback Mode: แสดงรายการสินค้าจาก allData
                 const now = new Date();
@@ -11247,7 +11272,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             else { badge.classList.add('d-none'); }
                         }
                     })
-                    .webGetStockTakeDiffs({ role: currentUserProfile.role, sessionId: stMgmtState.sessionId });
+                    .webGetStockTakeDiffs({ role: currentUserProfile.role, sessionId: stMgmtState.sessionId, adminUid: currentUserProfile.userId || currentUserProfile.uid || '-' });
             } else {
                 // Fallback Mode: สร้าง diffs จาก stMgmtState.items ที่นับและมีส่วนต่าง != 0
                 stMgmtState.diffs = (stMgmtState.items || [])
@@ -11334,7 +11359,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     }).join('');
                 })
                 .withFailureHandler(function(err) { document.getElementById('iwhList').innerHTML = assignNoteHtml + '<div class="text-center py-3 text-danger small">โหลดไม่สำเร็จ: ' + String(err) + '</div>'; })
-                .webGetItemRecentWithdraws({ role: currentUserProfile.role, sessionId: stMgmtState.sessionId, itemCode: code });
+                .webGetItemRecentWithdraws({ role: currentUserProfile.role, sessionId: stMgmtState.sessionId, itemCode: code, adminUid: currentUserProfile.userId || currentUserProfile.uid || '-' });
         }
 
         // เติมรายชื่อ user ลงใน dropdown "มอบหมายให้ user" ในโมดัลเบิกย้อนหลัง
@@ -11442,7 +11467,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     + '<td class="text-center">' + (it.counted ? it.countedQty : '-') + '</td>'
                     + '<td class="text-center">' + diffHtml + '</td>'
                     + '<td class="text-center"><input type="number" min="0" style="width:80px;background:#232838;color:#e0e0e0;border:1px solid #2a2f3d;border-radius:6px;text-align:center" id="stMgmtInput_' + it.code + '" value="' + (it.counted ? it.countedQty : '') + '" placeholder="' + it.systemStock + '"> '
-                    + '<button class="btn btn-sm mt-1" onclick="stMgmtSaveCount(\'' + it.code + '\')" style="background:#3a2e1e;color:#f59e0b;border:1px solid #5f4a2a;border-radius:6px"><i class="fas fa-save"></i></button></td>'
+                    + '<button id="stMgmtSaveBtn_' + it.code + '" class="btn btn-sm mt-1" onclick="stMgmtSaveCount(\'' + it.code + '\')" style="background:#3a2e1e;color:#f59e0b;border:1px solid #5f4a2a;border-radius:6px"><i class="fas fa-save"></i></button></td>'
                     + '</tr>';
             }).join('');
         }
@@ -11451,16 +11476,34 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const input = document.getElementById('stMgmtInput_' + code);
             const val = Number(input.value);
             if (input.value === '' || isNaN(val) || val < 0) { Swal.fire({icon:'warning', title:'กรอกจำนวนให้ถูกต้อง', timer:1500, showConfirmButton:false}); return; }
-            
+
+            // ★ แสดงสถานะกำลังโหลดบนปุ่มระหว่างรอ google.script.run ตอบกลับ (ปกติใช้เวลา 1-3 วิ)
+            // ป้องกันผู้ใช้กดซ้ำ และให้เห็นว่าระบบกำลังทำงานอยู่ ไม่ใช่ค้าง
+            const btn = document.getElementById('stMgmtSaveBtn_' + code);
+            const btnOriginalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '.6';
+                btn.style.cursor = 'not-allowed';
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+            const restoreBtn = function() {
+                if (!btn) return;
+                btn.disabled = false;
+                btn.style.opacity = '';
+                btn.style.cursor = 'pointer';
+                btn.innerHTML = btnOriginalHtml;
+            };
+
             if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webSubmitStockCount === 'function') {
                 google.script.run
                     .withSuccessHandler(function(res) {
-                        if (!res || !res.success) { Swal.fire({icon:'error', title:'บันทึกไม่สำเร็จ', text: res && res.error || ''}); return; }
+                        if (!res || !res.success) { restoreBtn(); Swal.fire({icon:'error', title:'บันทึกไม่สำเร็จ', text: res && res.error || ''}); return; }
                         Swal.fire({icon:'success', title: res.diff === 0 ? 'ยอดตรง บันทึกแล้ว' : 'ปรับยอด ' + (res.diff > 0 ? '+' : '') + res.diff + ' แล้ว', timer:1200, showConfirmButton:false});
                         loadStockTakeMgmt();
                     })
-                    .withFailureHandler(function(err) { Swal.fire({icon:'error', title:'บันทึกไม่สำเร็จ', text: String(err)}); })
-                    .webSubmitStockCount({ sessionId: stMgmtState.sessionId, itemCode: code, countedQty: val, role: currentUserProfile.role, userName: currentUserProfile.name, source: 'manual' });
+                    .withFailureHandler(function(err) { restoreBtn(); Swal.fire({icon:'error', title:'บันทึกไม่สำเร็จ', text: String(err)}); })
+                    .webSubmitStockCount({ sessionId: stMgmtState.sessionId, itemCode: code, countedQty: val, role: currentUserProfile.role, userName: currentUserProfile.name, source: 'manual', adminUid: currentUserProfile.userId || currentUserProfile.uid || '-' });
             } else {
                 // Fallback Mode: บันทึกเข้า Memory Local
                 if (!stMgmtState.counts) stMgmtState.counts = {};
@@ -11496,7 +11539,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         loadStockTakeMgmt();
                     })
                     .withFailureHandler(function(err) { Swal.fire({icon:'error', title:'ปิดรอบไม่สำเร็จ', text: String(err)}); })
-                    .webCloseStockTake({ sessionId: stMgmtState.sessionId, role: currentUserProfile.role, userName: currentUserProfile.name });
+                    .webCloseStockTake({ sessionId: stMgmtState.sessionId, role: currentUserProfile.role, userName: currentUserProfile.name, adminUid: currentUserProfile.userId || currentUserProfile.uid || '-' });
             });
         }
 
