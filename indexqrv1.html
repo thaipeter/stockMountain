@@ -1887,7 +1887,9 @@ function showRetroPendingBanner() {
     showCancelButton: true,
     cancelButtonText: 'ไว้ทีหลัง',
     background: '#1a1f2e',
-    color: '#c0c0c0'
+    color: '#c0c0c0',
+    confirmButtonColor: '#f59e0b',
+    cancelButtonColor: 'rgba(255,255,255,.15)'
   }).then(r => {
     if (r.isConfirmed) openRetroPendingModal();
   });
@@ -1917,11 +1919,21 @@ function renderRetroPendingList() {
       <div style="font-size:.75rem;color:rgba(255,255,255,.45);margin-bottom:8px">${esc(it.itemCode)} • ${diffTxt} ${esc(it.unit || '')}${it.assignedRemark ? ' • หมายเหตุจากแอดมิน: ' + esc(it.assignedRemark) : ''}</div>
       <label style="font-size:.72rem;color:rgba(255,255,255,.4);display:block;margin-bottom:3px">จำนวนที่เบิกย้อนหลัง</label>
       <input type="number" id="retroPendQty_${idx}" value="${it.assignedQty}" min="1" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:#fff;margin-bottom:8px">
+      <label style="font-size:.72rem;color:rgba(255,255,255,.4);display:block;margin-bottom:3px">วันที่/เวลาที่เบิกจริง (ย้อนหลังได้)</label>
+      <input type="datetime-local" id="retroPendDate_${idx}" value="${_defaultRetroDateTimeLocal()}" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:#fff;margin-bottom:8px;color-scheme:dark">
       <label style="font-size:.72rem;color:rgba(255,255,255,.4);display:block;margin-bottom:3px">เหตุผล / สาเหตุที่ขาด</label>
       <textarea id="retroPendRemark_${idx}" rows="2" placeholder="เช่น ใช้ซ่อม Line 2 แล้วลืมบันทึกเบิก" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:#fff;margin-bottom:8px"></textarea>
-      <button onclick="submitRetroPendingItem(${idx})" style="width:100%;padding:9px;border:none;border-radius:10px;background:var(--amber);color:#111;font-weight:700;cursor:pointer"><i class="fas fa-check me-1"></i> ยืนยันเบิกย้อนหลัง</button>
+      <button id="retroPendBtn_${idx}" onclick="submitRetroPendingItem(${idx})" style="width:100%;padding:9px;border:none;border-radius:10px;background:var(--amber);color:#111;font-weight:700;cursor:pointer"><i class="fas fa-check me-1"></i> ยืนยันเบิกย้อนหลัง</button>
     </div>`;
   }).join('');
+}
+
+// คืนค่าเวลาปัจจุบัน (โซนเวลาเครื่องผู้ใช้) เป็น string รูปแบบที่ input[type=datetime-local] ต้องการ ("YYYY-MM-DDTHH:mm")
+// ใช้เป็นค่าเริ่มต้นของช่องเลือกวันเวลา เพื่อให้พฤติกรรมเดิม (ไม่แก้ไขอะไร) เท่ากับก่อนมีฟีเจอร์นี้
+function _defaultRetroDateTimeLocal() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function submitRetroPendingItem(idx) {
@@ -1929,15 +1941,36 @@ function submitRetroPendingItem(idx) {
   if (!it) return;
   const qty = Number(document.getElementById('retroPendQty_' + idx).value);
   const remark = document.getElementById('retroPendRemark_' + idx).value.trim();
+  const dateInput = document.getElementById('retroPendDate_' + idx);
+  const customDateTime = dateInput ? dateInput.value : '';
   if (!qty || qty <= 0) { showToast('กรุณาระบุจำนวนให้ถูกต้อง', 'error'); return; }
   if (!remark) { showToast('กรุณาระบุเหตุผล', 'error'); return; }
+
+  // ★ แสดงสถานะกำลังโหลดบนปุ่ม ป้องกันผู้ใช้กดซ้ำ + ให้เห็นว่าระบบกำลังทำงานอยู่ระหว่างรอ callGAS ตอบกลับ
+  const btn = document.getElementById('retroPendBtn_' + idx);
+  const btnOriginalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.style.opacity = '.6';
+    btn.style.cursor = 'not-allowed';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> กำลังบันทึก...';
+  }
+  const restoreBtn = () => {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.style.cursor = 'pointer';
+    btn.innerHTML = btnOriginalHtml;
+  };
+
   callGAS('webSubmitRetroWithdrawByUser', [{
     sessionId: it.sessionId,
     itemCode: it.itemCode,
     qty: qty,
     remark: remark,
     userId: me.uid,
-    userName: me.name
+    userName: me.name,
+    customDateTime: customDateTime
   }], res => {
     if (res && res.success) {
       showToast('บันทึกเบิกย้อนหลังเรียบร้อย', 'success');
@@ -1947,8 +1980,9 @@ function submitRetroPendingItem(idx) {
       if (!_retroPendingQueue.length) setTimeout(closeRetroPendingModal, 900);
     } else {
       showToast('บันทึกไม่สำเร็จ: ' + ((res && res.error) || ''), 'error');
+      restoreBtn();
     }
-  }, () => { showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error'); });
+  }, () => { showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error'); restoreBtn(); });
 }
 
 /* ══ REAL-TIME STOCK POLLING (ทุก 3 วิ) ══ */
