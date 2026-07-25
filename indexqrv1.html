@@ -1399,12 +1399,14 @@ function renderUserDropdown(query) {
   }
   dd.innerHTML = filtered.map(u => {
     const rc = ROLE_CONFIG[u.role] || ROLE_CONFIG.user;
+    // role qr: ถ้ามีตำแหน่ง (dept) ที่กรอกไว้ตอนสมัคร ให้โชว์ตำแหน่งแทนป้าย "QR" (permission/role ข้างในยังเป็น qr เหมือนเดิม)
+    const badgeLabel = (u.role === 'qr' && u.dept) ? u.dept : rc.badgeText;
     return `<div class="user-dropdown-item" onclick="selectUser('${u.userId}','${u.name.replace(/'/g,"\\'")}','${u.role}')"
       style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s"
       onmouseenter="this.style.background='var(--surface)'" onmouseleave="this.style.background=''">
       <span style="font-size:18px">${rc.icon}</span>
       <span style="font-size:14px;color:var(--text);flex:1">${u.name}</span>
-      <span style="font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700;background:var(--surface);border:1px solid var(--border2);color:var(--text2)">${rc.badgeText}</span>
+      <span style="font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700;background:var(--surface);border:1px solid var(--border2);color:var(--text2)">${badgeLabel}</span>
     </div>`;
   }).join('');
 }
@@ -1816,6 +1818,8 @@ function confirmLogout() {
     me = { uid: null, name: '', role: 'user', photoUrl: null };
     withdrawCart = []; borrowCart = []; receiveCart = [];
     mineData = { history: [], borrows: [], retro: [], retroPending: [] };
+    _retroPendingQueue = [];
+    _updateRetroBellBadge();
     clearPin();
     document.getElementById('loginUid').value = '';
     document.getElementById('loginSearch').value = '';
@@ -1852,11 +1856,15 @@ let _retroPendingQueue = [];
 function checkMyPendingRetroWithdraws() {
   if (!me || !me.uid) return;
   callGAS('webGetMyPendingRetroWithdraws', [{ userId: me.uid }], res => {
-    if (!res || !res.success || !res.items || !res.items.length) return;
-    _retroPendingQueue = res.items.slice();
+    // ★ แก้บั๊ก: เดิมถ้า items ว่าง จะ return ทันทีโดยไม่ล้าง _retroPendingQueue เดิม
+    // ทำให้กระดิ่ง/รายการของ user คนก่อนหน้า (ที่ล็อกอินไว้ในเบราว์เซอร์เดียวกัน) ค้างโชว์ต่อให้ user คนใหม่เห็น
+    _retroPendingQueue = (res && res.success && res.items) ? res.items.slice() : [];
     _updateRetroBellBadge();
-    showRetroPendingBanner();
-  }, () => {});
+    if (_retroPendingQueue.length) showRetroPendingBanner();
+  }, () => {
+    _retroPendingQueue = [];
+    _updateRetroBellBadge();
+  });
 }
 
 function _updateRetroBellBadge() {
