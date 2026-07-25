@@ -3733,38 +3733,16 @@ function openReturnItemModal(code, name, maxQty) {
       loadMineData();
       loadMineApproval();
     }, err => {
-      // Demo / offline fallback
-      const nowStr = new Date().toLocaleDateString('th-TH', {day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
-      const newPending = {
-        reqId: 'REQ_RET_' + Date.now(),
-        type: 'คืน',
-        itemCode: code,
-        itemName: name,
-        qty: qty,
-        user: me.name,
-        userId: me.uid,
-        date: nowStr,
-        remark: 'ขอคืนอะไหล่: ' + remark,
-        status: 'รออนุมัติ'
-      };
-      if (!mineData.pendingApproval) mineData.pendingApproval = [];
-      mineData.pendingApproval.unshift(newPending);
-      
-      try {
-        let existingLocal = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
-        existingLocal.push(newPending);
-        localStorage.setItem('demo_pending_withdraws', JSON.stringify(existingLocal));
-      } catch(e) {}
-
+      // ★ แก้ไข: เดิมตรงนี้จะหลอกโชว์ว่า "สำเร็จ (Demo)" แล้วเก็บแค่ใน localStorage เครื่องนี้เครื่องเดียว
+      // ทำให้ข้อมูลไม่ไปถึง Admin จริง แต่ผู้ใช้เข้าใจผิดว่าส่งสำเร็จแล้ว — เปลี่ยนเป็นโชว์ error จริงแทน
       Swal.fire({
-        icon: 'success',
-        title: 'ส่งคำขอคืนแล้ว! (Demo)',
-        text: 'ส่งเรื่องขอคืนอะไหล่เรียบร้อย รอ Admin กดอนุมัติรับคืนในระบบใหญ่ครับ',
-        confirmButtonColor: '#3b82f6',
+        icon: 'error',
+        title: 'ส่งคำขอคืนไม่สำเร็จ',
+        text: 'เชื่อมต่อระบบหลังบ้านไม่ได้ (' + err + ') กรุณาลองใหม่อีกครั้ง หรือแจ้ง Admin ถ้ายังไม่ได้',
+        confirmButtonColor: '#ef4444',
         background: '#1a2230',
         color: '#e0e0e0'
       });
-      renderMineApproval();
     });
   });
 }
