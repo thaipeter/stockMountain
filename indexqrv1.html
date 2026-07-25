@@ -93,11 +93,11 @@ body{display:flex;flex-direction:column}
 .pin-display{display:flex;gap:12px;justify-content:center;margin-bottom:22px}
 .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:transparent;transition:all .2s ease}
 .pin-dot.filled{background:var(--amber);border-color:var(--amber);box-shadow:0 0 12px rgba(232,160,32,0.8);transform:scale(1.1)}
-.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .num-btn{
   background:rgba(255,255,255,.03)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:14px!important;
   color:#fff!important;font-family:'Sarabun',sans-serif;font-size:22px!important;font-weight:700!important;
-  padding:16px!important;cursor:pointer;transition:all .15s ease!important;text-align:center;
+  padding:10px 14px!important;font-size:20px!important;cursor:pointer;transition:all .15s ease!important;text-align:center;
   -webkit-user-select:none;user-select:none;
 }
 .num-btn:active{background:rgba(232,160,32,.25)!important;border-color:var(--amber)!important;transform:scale(.92)!important;box-shadow:0 0 15px rgba(232,160,32,.3)}
@@ -211,7 +211,7 @@ body{display:flex;flex-direction:column}
 .empty-state p{font-size:13px}
 
 /* ── Cart bar ── */
-.cart-bar, .receive-cart-bar{background:rgba(18, 20, 29, 0.95)!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,0.1);padding:12px 16px;flex-shrink:0;display:none!important;gap:12px;align-items:center;box-shadow:0 -6px 25px rgba(0,0,0,0.5)}
+.cart-bar, .receive-cart-bar{padding:10px 16px!important;min-height:62px!important;background:rgba(18, 20, 29, 0.95)!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,0.1);padding:12px 16px;flex-shrink:0;display:none!important;gap:12px;align-items:center;box-shadow:0 -6px 25px rgba(0,0,0,0.5)}
 .cart-bar.active, .receive-cart-bar.active{display:flex!important;animation:slideUp .2s ease}
 .cart-count-info{flex:1}
 .cart-count{font-size:13px;color:var(--text2);font-weight:600}
