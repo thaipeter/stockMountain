@@ -2453,8 +2453,8 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
                 <style>
                     #pendingApprovalTabs .nav-link{color:rgba(255,255,255,.55)!important;font-weight:700;border:none!important;border-bottom:2px solid transparent!important;background:transparent!important}
-                    #pendingApprovalTabs .nav-link:hover{color:rgba(255,255,255,.85)!important;background:rgba(255,255,255,.05)!important}
-                    #pendingApprovalTabs .nav-link.active{color:#fbbf24!important;border-bottom-color:#f59e0b!important;background:rgba(245,158,11,.08)!important}
+                    #pendingApprovalTabs .nav-link:hover{color:rgba(255,255,255,.85)!important;background:transparent!important}
+                    #pendingApprovalTabs .nav-link.active{color:#fbbf24!important;border:none!important;border-bottom:2px solid #eab308!important;background:transparent!important}
                     #pendingApprovals .pending-card{background:var(--card-bg,#161616);border:1px solid var(--border-color,#2a2a2a)}
                     #pendingApprovals .pending-card .pc-title{color:var(--text-main,#e5e7eb)}
                     #pendingApprovals .pending-card .pc-sub{color:var(--text-muted,#9ca3af)}
@@ -4198,6 +4198,9 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
+        // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
+        // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
+        // ใส่ URL เดียวกับที่ใช้ในหน้า QR (indexqrv1.html) เพราะเป็น backend เดียวกัน
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
         const isGAS = (typeof google !== 'undefined' && google.script && google.script.run && typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:');
         window.isGAS = isGAS;
@@ -4233,6 +4236,12 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
                 // ไม่มี GAS_URL ตั้งค่าไว้ และไม่ได้รันอยู่บน Apps Script โดยตรง — แจ้ง error แทนการจำลองข้อมูล
                 if (onFail) onFail('ยังไม่ได้เชื่อมต่อ Backend (GAS_URL) กรุณาตั้งค่า GAS_URL ในไฟล์ก่อนใช้งานจริง');
             }
+
+            // ★ แก้บั๊ก: เดิม callGAS ถูกประกาศแค่ในสโคปของ IIFE นี้เท่านั้น โค้ดส่วนอื่นในไฟล์
+            // (loadPendingApprovals, webArchiveMonth, webRestoreArchive) ที่เรียก callGAS(...) ตรงๆ
+            // จากนอก IIFE นี้จะเจอ ReferenceError แบบเงียบๆ (ไม่มี error โชว์ผู้ใช้) ทำให้ spinner
+            // ค้างโหลดตลอดไปเพราะฟังก์ชันตายก่อนจะได้เรียก callback ปิด spinner เลย
+            window.callGAS = callGAS;
             
             if (isExternal || typeof google === 'undefined' || !google.script || !google.script.run) {
                 const makeRunner = (successCb, failureCb) => {
