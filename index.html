@@ -5755,6 +5755,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             // โหลดโน้ตทันทีหลัง login / refresh
             setTimeout(function(){ loadNotes(); }, 300);
             setTimeout(function(){ refreshPendingApprovalBadge(); }, 300);
+            // ★ เพิ่ม: เริ่ม poll badge อิสระครั้งเดียวตอนโหลดข้อมูลครั้งแรก (ไม่ต้องรอ Auto Refresh)
+            if (!isSilentRefresh && typeof startBadgeOnlyPolling === 'function') startBadgeOnlyPolling();
             try {
                 data = data || {}; data.items = data.items || []; data.tools = data.tools || []; data.history = data.history || []; data.activeBorrows = data.activeBorrows || []; data.pendingPOs = data.pendingPOs || []; data.users = data.users || []; data.settings = data.settings || {};
                 if (data.error) Swal.fire({icon: 'error', title: 'พบปัญหาการเชื่อมต่อ', text: data.error});
@@ -10539,22 +10541,32 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         }
 
         function refreshPendingApprovalBadge() {
-            if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+            // ★ แก้บั๊ก: เดิมเรียก google.script.run ตรงๆ เท่านั้น ทำให้ตอน deploy หน้านี้แยก
+            // นอก Apps Script (เช่น GitHub Pages) ที่ไม่มี google.script.run เลย ฟังก์ชันนี้
+            // จะ return ออกทันทีทุกครั้ง ทำให้ badge ไม่เคยอัปเดตเลย เปลี่ยนมาใช้ callGAS()
+            // ซึ่งรองรับทั้ง google.script.run และ fetch fallback (GAS_URL) เหมือนจุดอื่นในไฟล์
+            if (typeof window.callGAS !== 'function') return;
             if (!currentUserProfile || currentUserProfile.role !== 'admin') return;
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    _pendingReqCount = (res && res.success) ? (res.data || []).length : 0;
-                    _updateMainPendingBadge();
-                })
-                .withFailureHandler(function() {})
-                .webGetPendingWebRequests();
-            google.script.run
-                .withSuccessHandler(function(rows) {
-                    _pendingUserCountForBadge = (rows || []).length;
-                    _updateMainPendingBadge();
-                })
-                .withFailureHandler(function() {})
-                .webGetQRPending();
+            window.callGAS('webGetPendingWebRequests', [], function(res) {
+                _pendingReqCount = (res && res.success) ? (res.data || []).length : 0;
+                _updateMainPendingBadge();
+            }, function() {});
+            window.callGAS('webGetQRPending', [], function(rows) {
+                _pendingUserCountForBadge = (rows || []).length;
+                _updateMainPendingBadge();
+            }, function() {});
+        }
+
+        // ★ เพิ่ม: poll badge แจ้งเตือนอิสระ ทำงานตลอดไม่ว่าจะเปิด Auto Refresh หรือไม่
+        // และไม่ว่าจะเปิดแท็บ "รายการรออนุมัติ" อยู่หรือเปล่า (เบากว่า loadData เต็มรูปแบบมาก
+        // เพราะดึงแค่จำนวนรายการรออนุมัติ ไม่ใช่ข้อมูลทั้งหน้า)
+        let _badgeOnlyPollInterval = null;
+        function startBadgeOnlyPolling() {
+            if (_badgeOnlyPollInterval) clearInterval(_badgeOnlyPollInterval);
+            _badgeOnlyPollInterval = setInterval(function() {
+                if (document.body.classList.contains('modal-open')) return;
+                refreshPendingApprovalBadge();
+            }, 20000); // เช็คทุก 20 วินาที ไม่ขึ้นกับ section หรือ Auto Refresh setting
         }
 
         let _pendingApprovalsPollInterval = null;
