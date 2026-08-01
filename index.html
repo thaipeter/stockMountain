@@ -4860,19 +4860,16 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
             const isGAS = (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.getInventoryData === 'function' && window.location.protocol !== 'file:');
             if (isGAS) {
-                // ── Step 1: โหลดแค่ Users sheet ก่อน (เร็วมาก ~1 วินาที)
+                // ── Step 1: โหลดแค่ Users sheet ก่อน (เร็วมาก ~1 วินาที ปกติ)
                 document.getElementById('loading').style.display = 'flex';
-                const loadTimer = setTimeout(() => {
-                    // ถ้า GAS ไม่ตอบใน 12 วินาที → fallback
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('loginScreen').style.display = 'flex';
-                    allData = createMockData();
-                    populateLoginUsers(allData.users || []);
-                }, 12000);
+                // ★ แก้บั๊ก: เดิมมี timer สำรอง 12 วิที่ทำงานเร็วกว่า timeout จริงของระบบ (30 วิ)
+                // ทำให้ตอน GAS cold start (ปกติใช้เวลาได้ถึง 12-30 วิ) โดนสลับไปโชว์ "ผู้ใช้ demo"
+                // ก่อนที่ request จริงจะทันตอบกลับด้วยซ้ำ ผู้ใช้เห็นรายชื่อ demo แล้วต้องรีเฟรชเอง
+                // ทั้งที่จริงๆ ระบบกำลังโหลดอยู่ ตัด timer นี้ออก ให้พึ่ง .withFailureHandler()
+                // ด้านล่างซึ่งจะ fallback เป็น demo ก็ต่อเมื่อ timeout จริง (30 วิ) เท่านั้น
 
                 google.script.run
                     .withSuccessHandler(users => {
-                        clearTimeout(loadTimer);
                         document.getElementById('loading').style.display = 'none';
 
                         // เก็บ users ไว้ใน allData ชั่วคราว (จะถูกแทนทีหลัง login)
@@ -4916,7 +4913,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         }
                     })
                     .withFailureHandler(err => {
-                        clearTimeout(loadTimer);
                         console.error('getLoginUsers error:', err);
                         document.getElementById('loading').style.display = 'none';
                         document.getElementById('loginScreen').style.display = 'flex';
@@ -5226,7 +5222,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'เปลี่ยนรหัสผ่านส่วนตัวของคุณสำเร็จ!', timer: 2000, showConfirmButton: false}); 
                         document.getElementById('newWebPin').value = ''; document.getElementById('confirmWebPin').value = ''; 
                     } else { Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: (res ? res.error : 'Unknown')}); }
-                }).webUpdateUserPin(currentUserProfile.uid, pin1);
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webUpdateUserPin(currentUserProfile.uid, pin1);
             } else {
                 setTimeout(() => {
                     document.getElementById('loading').style.display = 'none';
@@ -5755,6 +5751,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             // โหลดโน้ตทันทีหลัง login / refresh
             setTimeout(function(){ loadNotes(); }, 300);
             setTimeout(function(){ refreshPendingApprovalBadge(); }, 300);
+            // ★ เพิ่ม: เริ่ม poll badge อิสระครั้งเดียวตอนโหลดข้อมูลครั้งแรก (ไม่ต้องรอ Auto Refresh)
+            if (!isSilentRefresh && typeof startBadgeOnlyPolling === 'function') startBadgeOnlyPolling();
             try {
                 data = data || {}; data.items = data.items || []; data.tools = data.tools || []; data.history = data.history || []; data.activeBorrows = data.activeBorrows || []; data.pendingPOs = data.pendingPOs || []; data.users = data.users || []; data.settings = data.settings || {};
                 if (data.error) Swal.fire({icon: 'error', title: 'พบปัญหาการเชื่อมต่อ', text: data.error});
@@ -7294,7 +7292,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         onDataLoaded(allData);
                         resetPOForm();
                     }
-                }).webAddPendingPO(poData);
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webAddPendingPO(poData);
             } else { 
                 setTimeout(() => { 
                     document.getElementById('loading').style.display = 'none'; 
@@ -7520,7 +7518,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         renderSummaryPOTable(allData.pendingPOs);
                         renderHistoryPOTableWithFilter(allData.pendingPOs);
                     }
-                }).webUpdatePendingPO(poData);
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webUpdatePendingPO(poData);
             } else {
                 // Simulation mode
                 setTimeout(() => {
@@ -7571,7 +7569,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                                 renderSummaryPOTable(allData.pendingPOs);
                                 renderHistoryPOTableWithFilter(allData.pendingPOs);
                             }
-                        }).webReceivePO(poCode, currentUserProfile.name, currentUserProfile.uid);
+                        }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webReceivePO(poCode, currentUserProfile.name, currentUserProfile.uid);
                     } else { 
                         setTimeout(() => { 
                             document.getElementById('loading').style.display = 'none'; 
@@ -8082,7 +8080,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                                         if (found) { found.imageUrl = imgRes.imageUrl; }
                                         filterTable(p.type === 'Tools' ? 'toolsTable' : 'itemsTable');
                                     }
-                                }).webSaveItemImage({ code: p.code, type: p.type === 'Tools' ? 'tool' : 'item', base64: p._imgBase64, mimeType: p._imgMime, userName: currentUserProfile.name, userId: currentUserProfile.uid });
+                                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webSaveItemImage({ code: p.code, type: p.type === 'Tools' ? 'tool' : 'item', base64: p._imgBase64, mimeType: p._imgMime, userName: currentUserProfile.name, userId: currentUserProfile.uid });
                             });
                         }
                         Swal.fire({icon: 'success', title: 'สำเร็จ!', text: `เพิ่มรายการใหม่ ${payloads.length} รายการสำเร็จ!${imgPayloads.length > 0 ? ` (กำลังอัปโหลดรูป ${imgPayloads.length} รูป...)` : ''}`, timer: 2500, showConfirmButton: false});
@@ -8093,7 +8091,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         });
                         onDataLoaded(allData);
                     }
-                }).webAddNewItems(gasPayloads);
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webAddNewItems(gasPayloads);
             } else {
                 setTimeout(() => {
                     document.getElementById('loading').style.display = 'none';
@@ -8496,7 +8494,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             let targetList = payload.type === 'tool' ? allData.tools : allData.items; let item = targetList.find(i => i.code === payload.code);
                             if(item) { item.name = payload.name; item.category = payload.category; item.location = payload.location; item.unit = payload.unit; item.min = payload.min; } onDataLoaded(allData);
                         }
-                    }).webEditItem(payload);
+                    }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webEditItem(payload);
                 } else setTimeout(() => { document.getElementById('loading').style.display = 'none'; writeAudit('EDIT_ITEM', `แก้ไข [${payload.code}] (Demo)`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองอัปเดตข้อมูลสินค้าเสร็จสมบูรณ์!', timer: 2000, showConfirmButton: false}); }, 500);
             } else setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
         }
@@ -8532,7 +8530,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         allData.history.unshift({ time: getFormattedDate(), action: 'ปรับยอด', code: code, itemName: item ? item.name : '', amount: (adjustQty > 0 ? '+' : '') + formatNumber(Math.abs(adjustQty)), balance: item ? formatNumber(item.stock) : '-', user: currentUserProfile.name });
                         onDataLoaded(allData);
                     }
-                }).webAdjustStock(code, adjustQty, currentUserProfile.name, currentUserProfile.uid);
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webAdjustStock(code, adjustQty, currentUserProfile.name, currentUserProfile.uid);
             } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; writeAudit('ADJUST', `ปรับยอด [${code}] ${adjustQty > 0 ? '+' : ''}${adjustQty} (Demo)`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองปรับยอดสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
         }
 
@@ -8557,7 +8555,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         allData.history.unshift({ time: getFormattedDate(), action: 'แจ้งชำรุด', code: code, itemName: item ? item.name : '', amount: '-' + formatNumber(qty), balance: item ? formatNumber(item.stock) : '-', user: payload.user, remark: payload.remark });
                         onDataLoaded(allData);
                     }
-                }).webTransaction(payload);
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webTransaction(payload);
             } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; writeAudit('DAMAGE', `แจ้งชำรุด [${code}] จำนวน ${qty} (Demo)`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองแจ้งชำรุดสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
         }
 
@@ -8583,7 +8581,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         allData.history.unshift({ time: getFormattedDate(), action: 'ซ่อมแซมแล้ว', code: code, itemName: item ? item.name : '', amount: '+' + formatNumber(qty), balance: item ? formatNumber(item.stock) : '-', user: payload.user, remark: payload.remark });
                         onDataLoaded(allData);
                     }
-                }).webTransaction(payload);
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webTransaction(payload);
             } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; writeAudit('DAMAGE', `ซ่อมแซมแล้ว [${code}] จำนวน ${qty} (Demo)`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองซ่อมเสร็จสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
         }
 
@@ -8600,7 +8598,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             document.getElementById('loading').style.display = 'none';
                             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                             else { writeAudit('USER_MGMT', `เปลี่ยนสิทธิ์ผู้ใช้ [${userId}] เป็น: ${newRole}`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'เปลี่ยนสิทธิ์สำเร็จ!', timer: 2000, showConfirmButton: false}); let u = allData.users.find(u => u.userId === userId); if(u) u.role = newRole; onDataLoaded(allData); }
-                        }).webUpdateUser({userId: userId, role: newRole, actionBy: currentUserProfile.name, actorUserId: currentUserProfile.uid});
+                        }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webUpdateUser({userId: userId, role: newRole, actionBy: currentUserProfile.name, actorUserId: currentUserProfile.uid});
                     } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองปรับสิทธิ์สำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
                 }
             });
@@ -8616,7 +8614,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     const backupData = JSON.parse(res.data); const wb = XLSX.utils.book_new();
                     for(const sheetName in backupData) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(backupData[sheetName]), sheetName);
                     XLSX.writeFile(wb, `Mountain_Inventory_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
-                }).webGetBackupData();
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webGetBackupData();
             } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองดาวน์โหลดสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
         }
 
@@ -8632,7 +8630,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             document.getElementById('loading').style.display = 'none';
                             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                             else { Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'ล้างประวัติLogs เรียบร้อย!', timer: 2000, showConfirmButton: false}); allData.history = []; onDataLoaded(allData); }
-                        }).webClearLogs(currentUserProfile.name);
+                        }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webClearLogs(currentUserProfile.name);
                     } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองล้างล็อกสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
                 }
             });
@@ -8718,7 +8716,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             document.getElementById('loading').style.display = 'none';
                             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                             else { Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'ล้างฐานข้อมูลสำเร็จ ระบบจะเริ่มใหม่หมด!', timer: 2000, showConfirmButton: false}).then(() => location.reload()); }
-                        }).webFactoryReset(currentUserProfile.uid, pin);
+                        }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webFactoryReset(currentUserProfile.uid, pin);
                     } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'ล้างฐานข้อมูลสำเร็จ ระบบจะเริ่มใหม่หมด!', timer: 2000, showConfirmButton: false}); }, 500); }
                 }
             });
@@ -10539,22 +10537,32 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         }
 
         function refreshPendingApprovalBadge() {
-            if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+            // ★ แก้บั๊ก: เดิมเรียก google.script.run ตรงๆ เท่านั้น ทำให้ตอน deploy หน้านี้แยก
+            // นอก Apps Script (เช่น GitHub Pages) ที่ไม่มี google.script.run เลย ฟังก์ชันนี้
+            // จะ return ออกทันทีทุกครั้ง ทำให้ badge ไม่เคยอัปเดตเลย เปลี่ยนมาใช้ callGAS()
+            // ซึ่งรองรับทั้ง google.script.run และ fetch fallback (GAS_URL) เหมือนจุดอื่นในไฟล์
+            if (typeof window.callGAS !== 'function') return;
             if (!currentUserProfile || currentUserProfile.role !== 'admin') return;
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    _pendingReqCount = (res && res.success) ? (res.data || []).length : 0;
-                    _updateMainPendingBadge();
-                })
-                .withFailureHandler(function() {})
-                .webGetPendingWebRequests();
-            google.script.run
-                .withSuccessHandler(function(rows) {
-                    _pendingUserCountForBadge = (rows || []).length;
-                    _updateMainPendingBadge();
-                })
-                .withFailureHandler(function() {})
-                .webGetQRPending();
+            window.callGAS('webGetPendingWebRequests', [], function(res) {
+                _pendingReqCount = (res && res.success) ? (res.data || []).length : 0;
+                _updateMainPendingBadge();
+            }, function() {});
+            window.callGAS('webGetQRPending', [], function(rows) {
+                _pendingUserCountForBadge = (rows || []).length;
+                _updateMainPendingBadge();
+            }, function() {});
+        }
+
+        // ★ เพิ่ม: poll badge แจ้งเตือนอิสระ ทำงานตลอดไม่ว่าจะเปิด Auto Refresh หรือไม่
+        // และไม่ว่าจะเปิดแท็บ "รายการรออนุมัติ" อยู่หรือเปล่า (เบากว่า loadData เต็มรูปแบบมาก
+        // เพราะดึงแค่จำนวนรายการรออนุมัติ ไม่ใช่ข้อมูลทั้งหน้า)
+        let _badgeOnlyPollInterval = null;
+        function startBadgeOnlyPolling() {
+            if (_badgeOnlyPollInterval) clearInterval(_badgeOnlyPollInterval);
+            _badgeOnlyPollInterval = setInterval(function() {
+                if (document.body.classList.contains('modal-open')) return;
+                refreshPendingApprovalBadge();
+            }, 20000); // เช็คทุก 20 วินาที ไม่ขึ้นกับ section หรือ Auto Refresh setting
         }
 
         let _pendingApprovalsPollInterval = null;
@@ -11118,7 +11126,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         }
                     });
                 }
-            }).webGetQRPending();
+            }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webGetQRPending();
         }
 
         function approveQRUser(userId, name) {
@@ -11140,7 +11148,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         if (typeof loadPendingUserApprovals === 'function') loadPendingUserApprovals();
                         loadData(true);
                     }
-                }).webApproveQRUser(userId, currentUserProfile.uid);
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webApproveQRUser(userId, currentUserProfile.uid);
             });
         }
 
@@ -11162,7 +11170,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         loadQRPending();
                         if (typeof loadPendingUserApprovals === 'function') loadPendingUserApprovals();
                     }
-                }).webRejectQRUser(userId, currentUserProfile.uid);
+                }).withFailureHandler(function(err){document.getElementById('loading').style.display='none';Swal.fire({icon:'error',title:'เชื่อมต่อระบบไม่สำเร็จ',text:'กรุณาลองใหม่อีกครั้ง: ' + ((err&&err.message)||err||'')});}).webRejectQRUser(userId, currentUserProfile.uid);
             });
         }
 
