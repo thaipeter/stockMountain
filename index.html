@@ -4239,7 +4239,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
         // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
         // ใส่ URL เดียวกับที่ใช้ในหน้า QR (indexqrv1.html) เพราะเป็น backend เดียวกัน
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyHljTeKi0DuuseQE6QnTNnSs1ECfMYJyxSmvQ3OsE0vLo6zCwP0yKXhGL4F9lMUodn_Q/exec";
         const isGAS = (typeof google !== 'undefined' && google.script && google.script.run && typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:');
         window.isGAS = isGAS;
 
@@ -4248,7 +4248,19 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const isExternal = (window.location.hostname !== 'script.google.com' && !window.location.hostname.endsWith('.googleusercontent.com'));
             window.GAS_URL = (typeof GAS_URL !== 'undefined' && GAS_URL && GAS_URL.indexOf('วาง_URL') === -1) ? GAS_URL : '';
             
-            function callGAS(fn, args, onOk, onFail) {
+            // ★ เพิ่ม: เก็บ error ของ background poll (badge, QR pending ฯลฯ) ไว้ในหน่วยความจำ
+            // ฝั่ง browser เท่านั้น (ไม่ยิงเข้า Sheet ผ่าน webWriteAudit) เพราะเป็นแค่ log เชิง
+            // monitoring ไม่ใช่การกระทำของ user — ดูย้อนหลังได้ทาง Console: window._pollErrorLog
+            window._pollErrorLog = window._pollErrorLog || [];
+            function logBackgroundError(fn, message) {
+                window._pollErrorLog.unshift({ time: new Date(), fn, message });
+                if (window._pollErrorLog.length > 100) window._pollErrorLog.pop();
+                console.warn(`[Background Poll Error] ${fn}: ${message}`);
+            }
+
+            function callGAS(fn, args, onOk, onFail, opts) {
+                opts = opts || {};
+                const silent = !!opts.silent; // true = background poll: ไม่เขียน Audit Log, ไม่ป๊อปอัพ
                 if (window.GAS_URL) {
                     const controller = new AbortController();
                     const timer = setTimeout(() => controller.abort(), 30000);
@@ -4287,7 +4299,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         } else if (e instanceof TypeError) {
                             friendly = 'ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้ กรุณาเช็คสัญญาณเน็ตแล้วลองใหม่';
                         }
-                        if (typeof writeAudit === 'function') {
+                        if (silent) {
+                            logBackgroundError(fn, friendly);
+                        } else if (typeof writeAudit === 'function') {
                             writeAudit('CONNECTION_ERROR', `เรียก ${fn} ไม่สำเร็จ — ${friendly}`, 'FAIL');
                         }
                         if (onFail) onFail(friendly);
@@ -10567,14 +10581,15 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             // ซึ่งรองรับทั้ง google.script.run และ fetch fallback (GAS_URL) เหมือนจุดอื่นในไฟล์
             if (typeof window.callGAS !== 'function') return;
             if (!currentUserProfile || currentUserProfile.role !== 'admin') return;
-            window.callGAS('webGetPendingWebRequests', [], function(res) {
-                _pendingReqCount = (res && res.success) ? (res.data || []).length : 0;
+            // ★ แก้: เดิมยิง 2 request แยกกัน (webGetPendingWebRequests + webGetQRPending) ทุกรอบ poll
+            // รวมเป็น 1 request เดียว (webGetBadgeCounts ฝั่ง backend) ลด request ลงครึ่งหนึ่ง
+            // และตั้ง silent:true เพราะนี่คือ background poll เบื้องหลัง ไม่ใช่การกระทำของ user
+            // ถ้า fail ไม่ต้องขึ้น popup และไม่ต้องเขียน Audit Log หลัก (เก็บแค่ window._pollErrorLog)
+            window.callGAS('webGetBadgeCounts', [], function(res) {
+                _pendingReqCount = (res && res.success) ? (res.pendingReqCount || 0) : 0;
+                _pendingUserCountForBadge = (res && res.success) ? (res.pendingUserCount || 0) : 0;
                 _updateMainPendingBadge();
-            }, function() {});
-            window.callGAS('webGetQRPending', [], function(rows) {
-                _pendingUserCountForBadge = (rows || []).length;
-                _updateMainPendingBadge();
-            }, function() {});
+            }, function() {}, { silent: true });
         }
 
         // ★ เพิ่ม: poll badge แจ้งเตือนอิสระ ทำงานตลอดไม่ว่าจะเปิด Auto Refresh หรือไม่
@@ -10643,7 +10658,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }, function(err) {
                 wLoading.classList.add('d-none'); bLoading.classList.add('d-none');
                 renderPendingApprovals(getLocalPendings());
-            });
+            }, { silent: silent }); // ★ silent=true ตอน background poll -> ไม่เขียน Audit Log หลัก, silent=false ตอน user เปิดดูเอง -> log ตามปกติ
         }
 
 
