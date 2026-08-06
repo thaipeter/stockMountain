@@ -11911,7 +11911,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         // ============================================================
         let rcpFilteredLogs = [];      // รายการที่ผ่านตัวกรองล่าสุด (เฉพาะ เบิก/ยืม)
         let rcpSelectedKeys = new Set(); // เก็บ key ของแถวที่ถูกติ๊กเลือกไว้ (คงอยู่แม้กรองใหม่)
-        const RCP_PER_PAGE = 4; // จำนวนใบเบิกต่อ 1 แผ่น A4 เวลาพิมพ์ (ปรับเป็น 5 ได้ถ้าต้องการ)
+        const RCP_PER_PAGE = 7; // จำนวนใบเบิกต่อ 1 แผ่น A4 เวลาพิมพ์ (เดิม 4 ใบ ยังเหลือที่ว่างเยอะ ปรับเพิ่มเป็น 7 ใบ/แผ่น)
 
         function rcpRowKey(log) {
             return [log.code, log.time, log.user, log.amount, log.action].join('|||');
@@ -12135,7 +12135,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             printWindow.document.write('@page { size: A4; margin: 8mm; }');
             printWindow.document.write('* { box-sizing: border-box; }');
             printWindow.document.write('body { font-family: "Sarabun", sans-serif; background: #fff; color: #000; margin:0; padding:0; }');
-            printWindow.document.write('.r-page { display:flex; flex-direction:column; gap:4mm; page-break-after: always; padding: 2mm; }');
+            printWindow.document.write('.r-page { display:flex; flex-direction:column; gap:3mm; page-break-after: always; padding: 2mm; }');
             printWindow.document.write('.r-page:last-child { page-break-after: auto; }');
             printWindow.document.write('.r-card { border: 1.5px dashed #333; border-radius: 6px; padding: 3mm 4mm; flex: 1 1 0; display:flex; flex-direction:column; justify-content:space-between; }');
             printWindow.document.write('.r-head { display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid #999; padding-bottom:2mm; margin-bottom:2mm; flex-wrap:wrap; gap:4px; }');
