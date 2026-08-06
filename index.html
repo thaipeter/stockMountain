@@ -3261,6 +3261,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     <option value="4">4 ใบ/แถว (เล็ก)</option>
                                     <option value="5">5 ใบ/แถว (จิ๋ว)</option>
                                 </select>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-secondary fw-bold active" id="rcpOrientPortrait" onclick="setRcpOrientation('portrait')"><i class="fas fa-file-alt me-1"></i>แนวตั้ง</button>
+                                    <button type="button" class="btn btn-outline-secondary fw-bold" id="rcpOrientLandscape" onclick="setRcpOrientation('landscape')"><i class="fas fa-file me-1" style="transform:rotate(90deg)"></i>แนวนอน</button>
+                                </div>
+                                <div class="d-flex align-items-center gap-1">
+                                    <label class="small text-muted fw-bold mb-0"><i class="fas fa-ruler-combined me-1"></i>ขนาดการ์ด:</label>
+                                    <input type="number" class="form-control form-control-sm fw-bold text-center" id="rcpCardW" value="0" min="15" max="200" step="1" style="width:62px" onchange="updateRcpLayoutPreview()" title="กว้าง (mm) — 0 = อัตโนมัติ">
+                                    <span class="small text-muted">x</span>
+                                    <input type="number" class="form-control form-control-sm fw-bold text-center" id="rcpCardH" value="0" min="15" max="200" step="1" style="width:62px" onchange="updateRcpLayoutPreview()" title="สูง (mm) — 0 = อัตโนมัติ">
+                                    <span class="small text-muted">mm</span>
+                                </div>
                                 <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="toggleSelectAllReceipts()"><i class="fas fa-check-double me-1"></i> เลือก/ยกเลิกทั้งหมด</button>
                                 <button class="btn btn-warning btn-sm fw-bold text-dark" id="rcpPrintBtn" onclick="printSelectedReceipts()"><i class="fas fa-print me-1"></i> พิมพ์ใบเบิกที่เลือก (<span id="rcpSelectedCount">0</span>)</button>
                             </div>
@@ -4774,6 +4785,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if(sectionId === 'settings') { setTimeout(function(){ if(typeof syncMasterDataTags === 'function') syncMasterDataTags(); }, 50); }
                     if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
                     if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
+                    if(sectionId === 'archive' && typeof loadArchiveList === 'function') loadArchiveList();
                     if(sectionId === 'pendingApprovals' && typeof startPendingApprovalsPolling === 'function') startPendingApprovalsPolling();
                     else if(typeof stopPendingApprovalsPolling === 'function') stopPendingApprovalsPolling();
                 } catch(errSec) {
@@ -7084,6 +7096,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             submitBtn.innerHTML = originalText;
             document.getElementById('loading').style.display = 'none';
 
+            if (!res) { Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่ได้รับข้อมูลตอบกลับจากระบบ'}); return; }
             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
             else {
                 writeAudit('TRANSACTION', `${payload.mode} — [${payload.code}] จำนวน ${payload.qty} | หมายเหตุ: ${payload.remark || '-'}`);
@@ -7094,8 +7107,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
             document.getElementById('loading').style.display = 'none';
-            writeAudit('TRANSACTION', `${payload.mode} — [${payload.code}] ล้มเหลว: ${err.message}`, 'FAIL');
-            Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message});
+            const errMsg = (err && (err.message || err.toString())) || 'ข้อผิดพลาดไม่ทราบสาเหตุ กรุณาลองใหม่';
+            writeAudit('TRANSACTION', `${payload.mode} — [${payload.code}] ล้มเหลว: ${errMsg}`, 'FAIL');
+            Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: errMsg});
         }).webTransaction(payload);
     } else { 
         setTimeout(() => { 
@@ -11718,17 +11732,14 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             return '<div class="d-flex align-items-center justify-content-between px-3 py-2 mb-2 rounded-3" style="background:#232838;border:1px solid #2a2f3d">'                                + '<div>'                                + '<span class="fw-bold me-2" style="color:#e0e0e0"><i class="fas fa-file-archive me-2" style="color:#22c55e"></i>' + a.name + '</span>'                                + '<span class="badge" style="background:#1e3a2f;color:#22c55e;font-size:10px">' + a.rows + ' รายการ</span>'                                + '</div>'                                + '<div class="d-flex gap-2">'                                + '<a href="' + a.url + '" target="_blank" class="btn btn-sm" style="background:#1e3a5f;color:#60a5fa;border:1px solid #2a3f5f;border-radius:8px;font-size:12px"><i class="fas fa-external-link-alt me-1"></i>เปิด</a>'                                + '<button onclick="doRestoreArchive(\'' + a.name.replace(/'/g,"\\'") + '\')" class="btn btn-sm" style="background:#3a2a1e;color:#fbbf24;border:1px solid #5f4a2a;border-radius:8px;font-size:12px"><i class="fas fa-undo me-1"></i>กู้คืน</button>'                                + '</div>'                                + '</div>';
                         }).join('');
                     })
-                    .withFailureHandler(function() { wrap.innerHTML = '<div class="text-center py-3 text-danger small">โหลดไม่สำเร็จ</div>'; })
+                    .withFailureHandler(function(err) { const errMsg = (err && (err.message || err.toString())) || 'ไม่ทราบสาเหตุ'; wrap.innerHTML = '<div class="text-center py-3 text-danger small">โหลดไม่สำเร็จ: ' + errMsg + '</div>'; })
                     .webGetArchiveList();
             } else {
                 wrap.innerHTML = '<div class="text-center py-3" style="color:#6b7280"><small>ใช้งานได้บน GAS จริงเท่านั้น</small></div>';
             }
         }
 
-        // โหลด archive list เมื่อเข้าหน้า
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(loadArchiveList, 1000);
-        });
+        // loadArchiveList จะถูกเรียกเมื่อ goTo('archive') แทน (ลบ DOMContentLoaded auto-load เพราะตอนเปิดหน้ายังไม่ login)
 
         function doRestoreArchive(archiveName) {
             if (!currentUserProfile || currentUserProfile.role !== 'admin') {
@@ -11939,21 +11950,43 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         let rcpFilteredLogs = [];      // รายการที่ผ่านตัวกรองล่าสุด (เฉพาะ เบิก/ยืม)
         let rcpSelectedKeys = new Set(); // เก็บ key ของแถวที่ถูกติ๊กเลือกไว้ (คงอยู่แม้กรองใหม่)
 
+        let rcpOrientation = 'portrait'; // 'portrait' or 'landscape'
+        function setRcpOrientation(orient) {
+            rcpOrientation = orient;
+            document.getElementById('rcpOrientPortrait').classList.toggle('active', orient === 'portrait');
+            document.getElementById('rcpOrientLandscape').classList.toggle('active', orient === 'landscape');
+            updateRcpLayoutPreview();
+        }
+
         // 🆕 คำนวณจำนวนใบเบิก (สี่เหลี่ยมจัตุรัส) ต่อหน้า A4 โดยอิงจากจำนวนคอลัมน์ที่ผู้ใช้เลือก
         // กระดาษ A4 ใช้งานได้จริง ~194mm x 281mm (หลังหัก margin หน้าละ 8mm x2)
         function rcpCalcLayout(cols) {
             cols = Math.max(1, Math.min(6, parseInt(cols) || 3));
-            const GAP = 3, PAGE_W = 194, PAGE_H = 281;
-            const cardW = (PAGE_W - (cols - 1) * GAP) / cols;   // การ์ดเป็นสี่เหลี่ยมจัตุรัส -> สูง = กว้าง
-            const rows = Math.max(1, Math.floor((PAGE_H + GAP) / (cardW + GAP)));
-            return { cols: cols, rows: rows, perPage: cols * rows, cardW: cardW };
+            const GAP = 3;
+            // ขนาดพื้นที่พิมพ์จริงของ A4 หลังหัก margin 8mm x2
+            const PAGE_W = rcpOrientation === 'landscape' ? 281 : 194;
+            const PAGE_H = rcpOrientation === 'landscape' ? 194 : 281;
+            const customW = parseInt(document.getElementById('rcpCardW')?.value) || 0;
+            const customH = parseInt(document.getElementById('rcpCardH')?.value) || 0;
+            let cardW, cardH;
+            if (customW > 0 && customH > 0) {
+                // ผู้ใช้กำหนดขนาดเอง
+                cardW = customW;
+                cardH = customH;
+                cols = Math.max(1, Math.floor((PAGE_W + GAP) / (cardW + GAP)));
+            } else {
+                cardW = (PAGE_W - (cols - 1) * GAP) / cols;
+                cardH = customH > 0 ? customH : cardW; // ถ้ากำหนดแค่สูง ใช้ค่าที่กำหนด ไม่งั้นเป็นสี่เหลี่ยมจัตุรัส
+            }
+            const rows = Math.max(1, Math.floor((PAGE_H + GAP) / (cardH + GAP)));
+            return { cols: cols, rows: rows, perPage: cols * rows, cardW: cardW, cardH: cardH, orientation: rcpOrientation };
         }
 
         function updateRcpLayoutPreview() {
             const cols = document.getElementById('rcpLayoutCols').value;
             const layout = rcpCalcLayout(cols);
             const el = document.getElementById('rcpLayoutPreviewText');
-            if (el) el.innerText = '≈' + layout.perPage + ' ใบ/แผ่น (กว้าง≈' + layout.cardW.toFixed(0) + 'mm)';
+            if (el) el.innerText = '≈' + layout.perPage + ' ใบ/แผ่น (' + layout.cardW.toFixed(0) + 'x' + layout.cardH.toFixed(0) + 'mm) ' + (rcpOrientation === 'landscape' ? '⛶แนวนอน' : '⛶แนวตั้ง');
             renderRcpPreviewStage(layout);
         }
 
@@ -11963,7 +11996,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const scale = Math.max(0.55, Math.min(1.15, layout.cardW / 62));
             let css = '';
             css += scope + '.r-page { display:grid; grid-template-columns: repeat(' + layout.cols + ', 1fr); align-content:start; gap:3mm; padding: 2mm; box-sizing:border-box; }';
-            css += scope + '.r-card { aspect-ratio: 1 / 1; border: 1.5px dashed #333; border-radius: 6px; padding: ' + (3 * scale).toFixed(1) + 'mm ' + (3.5 * scale).toFixed(1) + 'mm; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; break-inside:avoid; font-size:' + (10 * scale).toFixed(1) + 'px; box-sizing:border-box; font-family:"Sarabun",sans-serif; color:#000; background:#fff; }';
+            const aratio = layout.cardH ? (layout.cardW / layout.cardH).toFixed(4) + ' / 1' : '1 / 1';
+            css += scope + '.r-card { aspect-ratio: ' + aratio + '; border: 1.5px dashed #333; border-radius: 6px; padding: ' + (3 * scale).toFixed(1) + 'mm ' + (3.5 * scale).toFixed(1) + 'mm; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; break-inside:avoid; font-size:' + (10 * scale).toFixed(1) + 'px; box-sizing:border-box; font-family:"Sarabun",sans-serif; color:#000; background:#fff; }';
             css += scope + '.r-head { display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid #999; padding-bottom:' + (2 * scale).toFixed(1) + 'mm; margin-bottom:' + (2 * scale).toFixed(1) + 'mm; flex-wrap:wrap; gap:4px; }';
             css += scope + '.r-sysname { font-weight:700; font-size:1.1em; }';
             css += scope + '.r-title { font-weight:600; font-size:1em; color:#333; }';
@@ -12256,7 +12290,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             printWindow.document.write('<html><head><title>พิมพ์ใบเบิกพัสดุ (' + dataList.length + ' รายการ)</title>');
             printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">');
             printWindow.document.write('<style>');
-            printWindow.document.write('@page { size: A4; margin: 8mm; }');
+            printWindow.document.write('@page { size: A4 ' + (layout.orientation === 'landscape' ? 'landscape' : 'portrait') + '; margin: 8mm; }');
             printWindow.document.write('* { box-sizing: border-box; }');
             printWindow.document.write('body { font-family: "Sarabun", sans-serif; background: #fff; color: #000; margin:0; padding:0; }');
             printWindow.document.write('.r-page { page-break-after: always; }');
