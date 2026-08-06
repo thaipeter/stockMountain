@@ -2052,6 +2052,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             <a onclick="goTo('monthlyOrders'); toggleMobileNav(false)"><i class="fas fa-shopping-cart"></i> Orders</a>
             <a onclick="goTo('qrManagement'); toggleMobileNav(false)"><i class="fas fa-qrcode"></i> QR</a>
             <a onclick="goTo('history'); toggleMobileNav(false)"><i class="fas fa-history"></i> Logs</a>
+            <a onclick="goTo('receiptPrint'); filterReceiptPrintTable(); toggleMobileNav(false)"><i class="fas fa-file-invoice"></i> พิมพ์ใบเบิก</a>
             <a onclick="goTo('notes'); toggleMobileNav(false)"><i class="fas fa-sticky-note"></i> Notes</a>
             <a onclick="goTo('aiCenter'); toggleMobileNav(false)"><i class="fas fa-robot"></i> AI วิเคราะห์คลัง</a>
 
@@ -2086,11 +2087,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </ul>
                         </div>
                         <div class="topnav-group">
-                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="monthlyOrders,qrManagement,history,archiveMgmt"><i class="fas fa-shopping-cart"></i> <span>เอกสาร & ตรวจสอบ</span></a>
+                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="monthlyOrders,qrManagement,history,receiptPrint,archiveMgmt"><i class="fas fa-shopping-cart"></i> <span>เอกสาร & ตรวจสอบ</span></a>
                             <ul class="topnav-dropdown-menu">
                                 <li class="dropdown-item" onclick="goTo('monthlyOrders')"><i class="fas fa-shopping-cart"></i> ใบสั่งซื้อ (Orders)</li>
                                 <li class="dropdown-item" onclick="goTo('qrManagement')"><i class="fas fa-qrcode"></i> จัดการ QR Code</li>
                                 <li class="dropdown-item" onclick="goTo('history')"><i class="fas fa-history"></i> ประวัติ Logs</li>
+                                <li class="dropdown-item" onclick="goTo('receiptPrint'); filterReceiptPrintTable();"><i class="fas fa-file-invoice"></i> พิมพ์ใบเบิก (หลักฐาน)</li>
                                 <li class="dropdown-item admin-only-element" id="menu-archive-top" onclick="goTo('archiveMgmt')"><i class="fas fa-archive"></i> คลังเอกสารเก่า</li>
                             </ul>
                         </div>
@@ -3215,6 +3217,64 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
                     </div>
                 </div>
+                <div id="receiptPrint" class="section-view">
+                    <div class="mb-4 d-flex align-items-center gap-3">
+                        <div style="width:42px;height:42px;background:rgba(232,160,32,.12);border-radius:12px;display:flex;align-items:center;justify-content:center">
+                            <i class="fas fa-file-invoice" style="color:#e8a020"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0" style="color:rgba(255,255,255,.9)">พิมพ์ใบเบิกพัสดุ (หลักฐาน)</h3>
+                            <p class="mb-0" style="font-size:.75rem;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase">ค้นหา เลือกหลายรายการ แล้วพิมพ์รวมประหยัดกระดาษ</p>
+                        </div>
+                    </div>
+
+                    <div class="table-container p-4 bg-white">
+                        <div class="filter-group bg-light p-3 rounded-3 mb-3 shadow-sm border-0 d-flex flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-white border shadow-sm text-primary" onclick="filterReceiptPrintTable()" title="รีเฟรช/ค้นหา"><i class="fas fa-sync-alt"></i></button>
+                                <select class="form-select border-0 shadow-sm" id="rcpTypeFilter" onchange="filterReceiptPrintTable()" style="min-width:150px;">
+                                    <option value="">📝 เบิก + ยืม (ทั้งหมด)</option>
+                                    <option value="เบิก">📤 เฉพาะเบิก (Out)</option>
+                                    <option value="ยืม">🛠️ เฉพาะยืม (Borrow)</option>
+                                </select>
+                            </div>
+                            <div class="search-box flex-grow-1"><i class="fas fa-search text-primary"></i><input type="text" class="form-control border-0 shadow-sm" id="rcpSearch" placeholder="ค้นหารหัส, ชื่อ, หรือผู้เบิก..." onkeyup="filterReceiptPrintTable()"></div>
+                            <div class="d-flex align-items-center gap-2 border-start ps-3 ms-auto">
+                                <input type="date" class="form-control border-0 shadow-sm w-auto text-muted" id="rcpStartDate" onchange="filterReceiptPrintTable()">
+                                <span class="text-muted">-</span>
+                                <input type="date" class="form-control border-0 shadow-sm w-auto text-muted" id="rcpEndDate" onchange="filterReceiptPrintTable()">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                            <div class="small text-muted">
+                                <i class="fas fa-info-circle me-1"></i> พบ <strong id="rcpFoundCount">0</strong> รายการ (เลือกได้เฉพาะรายการ เบิก/ยืม ที่มีข้อมูลในระบบ)
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="toggleSelectAllReceipts()"><i class="fas fa-check-double me-1"></i> เลือก/ยกเลิกทั้งหมด</button>
+                                <button class="btn btn-warning btn-sm fw-bold text-dark" id="rcpPrintBtn" onclick="printSelectedReceipts()"><i class="fas fa-print me-1"></i> พิมพ์ใบเบิกที่เลือก (<span id="rcpSelectedCount">0</span>)</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive border rounded">
+                            <table class="table table-hover align-middle mb-0" id="receiptPrintTable">
+                                <thead>
+                                    <tr>
+                                        <th width="4%" class="text-center"><input type="checkbox" id="rcpSelectAllCheckbox" onchange="toggleSelectAllReceipts(this.checked)"></th>
+                                        <th width="14%">วันเวลา</th>
+                                        <th width="9%" class="text-center">ประเภท</th>
+                                        <th width="24%">รายการ</th>
+                                        <th width="9%" class="text-end">จำนวน</th>
+                                        <th width="14%">ผู้ทำรายการ</th>
+                                        <th width="26%">หมายเหตุ</th>
+                                    </tr>
+                                </thead>
+                                <tbody><tr><td colspan="7" class="text-center py-4 text-muted">กำลังโหลด...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="archiveMgmt" class="section-view">
                     <div class="mb-4 d-flex align-items-center gap-3">
                         <div style="width:42px;height:42px;background:rgba(34,197,94,.12);border-radius:12px;display:flex;align-items:center;justify-content:center">
@@ -4239,7 +4299,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
         // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
         // ใส่ URL เดียวกับที่ใช้ในหน้า QR (indexqrv1.html) เพราะเป็น backend เดียวกัน
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyHljTeKi0DuuseQE6QnTNnSs1ECfMYJyxSmvQ3OsE0vLo6zCwP0yKXhGL4F9lMUodn_Q/exec";
         const isGAS = (typeof google !== 'undefined' && google.script && google.script.run && typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:');
         window.isGAS = isGAS;
 
@@ -5755,8 +5815,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             // โหลดโน้ตทันทีหลัง login / refresh
             setTimeout(function(){ loadNotes(); }, 300);
             setTimeout(function(){ refreshPendingApprovalBadge(); }, 300);
-            // ★ เพิ่ม: เริ่ม poll badge อิสระครั้งเดียวตอนโหลดข้อมูลครั้งแรก (ไม่ต้องรอ Auto Refresh)
-            if (!isSilentRefresh && typeof startBadgeOnlyPolling === 'function') startBadgeOnlyPolling();
             try {
                 data = data || {}; data.items = data.items || []; data.tools = data.tools || []; data.history = data.history || []; data.activeBorrows = data.activeBorrows || []; data.pendingPOs = data.pendingPOs || []; data.users = data.users || []; data.settings = data.settings || {};
                 if (data.error) Swal.fire({icon: 'error', title: 'พบปัญหาการเชื่อมต่อ', text: data.error});
@@ -10541,32 +10599,22 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         }
 
         function refreshPendingApprovalBadge() {
-            // ★ แก้บั๊ก: เดิมเรียก google.script.run ตรงๆ เท่านั้น ทำให้ตอน deploy หน้านี้แยก
-            // นอก Apps Script (เช่น GitHub Pages) ที่ไม่มี google.script.run เลย ฟังก์ชันนี้
-            // จะ return ออกทันทีทุกครั้ง ทำให้ badge ไม่เคยอัปเดตเลย เปลี่ยนมาใช้ callGAS()
-            // ซึ่งรองรับทั้ง google.script.run และ fetch fallback (GAS_URL) เหมือนจุดอื่นในไฟล์
-            if (typeof window.callGAS !== 'function') return;
+            if (typeof google === 'undefined' || !google.script || !google.script.run) return;
             if (!currentUserProfile || currentUserProfile.role !== 'admin') return;
-            window.callGAS('webGetPendingWebRequests', [], function(res) {
-                _pendingReqCount = (res && res.success) ? (res.data || []).length : 0;
-                _updateMainPendingBadge();
-            }, function() {});
-            window.callGAS('webGetQRPending', [], function(rows) {
-                _pendingUserCountForBadge = (rows || []).length;
-                _updateMainPendingBadge();
-            }, function() {});
-        }
-
-        // ★ เพิ่ม: poll badge แจ้งเตือนอิสระ ทำงานตลอดไม่ว่าจะเปิด Auto Refresh หรือไม่
-        // และไม่ว่าจะเปิดแท็บ "รายการรออนุมัติ" อยู่หรือเปล่า (เบากว่า loadData เต็มรูปแบบมาก
-        // เพราะดึงแค่จำนวนรายการรออนุมัติ ไม่ใช่ข้อมูลทั้งหน้า)
-        let _badgeOnlyPollInterval = null;
-        function startBadgeOnlyPolling() {
-            if (_badgeOnlyPollInterval) clearInterval(_badgeOnlyPollInterval);
-            _badgeOnlyPollInterval = setInterval(function() {
-                if (document.body.classList.contains('modal-open')) return;
-                refreshPendingApprovalBadge();
-            }, 20000); // เช็คทุก 20 วินาที ไม่ขึ้นกับ section หรือ Auto Refresh setting
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    _pendingReqCount = (res && res.success) ? (res.data || []).length : 0;
+                    _updateMainPendingBadge();
+                })
+                .withFailureHandler(function() {})
+                .webGetPendingWebRequests();
+            google.script.run
+                .withSuccessHandler(function(rows) {
+                    _pendingUserCountForBadge = (rows || []).length;
+                    _updateMainPendingBadge();
+                })
+                .withFailureHandler(function() {})
+                .webGetQRPending();
         }
 
         let _pendingApprovalsPollInterval = null;
@@ -11853,6 +11901,262 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             printWindow.document.write('<div class="receipt-border">');
             printWindow.document.write(printContents);
             printWindow.document.write('</div>');
+            printWindow.document.write('<script>window.onload = function() { window.print(); window.close(); };<\/script>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+        }
+
+        // ============================================================
+        // 🆕 หน้า "พิมพ์ใบเบิกพัสดุ (หลักฐาน)" — เลือกหลายรายการ พิมพ์รวมประหยัดกระดาษ
+        // ============================================================
+        let rcpFilteredLogs = [];      // รายการที่ผ่านตัวกรองล่าสุด (เฉพาะ เบิก/ยืม)
+        let rcpSelectedKeys = new Set(); // เก็บ key ของแถวที่ถูกติ๊กเลือกไว้ (คงอยู่แม้กรองใหม่)
+        const RCP_PER_PAGE = 4; // จำนวนใบเบิกต่อ 1 แผ่น A4 เวลาพิมพ์ (ปรับเป็น 5 ได้ถ้าต้องการ)
+
+        function rcpRowKey(log) {
+            return [log.code, log.time, log.user, log.amount, log.action].join('|||');
+        }
+
+        function filterReceiptPrintTable() {
+            try {
+                const typeFilter = (document.getElementById('rcpTypeFilter').value || '').trim();
+                const searchText = (document.getElementById('rcpSearch').value || '').toLowerCase().trim();
+                const startDateStr = document.getElementById('rcpStartDate').value;
+                const endDateStr = document.getElementById('rcpEndDate').value;
+                const startDt = startDateStr ? new Date(startDateStr) : null; if (startDt) startDt.setHours(0,0,0,0);
+                const endDt = endDateStr ? new Date(endDateStr) : null; if (endDt) endDt.setHours(23,59,59,999);
+
+                rcpFilteredLogs = (allData.history || []).filter(function(log) {
+                    const actLower = String(log.action).trim().toLowerCase();
+                    // เฉพาะรายการเบิก/ยืม เท่านั้น (ตรงกับที่ webGetReceiptData รองรับ)
+                    if (!(actLower.includes('เบิก') || actLower.includes('ยืม'))) return false;
+                    if (actLower.includes('แจ้งชำรุด')) return false; // แจ้งชำรุดไม่ใช่ใบเบิกจริง
+
+                    if (typeFilter === 'เบิก' && !actLower.startsWith('เบิก')) return false;
+                    if (typeFilter === 'ยืม' && !actLower.includes('ยืม')) return false;
+
+                    if (searchText) {
+                        const haystack = [log.code, log.itemName, log.user, log.remark].join(' ').toLowerCase();
+                        if (!haystack.includes(searchText)) return false;
+                    }
+                    const rowDate = parseThaiDate(log.time);
+                    if ((startDt || endDt) && !rowDate) return false;
+                    if (startDt && rowDate < startDt) return false;
+                    if (endDt && rowDate > endDt) return false;
+                    return true;
+                });
+                renderReceiptPrintTable(rcpFilteredLogs);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderReceiptPrintTable(logs) {
+            try {
+                const tbody = document.querySelector('#receiptPrintTable tbody');
+                if (!tbody) return;
+                document.getElementById('rcpFoundCount').innerText = logs.length;
+                const limit = parseInt(allData.settings?.rowsPerPage) || 100;
+                const limitedLogs = logs.slice(0, limit);
+
+                if (limitedLogs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบรายการเบิก/ยืมที่ตรงกับเงื่อนไข</td></tr>';
+                    updateRcpSelectedCount();
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                limitedLogs.forEach(function(log) {
+                    const key = rcpRowKey(log);
+                    const actLower = String(log.action).trim().toLowerCase();
+                    const isChecked = rcpSelectedKeys.has(key);
+                    let displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : 'ไม่ระบุ';
+                    const badgeClass = actLower.startsWith('เบิก') ? 'bg-danger bg-opacity-10 text-danger' : 'bg-warning bg-opacity-10 text-warning';
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = '<td class="text-center"><input type="checkbox" class="rcp-row-checkbox" data-key="' + encodeURIComponent(key) + '" ' + (isChecked ? 'checked' : '') + ' onchange="onRcpCheckboxChange(this)"></td>' +
+                        '<td style="white-space:nowrap" class="small font-monospace text-muted">' + log.time + '</td>' +
+                        '<td class="text-center"><span class="badge ' + badgeClass + '">' + log.action + '</span></td>' +
+                        '<td class="fw-bold text-dark">' + log.itemName + ' <span class="badge bg-light text-secondary border font-monospace ms-1 fw-normal">' + log.code + '</span></td>' +
+                        '<td class="text-end fw-bold">' + log.amount + '</td>' +
+                        '<td class="text-secondary"><i class="fas fa-user-circle me-1"></i>' + displayUser + '</td>' +
+                        '<td><small class="text-muted">' + (log.remark ? String(log.remark) : '-') + '</small></td>';
+                    tr._rcpLog = log; // เก็บ object เต็มไว้บน element เพื่อดึงตอนพิมพ์
+                    tbody.appendChild(tr);
+                });
+                updateRcpSelectedCount();
+            } catch (e) { console.error(e); }
+        }
+
+        function onRcpCheckboxChange(checkboxEl) {
+            const key = decodeURIComponent(checkboxEl.getAttribute('data-key'));
+            if (checkboxEl.checked) rcpSelectedKeys.add(key); else rcpSelectedKeys.delete(key);
+            updateRcpSelectedCount();
+        }
+
+        function toggleSelectAllReceipts(forceState) {
+            const checkboxes = document.querySelectorAll('#receiptPrintTable .rcp-row-checkbox');
+            // ถ้าไม่ได้ระบุ forceState (กดปุ่ม "เลือก/ยกเลิกทั้งหมด") ให้สลับสถานะตามที่เห็นอยู่ในตารางตอนนี้
+            let shouldCheck = forceState;
+            if (shouldCheck === undefined) {
+                const anyUnchecked = Array.from(checkboxes).some(function(cb) { return !cb.checked; });
+                shouldCheck = anyUnchecked;
+            }
+            checkboxes.forEach(function(cb) {
+                cb.checked = shouldCheck;
+                const key = decodeURIComponent(cb.getAttribute('data-key'));
+                if (shouldCheck) rcpSelectedKeys.add(key); else rcpSelectedKeys.delete(key);
+            });
+            document.getElementById('rcpSelectAllCheckbox').checked = shouldCheck;
+            updateRcpSelectedCount();
+        }
+
+        function updateRcpSelectedCount() {
+            document.getElementById('rcpSelectedCount').innerText = rcpSelectedKeys.size;
+        }
+
+        // ดึงข้อมูลใบเบิก 1 รายการ ห่อเป็น Promise (ใช้ของเดิม webGetReceiptData)
+        function rcpFetchOne(log) {
+            return new Promise(function(resolve) {
+                const displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : '';
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run
+                        .withSuccessHandler(function(res) { resolve(res); })
+                        .withFailureHandler(function(err) { resolve({ success: false, error: String(err) }); })
+                        .webGetReceiptData(log.code, log.time, displayUser, log.amount, log.action);
+                } else {
+                    // Demo Mode
+                    setTimeout(function() {
+                        resolve({
+                            success: true, transId: 'WD' + Math.floor(Math.random()*100000), date: log.time, user: displayUser,
+                            itemCode: log.code, itemName: log.itemName, qty: log.amount, category: '-', remark: log.remark || '-',
+                            signatureUrl: '', machine: '-', dept: '-', type: log.action.includes('ยืม') ? 'ยืม' : 'เบิก'
+                        });
+                    }, 100);
+                }
+            });
+        }
+
+        // สร้าง HTML ใบเบิกแบบย่อ (ไม่มีรูปพัสดุ) สำหรับพิมพ์รวมหลายใบต่อหน้า A4
+        function renderReceiptCompactHtml(data) {
+            const sysName = allData.settings?.sysName || 'C-FACTORY SYSTEM';
+            const titleText = data.type === 'ยืม' ? 'ใบขอยืมอุปกรณ์ / เครื่องมือ' : 'ใบเบิกพัสดุ / อะไหล่';
+            const itemInfo = (allData.items || []).find(function(i) { return i.code === data.itemCode; })
+                          || (allData.tools || []).find(function(t) { return t.code === data.itemCode; });
+            const unit = itemInfo ? (itemInfo.unit || '') : '';
+
+            let sigHtml = '<span class="r-nosign">(ไม่มีลายมือชื่อดิจิทัล)</span>';
+            if (data.signatureUrl && data.signatureUrl.trim() !== '') {
+                sigHtml = '<img src="' + data.signatureUrl + '" class="r-sig-img" alt="Signature">';
+            }
+
+            return '' +
+                '<div class="r-card">' +
+                    '<div class="r-head">' +
+                        '<span class="r-sysname">' + sysName + '</span>' +
+                        '<span class="r-title">' + titleText + '</span>' +
+                        '<span class="r-transid">เลขที่: ' + (data.transId || '-') + '</span>' +
+                    '</div>' +
+                    '<table class="r-table">' +
+                        '<tr>' +
+                            '<td class="r-code">' + data.itemCode + '</td>' +
+                            '<td class="r-name">' + data.itemName + ' <span class="r-cat">(' + (data.category || '-') + ')</span></td>' +
+                            '<td class="r-qty">' + data.qty + ' ' + unit + '</td>' +
+                        '</tr>' +
+                    '</table>' +
+                    '<div class="r-meta">' +
+                        '<span><b>วันที่:</b> ' + (data.date || '-') + '</span>' +
+                        '<span><b>ผู้เบิก:</b> ' + (data.user || '-') + '</span>' +
+                        '<span><b>แผนก:</b> ' + (data.machine || data.dept || '-') + '</span>' +
+                    '</div>' +
+                    '<div class="r-remark"><b>หมายเหตุ:</b> ' + (data.remark || '-') + '</div>' +
+                    '<div class="r-sign-row">' +
+                        '<div class="r-sign-box">' + sigHtml + '<div class="r-sign-caption">ลายเซ็นผู้เบิก/ยืม</div></div>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        async function printSelectedReceipts() {
+            if (rcpSelectedKeys.size === 0) {
+                Swal.fire({ icon: 'warning', title: 'ยังไม่ได้เลือกรายการ', text: 'กรุณาติ๊กเลือกรายการที่ต้องการพิมพ์อย่างน้อย 1 รายการ' });
+                return;
+            }
+
+            // จับคู่ key ที่เลือกไว้ กับ log object เต็ม จากทุกแถวที่เคยแสดงผล (ไม่ใช่แค่หน้าปัจจุบัน)
+            const logsToFetch = (allData.history || []).filter(function(log) { return rcpSelectedKeys.has(rcpRowKey(log)); });
+            if (logsToFetch.length === 0) {
+                Swal.fire({ icon: 'error', title: 'ไม่พบข้อมูล', text: 'ไม่พบรายการที่เลือกไว้ในระบบ กรุณาลองเลือกใหม่' });
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'flex';
+            try {
+                const results = await Promise.all(logsToFetch.map(rcpFetchOne));
+                document.getElementById('loading').style.display = 'none';
+
+                const okResults = results.filter(function(r) { return r && r.success; });
+                const failCount = results.length - okResults.length;
+
+                if (okResults.length === 0) {
+                    Swal.fire({ icon: 'error', title: 'พิมพ์ไม่ได้', text: 'ไม่พบใบเบิกต้นฉบับของรายการที่เลือกเลยสักใบ' });
+                    return;
+                }
+
+                const doOpenPrint = function() { openBulkReceiptPrintWindow(okResults); };
+
+                if (failCount > 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'พบรายการที่พิมพ์ไม่ได้ ' + failCount + ' รายการ',
+                        text: 'พิมพ์ได้ ' + okResults.length + ' จาก ' + results.length + ' รายการ (รายการที่หาไม่เจอจะถูกข้ามไป) ต้องการดำเนินการต่อหรือไม่?',
+                        showCancelButton: true,
+                        confirmButtonText: 'พิมพ์ ' + okResults.length + ' ใบที่เจอ',
+                        cancelButtonText: 'ยกเลิก',
+                        confirmButtonColor: 'var(--theme-color)'
+                    }).then(function(r) { if (r.isConfirmed) doOpenPrint(); });
+                } else {
+                    doOpenPrint();
+                }
+            } catch (e) {
+                document.getElementById('loading').style.display = 'none';
+                Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(e) });
+            }
+        }
+
+        function openBulkReceiptPrintWindow(dataList) {
+            // แบ่งเป็นหน้าๆ ละ RCP_PER_PAGE ใบ เพื่อประหยัดกระดาษ
+            let pagesHtml = '';
+            for (let i = 0; i < dataList.length; i += RCP_PER_PAGE) {
+                const chunk = dataList.slice(i, i + RCP_PER_PAGE);
+                pagesHtml += '<div class="r-page">' + chunk.map(renderReceiptCompactHtml).join('') + '</div>';
+            }
+
+            const printWindow = window.open('', '_blank', 'width=900,height=700');
+            printWindow.document.write('<html><head><title>พิมพ์ใบเบิกพัสดุ (' + dataList.length + ' รายการ)</title>');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">');
+            printWindow.document.write('<style>');
+            printWindow.document.write('@page { size: A4; margin: 8mm; }');
+            printWindow.document.write('* { box-sizing: border-box; }');
+            printWindow.document.write('body { font-family: "Sarabun", sans-serif; background: #fff; color: #000; margin:0; padding:0; }');
+            printWindow.document.write('.r-page { display:flex; flex-direction:column; gap:4mm; page-break-after: always; padding: 2mm; }');
+            printWindow.document.write('.r-page:last-child { page-break-after: auto; }');
+            printWindow.document.write('.r-card { border: 1.5px dashed #333; border-radius: 6px; padding: 3mm 4mm; flex: 1 1 0; display:flex; flex-direction:column; justify-content:space-between; }');
+            printWindow.document.write('.r-head { display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid #999; padding-bottom:2mm; margin-bottom:2mm; flex-wrap:wrap; gap:4px; }');
+            printWindow.document.write('.r-sysname { font-weight:700; font-size:11px; }');
+            printWindow.document.write('.r-title { font-weight:600; font-size:10px; color:#333; }');
+            printWindow.document.write('.r-transid { font-size:9px; color:#555; font-family:monospace; }');
+            printWindow.document.write('.r-table { width:100%; border-collapse:collapse; font-size:10px; margin-bottom:2mm; }');
+            printWindow.document.write('.r-table td { border:1px solid #ccc; padding:2px 5px; vertical-align:middle; }');
+            printWindow.document.write('.r-code { font-family:monospace; white-space:nowrap; width:15%; }');
+            printWindow.document.write('.r-name { font-weight:600; }');
+            printWindow.document.write('.r-cat { font-weight:400; color:#666; font-size:9px; }');
+            printWindow.document.write('.r-qty { text-align:right; font-weight:700; white-space:nowrap; width:15%; }');
+            printWindow.document.write('.r-meta { display:flex; gap:10px; font-size:9.5px; flex-wrap:wrap; margin-bottom:1.5mm; }');
+            printWindow.document.write('.r-remark { font-size:9.5px; margin-bottom:1.5mm; }');
+            printWindow.document.write('.r-sign-row { display:flex; justify-content:flex-end; }');
+            printWindow.document.write('.r-sign-box { text-align:center; min-width:120px; }');
+            printWindow.document.write('.r-sig-img { max-height:26px; max-width:120px; object-fit:contain; }');
+            printWindow.document.write('.r-nosign { font-size:8.5px; color:#999; }');
+            printWindow.document.write('.r-sign-caption { font-size:8px; color:#777; border-top:1px solid #999; margin-top:1px; padding-top:1px; }');
+            printWindow.document.write('</style></head><body>');
+            printWindow.document.write(pagesHtml);
             printWindow.document.write('<script>window.onload = function() { window.print(); window.close(); };<\/script>');
             printWindow.document.write('</body></html>');
             printWindow.document.close();
