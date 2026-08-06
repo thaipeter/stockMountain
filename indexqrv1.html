@@ -3138,7 +3138,7 @@ function callGAS(fn, args, onOk, onFail) {
   // 1. ถ้ารันอยู่บน Google Apps Script Web App (มี google.script.run) ให้ใช้ช่องทางหลักเสมอ เพื่อเลี่ยงปัญหา CORS
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     let done = false;
-    const timer = setTimeout(() => { if (!done) { done = true; if (onFail) onFail('timeout'); } }, 20000);
+    const timer = setTimeout(() => { if (!done) { done = true; if (onFail) onFail('เซิร์ฟเวอร์ตอบกลับช้ากว่าปกติ (อาจกำลังประมวลผลอยู่) กรุณารีเฟรชเพื่อตรวจสอบผลก่อนทำรายการซ้ำ'); } }, 55000);
     google.script.run
       .withSuccessHandler(res => {
         if (done) return; done = true; clearTimeout(timer);
@@ -3155,7 +3155,14 @@ function callGAS(fn, args, onOk, onFail) {
   // 2. ถ้ารันแบบโลคอลในเครื่องคอมพิวเตอร์ และมี GAS_URL ค่อยใช้ fetch (ช่องทางสำรอง)
   if (GAS_URL) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 25000);
+    // ⏱️ ขยายเวลารอเป็น 55 วิ (Apps Script ที่มีการยิงไลน์แจ้งเตือน/ล็อกชีต อาจใช้เวลานานกว่าปกติ)
+    // และใส่ "เหตุผล" ตอน abort ไว้ด้วย เพื่อให้ error message อ่านเข้าใจง่ายขึ้น แทนคำว่า
+    // "signal is aborted without reason" ที่ทำให้ผู้ใช้ตกใจว่าระบบพัง ทั้งที่จริงแล้วฝั่งเซิร์ฟเวอร์
+    // (Google) ยังทำงานต่อจนจบอยู่ดี แค่เบราว์เซอร์เลิกรอไปก่อน
+    const timer = setTimeout(() => {
+      try { controller.abort('เซิร์ฟเวอร์ตอบกลับช้ากว่าปกติ (อาจกำลังประมวลผลอยู่ และอาจบันทึกสำเร็จแล้ว) กรุณากด "รีเฟรช" เพื่อตรวจสอบผลก่อนทำรายการซ้ำ'); }
+      catch (e) { controller.abort(); } // เผื่อเบราว์เซอร์เก่าที่ไม่รองรับ abort(reason)
+    }, 55000);
     fetch(GAS_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ fn, args: args || [] }), signal: controller.signal
@@ -3166,7 +3173,15 @@ function callGAS(fn, args, onOk, onFail) {
       if (res && res.success === false) { if (onFail) onFail(res.error || 'error'); return; }
       onOk(res);
     })
-    .catch(err => { clearTimeout(timer); if (onFail) onFail(err.message || 'fetch error'); });
+    .catch(err => {
+      clearTimeout(timer);
+      // ถ้าเป็นการยกเลิกจากตัวจับเวลาของเราเอง ให้ใช้ข้อความที่อธิบายเหตุผลไว้แล้ว (ผูกกับ signal.reason)
+      const isAbort = err && (err.name === 'AbortError' || String(err.message || '').toLowerCase().includes('abort'));
+      const friendlyMsg = isAbort
+        ? (controller.signal.reason || 'การเชื่อมต่อใช้เวลานานเกินไป อาจกำลังประมวลผลอยู่ กรุณารีเฟรชเพื่อตรวจสอบผลก่อนทำรายการซ้ำ')
+        : (err.message || 'fetch error');
+      if (onFail) onFail(friendlyMsg);
+    });
     return;
   }
   
