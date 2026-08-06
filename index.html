@@ -4337,7 +4337,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
         // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
         // ใส่ URL เดียวกับที่ใช้ในหน้า QR (indexqrv1.html) เพราะเป็น backend เดียวกัน
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyHljTeKi0DuuseQE6QnTNnSs1ECfMYJyxSmvQ3OsE0vLo6zCwP0yKXhGL4F9lMUodn_Q/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
         const isGAS = (typeof google !== 'undefined' && google.script && google.script.run && typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:');
         window.isGAS = isGAS;
 
