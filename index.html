@@ -3325,6 +3325,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         <input type="range" class="form-range" id="rcpCardHSlider" min="15" max="200" step="1" value="60" oninput="onRcpCardSliderChange()">
                                     </div>
                                     <div class="small fw-bold mt-1" id="rcpCardShapeHint" style="color:#e8a020"></div>
+                                    <div class="d-flex align-items-center gap-2 mt-2">
+                                        <span class="small text-muted fw-bold">แนวใบเสร็จ (สลับกว้าง/สูง)</span>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-warning fw-bold py-0 px-2" onclick="setRcpCardOrientation('portrait')" title="ใบเสร็จทรงตั้ง (สูงกว่ากว้าง)"><i class="fas fa-file-alt me-1"></i>ตั้ง</button>
+                                            <button type="button" class="btn btn-outline-warning fw-bold py-0 px-2" onclick="setRcpCardOrientation('landscape')" title="ใบเสร็จทรงนอน (กว้างกว่าสูง)"><i class="fas fa-file me-1" style="transform:rotate(90deg)"></i>นอน</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="form-check form-switch mt-3 pt-2 border-top">
                                     <input class="form-check-input" type="checkbox" role="switch" id="rcpCutLinesCheckbox" checked onchange="onRcpCutLinesToggle(this.checked)">
@@ -12104,6 +12111,27 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const hVal = parseInt(hInput?.value) || 0;
             if (wVal > 0 && wSlider) wSlider.value = wVal;
             if (hVal > 0 && hSlider) hSlider.value = hVal;
+            updateRcpLayoutPreview();
+        }
+
+        // 🆕 แนว "ใบเสร็จ" (กว้าง/สูงของการ์ดแต่ละใบ) — คนละเรื่องกับ "แนวกระดาษ" (rcpOrientation)
+        // แนวกระดาษ = A4 ทั้งแผ่นตั้งหรือนอน, แนวใบเสร็จ = การ์ดแต่ละใบทรงตั้ง(สูงกว่ากว้าง)หรือทรงนอน(กว้างกว่าสูง)
+        // สลับด้วยการสลับค่ากว้าง/สูงของการ์ดปัจจุบัน แล้วตั้งเป็นค่ากำหนดเอง ให้เห็นผลทันทีไม่ว่าตอนนี้จะ auto หรือกำหนดเองอยู่ก็ตาม
+        function setRcpCardOrientation(mode) {
+            const cols = document.getElementById('rcpLayoutCols')?.value;
+            const layout = rcpCalcLayout(cols); // ขนาดการ์ดที่ใช้อยู่จริงตอนนี้ (ไม่ว่าจะ auto หรือกำหนดเอง)
+            let w = layout.cardW, h = layout.cardH;
+            if (mode === 'landscape' && w < h) { const t = w; w = h; h = t; }
+            if (mode === 'portrait' && h < w) { const t = w; w = h; h = t; }
+            w = Math.round(w); h = Math.round(h);
+            const wInput = document.getElementById('rcpCardW');
+            const hInput = document.getElementById('rcpCardH');
+            const wSlider = document.getElementById('rcpCardWSlider');
+            const hSlider = document.getElementById('rcpCardHSlider');
+            if (wInput) wInput.value = w;
+            if (hInput) hInput.value = h;
+            if (wSlider) wSlider.value = Math.min(200, Math.max(15, w));
+            if (hSlider) hSlider.value = Math.min(200, Math.max(15, h));
             updateRcpLayoutPreview();
         }
 
