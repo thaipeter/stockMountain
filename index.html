@@ -3228,9 +3228,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
                     </div>
 
-                    <div class="row g-3">
-                    <div class="col-xl-8">
-                    <div class="table-container p-4 bg-white h-100">
+                    <ul class="nav nav-tabs mb-3" style="border-bottom:1px solid #2a2f3d">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="rcpTabListBtn" onclick="switchReceiptPrintTab('list')" style="background:transparent;color:#e0e0e0;border:none;border-bottom:2px solid #e8a020"><i class="fas fa-list-check me-1"></i> รายการ</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="rcpTabSettingsBtn" onclick="switchReceiptPrintTab('settings')" style="background:transparent;color:#a0aec0;border:none;border-bottom:2px solid transparent"><i class="fas fa-sliders me-1"></i> ตั้งค่าการพิมพ์</button>
+                        </li>
+                    </ul>
+
+                    <div id="rcpTabListPane">
+                    <div class="table-container p-4 bg-white">
                         <div class="filter-group bg-light p-3 rounded-3 mb-3 shadow-sm border-0 d-flex flex-wrap gap-3">
                             <div class="d-flex align-items-center gap-2">
                                 <button class="btn btn-white border shadow-sm text-primary" onclick="filterReceiptPrintTable()" title="รีเฟรช/ค้นหา"><i class="fas fa-sync-alt"></i></button>
@@ -3253,26 +3261,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <i class="fas fa-info-circle me-1"></i> พบ <strong id="rcpFoundCount">0</strong> รายการ (เลือกได้เฉพาะรายการ เบิก/ยืม ที่มีข้อมูลในระบบ)
                             </div>
                             <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <label class="small text-muted fw-bold mb-0" for="rcpLayoutCols"><i class="fas fa-th me-1"></i>ขนาดใบเบิก:</label>
-                                <select class="form-select form-select-sm border shadow-sm fw-bold" id="rcpLayoutCols" style="min-width:170px;" onchange="updateRcpLayoutPreview()">
-                                    <option value="1">1 ใบ/แถว (ใหญ่มาก)</option>
-                                    <option value="2">2 ใบ/แถว (ใหญ่)</option>
-                                    <option value="3" selected>3 ใบ/แถว (กลาง)</option>
-                                    <option value="4">4 ใบ/แถว (เล็ก)</option>
-                                    <option value="5">5 ใบ/แถว (จิ๋ว)</option>
-                                </select>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button type="button" class="btn btn-outline-secondary fw-bold active" id="rcpOrientPortrait" onclick="setRcpOrientation('portrait')"><i class="fas fa-file-alt me-1"></i>แนวตั้ง</button>
-                                    <button type="button" class="btn btn-outline-secondary fw-bold" id="rcpOrientLandscape" onclick="setRcpOrientation('landscape')"><i class="fas fa-file me-1" style="transform:rotate(90deg)"></i>แนวนอน</button>
-                                </div>
-                                <div class="d-flex align-items-center gap-1">
-                                    <label class="small text-muted fw-bold mb-0"><i class="fas fa-ruler-combined me-1"></i>ขนาดการ์ด:</label>
-                                    <input type="number" class="form-control form-control-sm fw-bold text-center" id="rcpCardW" value="0" min="15" max="200" step="1" style="width:62px" onchange="updateRcpLayoutPreview()" title="กว้าง (mm) — 0 = อัตโนมัติ">
-                                    <span class="small text-muted">x</span>
-                                    <input type="number" class="form-control form-control-sm fw-bold text-center" id="rcpCardH" value="0" min="15" max="200" step="1" style="width:62px" onchange="updateRcpLayoutPreview()" title="สูง (mm) — 0 = อัตโนมัติ">
-                                    <span class="small text-muted">mm</span>
-                                </div>
                                 <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="toggleSelectAllReceipts()"><i class="fas fa-check-double me-1"></i> เลือก/ยกเลิกทั้งหมด</button>
+                                <button class="btn btn-outline-warning btn-sm fw-bold" onclick="previewSelectedReceipts()"><i class="fas fa-eye me-1"></i> ดูตัวอย่างก่อนพิมพ์</button>
                                 <button class="btn btn-warning btn-sm fw-bold text-dark" id="rcpPrintBtn" onclick="printSelectedReceipts()"><i class="fas fa-print me-1"></i> พิมพ์ใบเบิกที่เลือก (<span id="rcpSelectedCount">0</span>)</button>
                             </div>
                         </div>
@@ -3296,18 +3286,61 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     </div>
 
-                    <div class="col-xl-4">
-                        <div class="table-container p-3 bg-white h-100" style="position:sticky; top:12px;">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-eye me-1 text-warning"></i> ตัวอย่างก่อนพิมพ์</h6>
-                                <span class="small text-muted" id="rcpLayoutPreviewText"></span>
-                            </div>
-                            <div class="d-flex justify-content-center p-2 rounded-3" style="background:#e9ecef;">
-                                <div id="rcpPreviewWrap" style="overflow:hidden; max-width:100%; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.15); border-radius:3px;">
-                                    <div id="rcpPreviewStage"></div>
+                    <div id="rcpTabSettingsPane" style="display:none">
+                    <div class="row g-3">
+                        <div class="col-xl-6">
+                            <div class="table-container p-4 bg-white h-100">
+                                <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-sliders me-1 text-warning"></i> ตั้งค่ารูปแบบใบเบิก</h6>
+                                <div class="mb-3">
+                                    <label class="small text-muted fw-bold mb-1 d-block" for="rcpLayoutCols"><i class="fas fa-th me-1"></i>ขนาดใบเบิก</label>
+                                    <select class="form-select form-select-sm border shadow-sm fw-bold" id="rcpLayoutCols" onchange="updateRcpLayoutPreview()">
+                                        <option value="1">1 ใบ/แถว (ใหญ่มาก)</option>
+                                        <option value="2">2 ใบ/แถว (ใหญ่)</option>
+                                        <option value="3" selected>3 ใบ/แถว (กลาง)</option>
+                                        <option value="4">4 ใบ/แถว (เล็ก)</option>
+                                        <option value="5">5 ใบ/แถว (จิ๋ว)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="small text-muted fw-bold mb-1 d-block">แนวกระดาษ</label>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-secondary fw-bold active" id="rcpOrientPortrait" onclick="setRcpOrientation('portrait')"><i class="fas fa-file-alt me-1"></i>แนวตั้ง</button>
+                                        <button type="button" class="btn btn-outline-secondary fw-bold" id="rcpOrientLandscape" onclick="setRcpOrientation('landscape')"><i class="fas fa-file me-1" style="transform:rotate(90deg)"></i>แนวนอน</button>
+                                    </div>
+                                </div>
+                                <div class="mb-1">
+                                    <label class="small text-muted fw-bold mb-1 d-block"><i class="fas fa-ruler-combined me-1"></i>ขนาดการ์ด (mm) — 0 = อัตโนมัติ</label>
+                                    <div class="d-flex align-items-center gap-1 mb-2">
+                                        <input type="number" class="form-control form-control-sm fw-bold text-center" id="rcpCardW" value="0" min="0" max="200" step="1" style="width:70px" onchange="onRcpCardNumberChange()" oninput="onRcpCardNumberChange()" title="กว้าง (mm) — 0 = อัตโนมัติ">
+                                        <span class="small text-muted">x</span>
+                                        <input type="number" class="form-control form-control-sm fw-bold text-center" id="rcpCardH" value="0" min="0" max="200" step="1" style="width:70px" onchange="onRcpCardNumberChange()" oninput="onRcpCardNumberChange()" title="สูง (mm) — 0 = อัตโนมัติ">
+                                        <span class="small text-muted">mm</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="small text-muted" style="width:40px">กว้าง</span>
+                                        <input type="range" class="form-range" id="rcpCardWSlider" min="15" max="200" step="1" value="60" oninput="onRcpCardSliderChange()">
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="small text-muted" style="width:40px">สูง</span>
+                                        <input type="range" class="form-range" id="rcpCardHSlider" min="15" max="200" step="1" value="60" oninput="onRcpCardSliderChange()">
+                                    </div>
+                                    <div class="small fw-bold mt-1" id="rcpCardShapeHint" style="color:#e8a020"></div>
                                 </div>
                             </div>
-                            <p class="small text-muted mt-2 mb-0"><i class="fas fa-info-circle me-1"></i>ตัวอย่างจำลอง 1 แผ่น A4 (ข้อมูลตัวอย่าง) — ของจริงจะใช้รายการที่ติ๊กเลือกไว้</p>
+                        </div>
+                        <div class="col-xl-6">
+                            <div class="table-container p-3 bg-white h-100">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-eye me-1 text-warning"></i> ตัวอย่างก่อนพิมพ์</h6>
+                                    <span class="small text-muted" id="rcpLayoutPreviewText"></span>
+                                </div>
+                                <div class="d-flex justify-content-center p-2 rounded-3" style="background:#e9ecef;">
+                                    <div id="rcpPreviewWrap" style="overflow:hidden; max-width:100%; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.15); border-radius:3px;">
+                                        <div id="rcpPreviewStage"></div>
+                                    </div>
+                                </div>
+                                <p class="small text-muted mt-2 mb-0" id="rcpPreviewNote"><i class="fas fa-info-circle me-1"></i>ตัวอย่างจำลอง 1 แผ่น A4 (ข้อมูลตัวอย่าง) — ของจริงจะใช้รายการที่ติ๊กเลือกไว้</p>
+                            </div>
                         </div>
                     </div>
                     </div>
@@ -11963,6 +11996,27 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         let rcpSelectedKeys = new Set(); // เก็บ key ของแถวที่ถูกติ๊กเลือกไว้ (คงอยู่แม้กรองใหม่)
 
         let rcpOrientation = 'portrait'; // 'portrait' or 'landscape'
+
+        function switchReceiptPrintTab(tab) {
+            const listPane = document.getElementById('rcpTabListPane');
+            const settingsPane = document.getElementById('rcpTabSettingsPane');
+            const listBtn = document.getElementById('rcpTabListBtn');
+            const settingsBtn = document.getElementById('rcpTabSettingsBtn');
+            if (listPane) listPane.style.display = (tab === 'list') ? '' : 'none';
+            if (settingsPane) settingsPane.style.display = (tab === 'settings') ? '' : 'none';
+            if (listBtn) { listBtn.style.borderBottomColor = (tab === 'list') ? '#e8a020' : 'transparent'; listBtn.style.color = (tab === 'list') ? '#e0e0e0' : '#a0aec0'; }
+            if (settingsBtn) { settingsBtn.style.borderBottomColor = (tab === 'settings') ? '#e8a020' : 'transparent'; settingsBtn.style.color = (tab === 'settings') ? '#e0e0e0' : '#a0aec0'; }
+            if (tab === 'settings') {
+                // ซิงก์ตำแหน่งขีดเลื่อนให้ตรงกับขนาดการ์ดที่ใช้งานจริงตอนนี้ (เผื่อยังไม่เคยกำหนดเอง)
+                const layoutNow = rcpCalcLayout(document.getElementById('rcpLayoutCols')?.value);
+                const wSlider = document.getElementById('rcpCardWSlider');
+                const hSlider = document.getElementById('rcpCardHSlider');
+                if (wSlider) wSlider.value = Math.round(layoutNow.cardW);
+                if (hSlider) hSlider.value = Math.round(layoutNow.cardH);
+                updateRcpLayoutPreview(); // รีเฟรชพรีวิว เผื่อยังไม่เคยวาดตอนซ่อนอยู่
+            }
+        }
+
         function setRcpOrientation(orient) {
             rcpOrientation = orient;
             document.getElementById('rcpOrientPortrait').classList.toggle('active', orient === 'portrait');
@@ -11994,11 +12048,43 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             return { cols: cols, rows: rows, perPage: cols * rows, cardW: cardW, cardH: cardH, orientation: rcpOrientation };
         }
 
+        function onRcpCardSliderChange() {
+            const wSlider = document.getElementById('rcpCardWSlider');
+            const hSlider = document.getElementById('rcpCardHSlider');
+            const wInput = document.getElementById('rcpCardW');
+            const hInput = document.getElementById('rcpCardH');
+            if (wInput && wSlider) wInput.value = wSlider.value;
+            if (hInput && hSlider) hInput.value = hSlider.value;
+            updateRcpLayoutPreview();
+        }
+
+        function onRcpCardNumberChange() {
+            const wSlider = document.getElementById('rcpCardWSlider');
+            const hSlider = document.getElementById('rcpCardHSlider');
+            const wInput = document.getElementById('rcpCardW');
+            const hInput = document.getElementById('rcpCardH');
+            const wVal = parseInt(wInput?.value) || 0;
+            const hVal = parseInt(hInput?.value) || 0;
+            if (wVal > 0 && wSlider) wSlider.value = wVal;
+            if (hVal > 0 && hSlider) hSlider.value = hVal;
+            updateRcpLayoutPreview();
+        }
+
+        // อธิบายรูปทรงการ์ดเป็นภาษาคน (กว้าง/ยาว/จัตุรัส) ให้ดูง่ายกว่าตัวเลข mm เฉยๆ
+        function _rcpShapeHint(cardW, cardH) {
+            const ratio = cardW / cardH;
+            if (ratio > 1.15) return '↔️ ทรงกว้าง (แนวนอน) — กว้างกว่าสูง';
+            if (ratio < 0.87) return '↕️ ทรงยาว (แนวตั้ง) — สูงกว่ากว้าง';
+            return '◻️ ทรงสี่เหลี่ยมจัตุรัส — กว้างและสูงใกล้เคียงกัน';
+        }
+
         function updateRcpLayoutPreview() {
             const cols = document.getElementById('rcpLayoutCols').value;
             const layout = rcpCalcLayout(cols);
             const el = document.getElementById('rcpLayoutPreviewText');
             if (el) el.innerText = '≈' + layout.perPage + ' ใบ/แผ่น (' + layout.cardW.toFixed(0) + 'x' + layout.cardH.toFixed(0) + 'mm) ' + (rcpOrientation === 'landscape' ? '⛶แนวนอน' : '⛶แนวตั้ง');
+            const hintEl = document.getElementById('rcpCardShapeHint');
+            if (hintEl) hintEl.innerText = _rcpShapeHint(layout.cardW, layout.cardH);
             renderRcpPreviewStage(layout);
         }
 
@@ -12049,6 +12135,28 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             };
         }
 
+        // ใช้รายการที่ผู้ใช้ติ๊กเลือกไว้จริงมาแสดงในพรีวิว (ถ้ามี) แทนข้อมูลตัวอย่างสมมติ
+        function _rcpSelectedLogs() {
+            return (allData.history || []).filter(function(log) { return rcpSelectedKeys.has(rcpRowKey(log)); });
+        }
+
+        function _rcpPreviewDataFromLog(log, idx) {
+            const displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : '';
+            return {
+                transId: '#' + (idx + 1),
+                type: String(log.action || '').includes('ยืม') ? 'ยืม' : 'เบิก',
+                itemCode: log.code,
+                itemName: log.itemName,
+                category: log.category || '-',
+                qty: log.amount,
+                date: log.time,
+                user: displayUser,
+                machine: log.machine || log.dept || '-',
+                remark: log.remark || '-',
+                signatureUrl: ''
+            };
+        }
+
         // 🆕 วาดพรีวิวแผ่น A4 จำลอง (ย่อขนาดด้วย transform:scale) ให้เห็นภาพก่อนพิมพ์จริง
         function renderRcpPreviewStage(layout) {
             const stage = document.getElementById('rcpPreviewStage');
@@ -12067,9 +12175,22 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const pageWmm = rcpOrientation === 'landscape' ? 281 : 194;
             const pageHmm = rcpOrientation === 'landscape' ? 194 : 281;
 
+            const selectedLogs = _rcpSelectedLogs();
+            const useReal = selectedLogs.length > 0;
             const cards = [];
-            for (let i = 0; i < layout.perPage; i++) cards.push(renderReceiptCompactHtml(rcpDummySample(i)));
+            for (let i = 0; i < layout.perPage; i++) {
+                cards.push(useReal
+                    ? renderReceiptCompactHtml(_rcpPreviewDataFromLog(selectedLogs[i % selectedLogs.length], i))
+                    : renderReceiptCompactHtml(rcpDummySample(i)));
+            }
             stage.innerHTML = '<div class="r-page" style="width:' + pageWmm + 'mm;height:' + pageHmm + 'mm;background:#fff;">' + cards.join('') + '</div>';
+
+            const noteEl = document.getElementById('rcpPreviewNote');
+            if (noteEl) {
+                noteEl.innerHTML = useReal
+                    ? '<i class="fas fa-check-circle me-1 text-success"></i>กำลังแสดงจากรายการที่ติ๊กเลือกไว้จริง <b>' + selectedLogs.length + '</b> รายการ'
+                    : '<i class="fas fa-info-circle me-1"></i>ยังไม่ได้ติ๊กเลือกรายการ — แสดงข้อมูลตัวอย่างสมมติไปก่อน';
+            }
 
             // ย่อขนาดหน้า A4 จำลอง ให้พอดีกับกล่องพรีวิว (กว้างประมาณ 230px) โดยยึดด้านที่ยาวกว่าเป็นหลัก กันกล่องล้นทับตารางด้านซ้าย
             const TARGET_MAX = 230; // px
@@ -12243,55 +12364,81 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 '</div>';
         }
 
-        async function printSelectedReceipts() {
+        // ดึงข้อมูลใบเบิกจริงของรายการที่ติ๊กเลือกไว้ (ใช้ร่วมกันทั้งปุ่ม "ดูตัวอย่าง" และปุ่ม "พิมพ์")
+        async function _rcpFetchSelectedForPrint() {
             if (rcpSelectedKeys.size === 0) {
-                Swal.fire({ icon: 'warning', title: 'ยังไม่ได้เลือกรายการ', text: 'กรุณาติ๊กเลือกรายการที่ต้องการพิมพ์อย่างน้อย 1 รายการ' });
-                return;
+                Swal.fire({ icon: 'warning', title: 'ยังไม่ได้เลือกรายการ', text: 'กรุณาติ๊กเลือกรายการที่ต้องการอย่างน้อย 1 รายการ' });
+                return null;
             }
-
             // จับคู่ key ที่เลือกไว้ กับ log object เต็ม จากทุกแถวที่เคยแสดงผล (ไม่ใช่แค่หน้าปัจจุบัน)
             const logsToFetch = (allData.history || []).filter(function(log) { return rcpSelectedKeys.has(rcpRowKey(log)); });
             if (logsToFetch.length === 0) {
                 Swal.fire({ icon: 'error', title: 'ไม่พบข้อมูล', text: 'ไม่พบรายการที่เลือกไว้ในระบบ กรุณาลองเลือกใหม่' });
-                return;
+                return null;
             }
-
             document.getElementById('loading').style.display = 'flex';
             try {
                 const results = await Promise.all(logsToFetch.map(rcpFetchOne));
                 document.getElementById('loading').style.display = 'none';
-
                 const okResults = results.filter(function(r) { return r && r.success; });
                 const failCount = results.length - okResults.length;
-
                 if (okResults.length === 0) {
-                    Swal.fire({ icon: 'error', title: 'พิมพ์ไม่ได้', text: 'ไม่พบใบเบิกต้นฉบับของรายการที่เลือกเลยสักใบ' });
-                    return;
+                    Swal.fire({ icon: 'error', title: 'ไม่สามารถดำเนินการได้', text: 'ไม่พบใบเบิกต้นฉบับของรายการที่เลือกเลยสักใบ' });
+                    return null;
                 }
-
-                const chosenCols = parseInt(document.getElementById('rcpLayoutCols')?.value) || 3;
-                const doOpenPrint = function() { openBulkReceiptPrintWindow(okResults, chosenCols); };
-
-                if (failCount > 0) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'พบรายการที่พิมพ์ไม่ได้ ' + failCount + ' รายการ',
-                        text: 'พิมพ์ได้ ' + okResults.length + ' จาก ' + results.length + ' รายการ (รายการที่หาไม่เจอจะถูกข้ามไป) ต้องการดำเนินการต่อหรือไม่?',
-                        showCancelButton: true,
-                        confirmButtonText: 'พิมพ์ ' + okResults.length + ' ใบที่เจอ',
-                        cancelButtonText: 'ยกเลิก',
-                        confirmButtonColor: 'var(--theme-color)'
-                    }).then(function(r) { if (r.isConfirmed) doOpenPrint(); });
-                } else {
-                    doOpenPrint();
-                }
+                return { okResults: okResults, failCount: failCount, total: results.length };
             } catch (e) {
                 document.getElementById('loading').style.display = 'none';
                 Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(e) });
+                return null;
             }
         }
 
-        function openBulkReceiptPrintWindow(dataList, cols) {
+        async function printSelectedReceipts() {
+            const fetched = await _rcpFetchSelectedForPrint();
+            if (!fetched) return;
+            const chosenCols = parseInt(document.getElementById('rcpLayoutCols')?.value) || 3;
+            const doOpenPrint = function() { openBulkReceiptPrintWindow(fetched.okResults, chosenCols, true); };
+
+            if (fetched.failCount > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'พบรายการที่พิมพ์ไม่ได้ ' + fetched.failCount + ' รายการ',
+                    text: 'พิมพ์ได้ ' + fetched.okResults.length + ' จาก ' + fetched.total + ' รายการ (รายการที่หาไม่เจอจะถูกข้ามไป) ต้องการดำเนินการต่อหรือไม่?',
+                    showCancelButton: true,
+                    confirmButtonText: 'พิมพ์ ' + fetched.okResults.length + ' ใบที่เจอ',
+                    cancelButtonText: 'ยกเลิก',
+                    confirmButtonColor: 'var(--theme-color)'
+                }).then(function(r) { if (r.isConfirmed) doOpenPrint(); });
+            } else {
+                doOpenPrint();
+            }
+        }
+
+        // 🆕 เปิดดูใบเสร็จจริงแบบเต็ม (ข้อมูลจริง + ลายเซ็นจริง) ก่อนตัดสินใจพิมพ์ — ไม่สั่งพิมพ์อัตโนมัติ ผู้ใช้กดพิมพ์เองจากหน้าต่างที่เปิดได้
+        async function previewSelectedReceipts() {
+            const fetched = await _rcpFetchSelectedForPrint();
+            if (!fetched) return;
+            const chosenCols = parseInt(document.getElementById('rcpLayoutCols')?.value) || 3;
+            const doOpenPreview = function() { openBulkReceiptPrintWindow(fetched.okResults, chosenCols, false); };
+
+            if (fetched.failCount > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'พบรายการที่แสดงตัวอย่างไม่ได้ ' + fetched.failCount + ' รายการ',
+                    text: 'แสดงตัวอย่างได้ ' + fetched.okResults.length + ' จาก ' + fetched.total + ' รายการ (รายการที่หาไม่เจอจะถูกข้ามไป) ต้องการดำเนินการต่อหรือไม่?',
+                    showCancelButton: true,
+                    confirmButtonText: 'ดูตัวอย่าง ' + fetched.okResults.length + ' ใบที่เจอ',
+                    cancelButtonText: 'ยกเลิก',
+                    confirmButtonColor: 'var(--theme-color)'
+                }).then(function(r) { if (r.isConfirmed) doOpenPreview(); });
+            } else {
+                doOpenPreview();
+            }
+        }
+
+        function openBulkReceiptPrintWindow(dataList, cols, autoPrint) {
+            autoPrint = autoPrint !== false; // ค่าเริ่มต้นยังคงพิมพ์อัตโนมัติเหมือนเดิม เว้นแต่เรียกจากโหมดดูตัวอย่าง
             // 🆕 จัดเป็นตาราง (Grid) ใบเบิกสี่เหลี่ยมจัตุรัส ปรับได้ว่ากี่ใบ/แถว (กว้าง/ขนาดเท่าไหร่)
             const layout = rcpCalcLayout(cols);
             const perPage = layout.perPage;
@@ -12303,7 +12450,12 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }
 
             const printWindow = window.open('', '_blank', 'width=900,height=700');
-            printWindow.document.write('<html><head><title>พิมพ์ใบเบิกพัสดุ (' + dataList.length + ' รายการ)</title>');
+            if (!printWindow) {
+                Swal.fire({ icon: 'warning', title: 'เปิดหน้าต่างไม่ได้', text: 'เบราว์เซอร์บล็อกป๊อปอัพ กรุณาอนุญาตป๊อปอัพสำหรับเว็บนี้แล้วลองอีกครั้ง' });
+                return;
+            }
+            const titlePrefix = autoPrint ? 'พิมพ์ใบเบิกพัสดุ' : 'ดูตัวอย่างใบเบิกพัสดุ';
+            printWindow.document.write('<html><head><title>' + titlePrefix + ' (' + dataList.length + ' รายการ)</title>');
             printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">');
             printWindow.document.write('<style>');
             printWindow.document.write('@page { size: A4 ' + (layout.orientation === 'landscape' ? 'landscape' : 'portrait') + '; margin: 8mm; }');
@@ -12311,10 +12463,21 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             printWindow.document.write('body { font-family: "Sarabun", sans-serif; background: #fff; color: #000; margin:0; padding:0; }');
             printWindow.document.write('.r-page { page-break-after: always; }');
             printWindow.document.write('.r-page:last-child { page-break-after: auto; }');
+            if (!autoPrint) {
+                // แถบเครื่องมือลอยด้านบนตอนดูตัวอย่าง (ไม่โดนพิมพ์ออกไปด้วย เพราะซ่อนตอน @media print)
+                printWindow.document.write('.rcp-preview-toolbar { position:sticky; top:0; z-index:10; background:#1a2230; color:#fff; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; font-family:"Sarabun",sans-serif; box-shadow:0 2px 8px rgba(0,0,0,.2); }');
+                printWindow.document.write('.rcp-preview-toolbar button { background:#e8a020; color:#1a1200; border:none; border-radius:8px; padding:8px 16px; font-weight:700; cursor:pointer; }');
+                printWindow.document.write('@media print { .rcp-preview-toolbar { display:none !important; } }');
+            }
             printWindow.document.write(buildRcpGridCss(layout, ''));
             printWindow.document.write('</style></head><body>');
+            if (!autoPrint) {
+                printWindow.document.write('<div class="rcp-preview-toolbar"><span>👁️ ตัวอย่างใบเบิกจริง ' + dataList.length + ' ใบ — เลื่อนดูได้ก่อนสั่งพิมพ์</span><button onclick="window.print()"><i class="fas fa-print"></i> พิมพ์เลย</button></div>');
+            }
             printWindow.document.write(pagesHtml);
-            printWindow.document.write('<script>window.onload = function() { window.print(); window.close(); };<\/script>');
+            if (autoPrint) {
+                printWindow.document.write('<script>window.onload = function() { window.print(); window.close(); };<\/script>');
+            }
             printWindow.document.write('</body></html>');
             printWindow.document.close();
         }
