@@ -2184,7 +2184,7 @@ let stState = { sessionId: null, items: [], loaded: false };
 function stLoad() {
   const listEl = document.getElementById('stList');
   if (!stState.loaded) listEl.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>กำลังโหลดรายการนับสต็อก...</p></div>';
-  callGAS('webGetStockTakeProgress', [{ role: me.role, userName: me.name }], res => {
+  callGAS('webGetStockTakeProgress', [{ uid: me.uid, role: me.role, userName: me.name }], res => {
     stState.sessionId = res.sessionId;
     stState.items = res.items || [];
     stState.loaded = true;
@@ -2254,7 +2254,7 @@ function stOpenCount(code) {
 function stSaveCount(code, countedQty) {
   callGAS('webSubmitStockCount', [{
     sessionId: stState.sessionId, itemCode: code, countedQty: countedQty,
-    role: me.role, userName: me.name, source: 'scan'
+    uid: me.uid, role: me.role, userName: me.name, source: 'scan'
   }], res => {
     showToast(res.diff === 0 ? 'ยอดตรง บันทึกแล้ว' : ('ปรับยอด ' + (res.diff > 0 ? '+' : '') + res.diff + ' แล้ว'), 'success');
     stLoad();
@@ -2273,7 +2273,7 @@ function stCloseSession() {
     background: '#1a1f2e', color: '#e0e0e0', confirmButtonColor: '#f59e0b'
   }).then(r => {
     if (!r.isConfirmed) return;
-    callGAS('webCloseStockTake', [{ sessionId: stState.sessionId, role: me.role, userName: me.name }], () => {
+    callGAS('webCloseStockTake', [{ sessionId: stState.sessionId, uid: me.uid, role: me.role, userName: me.name }], () => {
       showToast('ปิดรอบนับสต็อกแล้ว', 'success');
       stLoad();
     }, err => Swal.fire({ icon: 'error', title: 'ปิดรอบไม่สำเร็จ', text: String(err), background: '#1a1f2e', color: '#e0e0e0' }));
