@@ -3303,7 +3303,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <span class="small text-muted" id="rcpLayoutPreviewText"></span>
                             </div>
                             <div class="d-flex justify-content-center p-2 rounded-3" style="background:#e9ecef;">
-                                <div id="rcpPreviewWrap" style="overflow:hidden; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.15); border-radius:3px;">
+                                <div id="rcpPreviewWrap" style="overflow:hidden; max-width:100%; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.15); border-radius:3px;">
                                     <div id="rcpPreviewStage"></div>
                                 </div>
                             </div>
@@ -4253,7 +4253,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         <div class="d-flex align-items-center gap-2" style="font-size:.78rem;color:rgba(255,255,255,.5)">
                                             <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block"></span>
                                             <span class="fw-bold" style="color:#ef4444">LOGS CONSOLE / CHAT MONITOR</span>
-                                            <span>• อัปเดตล่าสุด: <span id="diagLastRunTime">-</span></span>
+                                            <span class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded-pill" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"><i class="far fa-clock"></i> อัปเดตล่าสุด: <span id="diagLastRunTime" style="color:#e5e7eb;font-weight:600">-</span></span>
                                         </div>
                                         <div class="d-flex gap-2">
                                             <button class="btn btn-sm btn-dark py-0 px-2" style="font-size:.72rem" onclick="clearDiagnosticLogs()">
@@ -9091,10 +9091,23 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
            ============================================================ */
         let _diagLogs = [];
 
+        // จัดรูปแบบวันที่/เวลาให้อ่านง่ายและสวยขึ้น เช่น "ศ. 7 ส.ค. 2569 · 17:32:41"
+        function _diagPrettyDateTime(d) {
+            d = d || new Date();
+            const datePart = d.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+            const timePart = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            return datePart + ' · ' + timePart;
+        }
+
+        function _diagSetLastRunTime() {
+            const timeEl = document.getElementById('diagLastRunTime');
+            if (timeEl) timeEl.innerText = _diagPrettyDateTime();
+        }
+
         function appendDiagnosticLog(type, title, message) {
             const consoleEl = document.getElementById('diagnosticChatConsole');
             if (!consoleEl) return;
-            const now = new Date().toLocaleTimeString('th-TH');
+            const now = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
             let badgeBg = 'rgba(96,165,250,.15)', badgeColor = '#60a5fa', borderColor = 'rgba(96,165,250,.3)';
             if (type === 'CRITICAL' || type === 'ERROR') {
@@ -9121,6 +9134,33 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
+        // ตรวจรายการเบิก/ยืมที่ค้างรออนุมัติจริงจาก Sheet ผ่าน backend (WebPendingRequests)
+        // แทนการอ่าน localStorage เก่า (demo_pending_withdraws) ที่ไม่ตรงกับข้อมูลจริงในระบบ
+        function _diagFetchRealPending(onDone) {
+            if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webGetPendingWebRequests === 'function') {
+                google.script.run
+                    .withSuccessHandler(function(res) {
+                        const list = (res && res.success && res.data) ? res.data : [];
+                        if (list.length > 0) {
+                            const detailLines = list.map((p, i) => `${i+1}. <b>${p.itemName || '?'}</b> (${p.itemCode || '?'}) x${p.qty || '?'} — ${p.name || ''} ${p.requestedAt || ''} [${p.type || 'รออนุมัติ'}]`);
+                            appendDiagnosticLog('WARNING', `📲 รายการค้างรออนุมัติ ${list.length} รายการ`, `พบรายการขอเบิก/ยืมค้างรออนุมัติจริงในระบบ:<br>${detailLines.join('<br>')}<br><br>👉 กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อกดอนุมัติ/ปฏิเสธ!`);
+                            onDone(1);
+                        } else {
+                            appendDiagnosticLog('SUCCESS', '📲 รายการรออนุมัติ', 'ไม่มีรายการขอเบิก/ยืมค้างรออนุมัติในระบบ');
+                            onDone(0);
+                        }
+                    })
+                    .withFailureHandler(function(err) {
+                        appendDiagnosticLog('WARNING', '📲 ตรวจรายการรออนุมัติไม่สำเร็จ', 'เชื่อมต่อ backend ไม่สำเร็จ: ' + err);
+                        onDone(1);
+                    })
+                    .webGetPendingWebRequests();
+            } else {
+                appendDiagnosticLog('INFO', '📲 รายการรออนุมัติ', 'ไม่ได้เชื่อมต่อ GAS — ข้ามการตรวจสอบรายการค้างอนุมัติจริง (โหมดออฟไลน์/Demo)');
+                onDone(0);
+            }
+        }
+
         function clearDiagnosticLogs() {
             const consoleEl = document.getElementById('diagnosticChatConsole');
             if (consoleEl) consoleEl.innerHTML = '<div class="text-muted text-center py-3" style="font-size:.75rem">🧹 ล้างประวัติ Log เรียบร้อยแล้ว — กดตรวจความผิดปกติเพื่อสแกนใหม่</div>';
@@ -9136,8 +9176,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (consoleEl) consoleEl.innerHTML = '';
             
             let issueCount = 0;
-            const timeEl = document.getElementById('diagLastRunTime');
-            if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('th-TH');
+            _diagSetLastRunTime();
 
             appendDiagnosticLog('INFO', '🤖 AI DIAGNOSTIC BOT INITIATED', 'กำลังเริ่มสแกนตรวจสอบความผิดปกติและสุขภาพของระบบ WMS ทั้งหมด...');
 
@@ -9172,32 +9211,15 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     appendDiagnosticLog('WARNING', '🏷️ รหัสสินค้าไม่สมบูรณ์ (Missing Item Code)', `พบรายการสินค้าที่ไม่ได้ระบุรหัส (Code) จำนวน <b>${noCode}</b> รายการ:<br>• ${noCodeNames.slice(0, 5).join('<br>• ')}${noCode > 5 ? '<br>...และอีก ' + (noCode - 5) + ' รายการ' : ''}`);
                 }
 
-                // ═══ 1.5. QR Web App — ตรวจรายการค้างรออนุมัติจริง ═══
-                let localPendings = [];
-                try {
-                    localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
-                } catch(e) {}
-                // รวมข้อมูลจากทุกแหล่ง: GAS + localStorage
-                const allPendings = [...(allData.pending || []), ...(allData.pendingWithdraws || []), ...localPendings];
-                const pendingCount = allPendings.length;
+                // ═══ 1.5. ตรวจรายการค้างรออนุมัติจริงจาก Sheet (async) ═══
+                _diagFetchRealPending(function(pendingIssueDelta) {
+                    issueCount += pendingIssueDelta;
+                    _runSystemHealthCheckContinued(issueCount, spin, search);
+                });
+            }, 600);
+        }
 
-                if (pendingCount > 0) {
-                    issueCount++;
-                    // แสดงรายละเอียดทุกรายการ
-                    const detailLines = allPendings.map((p, i) => {
-                        const name = p.itemName || p.name || 'ไม่ทราบชื่อ';
-                        const code = p.itemCode || p.code || '?';
-                        const qty = p.qty || '?';
-                        const user = p.user || p.userId || '';
-                        const date = p.date || '';
-                        const status = p.status || 'รออนุมัติ';
-                        return `${i+1}. <b>${name}</b> (${code}) x${qty} — ${user} ${date} [${status}]`;
-                    });
-                    appendDiagnosticLog('WARNING', `📲 รายการค้างรออนุมัติ ${pendingCount} รายการ`, `พบรายการขอเบิก/ยืมค้างรออนุมัติ:<br>${detailLines.join('<br>')}<br><br>👉 กรุณาไปที่เมนู "รายการรออนุมัติ" เพื่อกดอนุมัติ/ปฏิเสธ!`);
-                } else {
-                    appendDiagnosticLog('SUCCESS', '📲 ระบบ QR Web App (indexqr.html)', 'หน้า indexqr.html พร้อมใช้งาน ไม่มีรายการค้างรออนุมัติ');
-                }
-
+        function _runSystemHealthCheckContinued(issueCount, spin, search) {
                 // ═══ 2. User & Permission Check ═══
                 const users = allData.users || [];
                 let noPin = 0, noRole = 0;
@@ -9269,7 +9291,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 
                 if (spin) spin.style.display = 'none';
                 if (search) search.style.display = 'inline-block';
-            }, 600);
         }
 
         function _updateDiagBadge(issueCount) {
@@ -9292,8 +9313,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         function checkStockAnomaliesOnly() {
             const consoleEl = document.getElementById('diagnosticChatConsole');
             if (consoleEl) consoleEl.innerHTML = '';
-            const timeEl = document.getElementById('diagLastRunTime');
-            if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('th-TH');
+            _diagSetLastRunTime();
             let issueCount = 0;
 
             appendDiagnosticLog('INFO', '📦 เริ่มสแกนสต็อก...', 'ตรวจสอบสินค้า/เครื่องมือทั้งหมดในระบบ');
@@ -9315,25 +9335,18 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (zeroStock > 0) { appendDiagnosticLog('INFO', '📭 สต็อกเป็น 0', `<b>${zeroStock}</b> รายการหมดสต็อก: ${zeroList.slice(0,5).join(', ')}${zeroStock > 5 ? '...' : ''}`); }
                 if (issueCount === 0) appendDiagnosticLog('SUCCESS', '✅ สต็อกปกติทั้งหมด', `ตรวจ <b>${allStock.length}</b> รายการ ไม่พบปัญหา`);
 
-                // ตรวจ pending ด้วย
-                let localPendings = [];
-                try { localPendings = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || []; } catch(e) {}
-                const allPendings = [...(allData.pending || []), ...(allData.pendingWithdraws || []), ...localPendings];
-                if (allPendings.length > 0) {
-                    issueCount++;
-                    const lines = allPendings.map((p, i) => `${i+1}. <b>${p.itemName || p.name || '?'}</b> (${p.itemCode || p.code || '?'}) x${p.qty || '?'} — ${p.user || ''} [${p.status || 'รออนุมัติ'}]`);
-                    appendDiagnosticLog('WARNING', `📲 ค้างรออนุมัติ ${allPendings.length} รายการ`, lines.join('<br>'));
-                }
-
-                _updateDiagBadge(issueCount);
+                // ตรวจรายการค้างรออนุมัติจริงจาก Sheet
+                _diagFetchRealPending(function(pendingIssueDelta) {
+                    issueCount += pendingIssueDelta;
+                    _updateDiagBadge(issueCount);
+                });
             }, 400);
         }
 
         function checkApiConnectionsOnly() {
             const consoleEl = document.getElementById('diagnosticChatConsole');
             if (consoleEl) consoleEl.innerHTML = '';
-            const timeEl = document.getElementById('diagLastRunTime');
-            if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('th-TH');
+            _diagSetLastRunTime();
             let issueCount = 0;
 
             appendDiagnosticLog('INFO', '🔌 เริ่มตรวจสอบการเชื่อมต่อ...', 'ตรวจสอบ API & LINE Token');
@@ -9370,8 +9383,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         function checkUsersHealthOnly() {
             const consoleEl = document.getElementById('diagnosticChatConsole');
             if (consoleEl) consoleEl.innerHTML = '';
-            const timeEl = document.getElementById('diagLastRunTime');
-            if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('th-TH');
+            _diagSetLastRunTime();
             let issueCount = 0;
 
             appendDiagnosticLog('INFO', '👥 เริ่มตรวจสอบบัญชีผู้ใช้...', 'ตรวจสอบ Role, PIN, สิทธิ์');
@@ -12051,15 +12063,19 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }
             styleTag.textContent = buildRcpGridCss(layout, '#rcpPreviewStage ');
 
+            // ขนาดหน้า A4 จำลอง ต้องสลับตามแนวตั้ง/แนวนอนที่เลือกจริง ไม่งั้นกล่องพรีวิวจะผิดสัดส่วนและล้นออกนอกกรอบ
+            const pageWmm = rcpOrientation === 'landscape' ? 281 : 194;
+            const pageHmm = rcpOrientation === 'landscape' ? 194 : 281;
+
             const cards = [];
             for (let i = 0; i < layout.perPage; i++) cards.push(renderReceiptCompactHtml(rcpDummySample(i)));
-            stage.innerHTML = '<div class="r-page" style="width:194mm;height:281mm;background:#fff;">' + cards.join('') + '</div>';
+            stage.innerHTML = '<div class="r-page" style="width:' + pageWmm + 'mm;height:' + pageHmm + 'mm;background:#fff;">' + cards.join('') + '</div>';
 
-            // ย่อขนาดหน้า A4 จำลอง ให้พอดีกับกล่องพรีวิว (กว้างประมาณ 230px)
-            const TARGET_W = 230; // px
-            const PAGE_W_PX = 194 * 3.7795275591; // mm -> px @96dpi
-            const PAGE_H_PX = 281 * 3.7795275591;
-            const s = TARGET_W / PAGE_W_PX;
+            // ย่อขนาดหน้า A4 จำลอง ให้พอดีกับกล่องพรีวิว (กว้างประมาณ 230px) โดยยึดด้านที่ยาวกว่าเป็นหลัก กันกล่องล้นทับตารางด้านซ้าย
+            const TARGET_MAX = 230; // px
+            const PAGE_W_PX = pageWmm * 3.7795275591; // mm -> px @96dpi
+            const PAGE_H_PX = pageHmm * 3.7795275591;
+            const s = TARGET_MAX / Math.max(PAGE_W_PX, PAGE_H_PX);
             stage.style.transform = 'scale(' + s.toFixed(4) + ')';
             stage.style.transformOrigin = 'top left';
             wrap.style.width = (PAGE_W_PX * s).toFixed(1) + 'px';
