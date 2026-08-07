@@ -3326,6 +3326,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     </div>
                                     <div class="small fw-bold mt-1" id="rcpCardShapeHint" style="color:#e8a020"></div>
                                 </div>
+                                <div class="form-check form-switch mt-3 pt-2 border-top">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="rcpCutLinesCheckbox" checked onchange="onRcpCutLinesToggle(this.checked)">
+                                    <label class="form-check-label small fw-bold text-dark" for="rcpCutLinesCheckbox">
+                                        <i class="fas fa-cut me-1 text-warning"></i>แสดงเส้นตัด (เผื่อตัดแยกเป็นใบใครใบมันภายหลัง)
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         <div class="col-xl-6">
@@ -11996,6 +12002,12 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         let rcpSelectedKeys = new Set(); // เก็บ key ของแถวที่ถูกติ๊กเลือกไว้ (คงอยู่แม้กรองใหม่)
 
         let rcpOrientation = 'portrait'; // 'portrait' or 'landscape'
+        let rcpShowCutLines = true; // 🆕 แสดงเส้นประ+ไอคอนกรรไกรระหว่างใบเสร็จ เผื่อตัดแยกทีหลัง
+
+        function onRcpCutLinesToggle(checked) {
+            rcpShowCutLines = !!checked;
+            updateRcpLayoutPreview();
+        }
 
         function switchReceiptPrintTab(tab) {
             const listPane = document.getElementById('rcpTabListPane');
@@ -12091,11 +12103,19 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         // 🆕 สร้าง CSS สำหรับกริดใบเบิกสี่เหลี่ยมจัตุรัส ใช้ร่วมกันทั้งหน้าต่างพิมพ์จริงและพรีวิวในหน้าเว็บ
         function buildRcpGridCss(layout, scope) {
             scope = scope || '';
+            const cutLines = rcpShowCutLines !== false;
             const scale = Math.max(0.55, Math.min(1.15, layout.cardW / 62));
             let css = '';
-            css += scope + '.r-page { display:grid; grid-template-columns: repeat(' + layout.cols + ', 1fr); align-content:start; gap:3mm; padding: 2mm; box-sizing:border-box; }';
+            // 🆕 เมื่อเปิดเส้นตัด ให้ตัดช่องว่างระหว่างการ์ดออก (gap:0) แล้วให้เส้นประของแต่ละใบมาชนกันพอดี
+            // กลายเป็น "เส้นตัดกลาง" เส้นเดียวที่ใช้ร่วมกันระหว่าง 2 ใบที่อยู่ติดกัน (เหมือนตั๋ว/คูปองที่ฉีกได้จริง)
+            css += scope + '.r-page { display:grid; grid-template-columns: repeat(' + layout.cols + ', 1fr); align-content:start; gap:' + (cutLines ? '0' : '3mm') + '; padding: 2mm; box-sizing:border-box; }';
             const aratio = layout.cardH ? (layout.cardW / layout.cardH).toFixed(4) + ' / 1' : '1 / 1';
-            css += scope + '.r-card { aspect-ratio: ' + aratio + '; border: 1.5px dashed #333; border-radius: 6px; padding: ' + (3 * scale).toFixed(1) + 'mm ' + (3.5 * scale).toFixed(1) + 'mm; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; break-inside:avoid; font-size:' + (10 * scale).toFixed(1) + 'px; box-sizing:border-box; font-family:"Sarabun",sans-serif; color:#000; background:#fff; }';
+            css += scope + '.r-card { position:relative; aspect-ratio: ' + aratio + '; border: ' + (cutLines ? '1px dashed #777' : '1.5px solid #333') + '; border-radius: ' + (cutLines ? '0' : '6px') + '; padding: ' + (3 * scale).toFixed(1) + 'mm ' + (3.5 * scale).toFixed(1) + 'mm; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; break-inside:avoid; font-size:' + (10 * scale).toFixed(1) + 'px; box-sizing:border-box; font-family:"Sarabun",sans-serif; color:#000; background:#fff; }';
+            if (cutLines) {
+                // ไอคอนกรรไกรเล็กๆ มุมซ้ายบนของทุกใบ เป็นจุดสังเกตแนวตัด ไม่บังเนื้อหาเพราะวางลอยนอกกรอบการ์ด
+                const sSize = (9 * scale).toFixed(1);
+                css += scope + '.r-card::before { content:"✂"; position:absolute; top:-1px; left:-1px; width:' + (14 * scale).toFixed(0) + 'px; height:' + (14 * scale).toFixed(0) + 'px; display:flex; align-items:center; justify-content:center; background:#fff; color:#777; font-size:' + sSize + 'px; line-height:1; border-right:1px dashed #777; border-bottom:1px dashed #777; z-index:1; }';
+            }
             css += scope + '.r-head { display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid #999; padding-bottom:' + (2 * scale).toFixed(1) + 'mm; margin-bottom:' + (2 * scale).toFixed(1) + 'mm; flex-wrap:wrap; gap:4px; }';
             css += scope + '.r-sysname { font-weight:700; font-size:1.1em; }';
             css += scope + '.r-title { font-weight:600; font-size:1em; color:#333; }';
