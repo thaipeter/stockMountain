@@ -4848,7 +4848,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if(sectionId === 'settings') { setTimeout(function(){ if(typeof syncMasterDataTags === 'function') syncMasterDataTags(); }, 50); }
                     if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
                     if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
-                    if(sectionId === 'archive' && typeof loadArchiveList === 'function') loadArchiveList();
+                    if(sectionId === 'archiveMgmt' && typeof loadArchiveList === 'function') loadArchiveList();
                     if(sectionId === 'pendingApprovals' && typeof startPendingApprovalsPolling === 'function') startPendingApprovalsPolling();
                     else if(typeof stopPendingApprovalsPolling === 'function') stopPendingApprovalsPolling();
                 } catch(errSec) {
