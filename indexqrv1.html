@@ -2603,9 +2603,10 @@ function submitReceive() {
   const payloads = receiveCart.map(item => ({
     code: item.code, qty: item.qty,
     type: 'รับเข้า', user: me.name, uid: me.uid,
-    remark: [poNo, supplier, remark].filter(Boolean).join(' | ')
+    remark: [poNo, supplier, remark].filter(Boolean).join(' | '),
+    deviceInfo: getDeviceInfoString()
   }));
-  callGAS('webBatchTransaction', [payloads], res => {
+  callGASQueued('webBatchTransaction', [payloads], res => {
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-check-circle"></i> ยืนยันรับเข้า';
     receiveCart = [];
@@ -3004,7 +3005,8 @@ function executeSubmitCart(mode, signatureBase64) {
   const payloads = cart.map(item => ({
     code: item.code, qty: item.qty,
     type: mode === 'withdraw' ? 'เบิก' : 'ยืม',
-    user: me.name, uid: me.uid, remark
+    user: me.name, uid: me.uid, remark,
+    deviceInfo: getDeviceInfoString() // 🆕 แนบข้อมูลอุปกรณ์ไว้เผื่อสืบย้อนความรับผิดชอบ (ไม่กระทบ payload เดิม)
   }));
   
   const handleSuccess = (pendingN) => {
@@ -3026,7 +3028,7 @@ function executeSubmitCart(mode, signatureBase64) {
     renderMineApproval();
   };
 
-  callGAS('webBatchTransaction', [payloads, signatureBase64], res => {
+  callGASQueued('webBatchTransaction', [payloads, signatureBase64], res => {
     handleSuccess((res && res.pendingCount) || payloads.length);
     callGAS('getInventoryData', [], d => { allData = d; renderList(mode, ''); renderReturnList(); }, null);
     loadMineApproval();
@@ -3137,6 +3139,93 @@ function handleQR(code) {
 // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
 const MY_GAS_URL = "วาง_URL_ของ_Web_App_หลังบ้านที่นี่";
 const GAS_URL = (MY_GAS_URL && MY_GAS_URL.indexOf("วาง_URL") === -1) ? MY_GAS_URL : ((typeof __GAS_URL__ !== 'undefined') ? __GAS_URL__ : '');
+
+// 🆕 ═══════════════════════════════════════════════════
+//  OFFLINE DETECTION + RETRY QUEUE (เพิ่มใหม่ ไม่แตะ logic เดิมของ callGAS)
+//  แสดง banner ตอนเน็ตหลุด และเก็บรายการที่ยังไม่ได้ส่งไว้ใน localStorage
+//  แล้ว auto-retry ให้เองทันทีที่เน็ตกลับมา กันข้อมูลตะกร้าหายตอนกดยืนยันแล้วเน็ตหลุดพอดี
+// ═══════════════════════════════════════════════════
+const OFFLINE_QUEUE_KEY = 'pendingOfflineQueue_v1';
+
+function getDeviceInfoString() {
+  try {
+    const ua = navigator.userAgent || 'unknown';
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+    return (isMobile ? '📱 มือถือ' : '💻 คอมพิวเตอร์') + ' | ' + ua;
+  } catch (e) { return 'ไม่ทราบอุปกรณ์'; }
+}
+
+function _offlineQueueRead() {
+  try { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+function _offlineQueueWrite(list) {
+  try { localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+function _ensureOfflineBanner() {
+  let el = document.getElementById('offlineBanner');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'offlineBanner';
+  el.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;z-index:99999;'
+    + 'background:#7c2d12;color:#fed7aa;text-align:center;font-size:13px;'
+    + 'padding:8px 12px;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.3);';
+  document.body.appendChild(el);
+  return el;
+}
+
+function _renderOfflineBanner() {
+  const el = _ensureOfflineBanner();
+  const queued = _offlineQueueRead();
+  if (!navigator.onLine) {
+    el.style.display = 'block';
+    el.innerHTML = '📡 ขาดการเชื่อมต่ออินเทอร์เน็ต — รายการที่ทำระหว่างนี้จะถูกเก็บไว้และส่งอัตโนมัติเมื่อเน็ตกลับมา'
+      + (queued.length ? ` (ค้างอยู่ ${queued.length} รายการ)` : '');
+  } else if (queued.length) {
+    el.style.display = 'block';
+    el.innerHTML = `🔄 กำลังส่งรายการที่ค้างไว้ตอนเน็ตหลุด (${queued.length} รายการ)...`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// เรียกฟังก์ชันเดิม (fn/args) ซ้ำสำหรับรายการที่ค้างอยู่ในคิว ทีละรายการ
+function _flushOfflineQueue() {
+  const queued = _offlineQueueRead();
+  if (!queued.length || !navigator.onLine) { _renderOfflineBanner(); return; }
+  const item = queued[0];
+  callGAS(item.fn, item.args, () => {
+    const rest = _offlineQueueRead().slice(1);
+    _offlineQueueWrite(rest);
+    showToast(`ส่งรายการที่ค้างไว้สำเร็จแล้ว (เหลืออีก ${rest.length})`, 'success');
+    _renderOfflineBanner();
+    if (rest.length) setTimeout(_flushOfflineQueue, 800);
+    else callGAS('getInventoryData', [], d => { allData = d; }, null);
+  }, () => {
+    // ยังส่งไม่สำเร็จ (อาจเน็ตหลุดอีก) รอลองใหม่ในอีก 5 วิ ไม่ลบออกจากคิว กันข้อมูลหาย
+    setTimeout(_flushOfflineQueue, 5000);
+  });
+  _renderOfflineBanner();
+}
+
+window.addEventListener('online', () => { _renderOfflineBanner(); _flushOfflineQueue(); });
+window.addEventListener('offline', () => { _renderOfflineBanner(); });
+document.addEventListener('DOMContentLoaded', () => { _renderOfflineBanner(); if (navigator.onLine) _flushOfflineQueue(); });
+
+// เรียกใช้แทน callGAS ตรงๆ เฉพาะจุดที่เป็นการ "ส่งคำขอ/ยืนยันรายการ" ที่ห้ามให้ข้อมูลหายตอนเน็ตหลุด
+// ถ้าออนไลน์อยู่ ทำงานเหมือน callGAS ทุกประการ ถ้าออฟไลน์ จะเก็บลงคิวแทนการยิง error ทันที
+function callGASQueued(fn, args, onOk, onFail) {
+  if (!navigator.onLine) {
+    const queued = _offlineQueueRead();
+    queued.push({ fn, args, ts: Date.now() });
+    _offlineQueueWrite(queued);
+    _renderOfflineBanner();
+    if (onFail) onFail('ขณะนี้ไม่มีอินเทอร์เน็ต ระบบได้เก็บรายการนี้ไว้แล้ว จะส่งอัตโนมัติทันทีที่เน็ตกลับมา');
+    return;
+  }
+  callGAS(fn, args, onOk, onFail);
+}
 
 function callGAS(fn, args, onOk, onFail) {
   // 1. ถ้ารันอยู่บน Google Apps Script Web App (มี google.script.run) ให้ใช้ช่องทางหลักเสมอ เพื่อเลี่ยงปัญหา CORS
@@ -3721,7 +3810,7 @@ function openReportDamageModal(code, name, maxQty) {
     const { qty, remark } = res.value;
     const payload = [{ code, qty, type: 'แจ้งชำรุด', user: me.name, uid: me.uid, remark: 'แจ้งชำรุด: ' + remark }];
 
-    callGAS('webBatchTransaction', [payload, ''], r => {
+    callGASQueued('webBatchTransaction', [payload, ''], r => {
       showToast('แจ้งชำรุดเรียบร้อย', 'success');
       loadMineData();
       callGAS('getInventoryData', [], d => { allData = d; }, null);
@@ -3774,7 +3863,7 @@ function openReturnItemModal(code, name, maxQty) {
     const { qty, remark } = res.value;
     const payload = [{ code, qty, type: 'คืน', user: me.name, uid: me.uid, remark: 'ขอคืนอะไหล่: ' + remark }];
 
-    callGAS('webBatchTransaction', [payload, ''], r => {
+    callGASQueued('webBatchTransaction', [payload, ''], r => {
       Swal.fire({
         icon: 'success',
         title: 'ส่งคำขอคืนแล้ว!',
