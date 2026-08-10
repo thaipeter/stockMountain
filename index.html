@@ -8858,6 +8858,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     const backupData = JSON.parse(res.data); const wb = XLSX.utils.book_new();
                     for(const sheetName in backupData) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(backupData[sheetName]), sheetName);
                     XLSX.writeFile(wb, `Mountain_Inventory_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
+                    if (res.truncated) {
+                        Swal.fire({icon: 'warning', title: 'ดาวน์โหลดสำเร็จ (มีบางชีตถูกตัด)', html: 'บางชีตมีข้อมูลเยอะเกินไป ระบบเอาเฉพาะแถวล่าสุดมาให้:<br><br>' + res.truncatedSheets.join('<br>')});
+                    }
                 }).webGetBackupData();
             } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองดาวน์โหลดสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
         }
