@@ -3744,6 +3744,23 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                           </div>
                                       </div>
 
+                                      <!-- System Health Check -->
+                                      <div class="p-3 rounded-3 mb-3" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)">
+                                          <div class="d-flex align-items-center justify-content-between mb-2">
+                                              <div class="d-flex align-items-center gap-2">
+                                                  <i class="fas fa-heart-pulse" style="color:#f87171;font-size:1.1rem"></i>
+                                                  <span style="font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.5px" class="fw-bold">สุขภาพระบบ (System Health)</span>
+                                              </div>
+                                              <div class="d-flex align-items-center gap-2">
+                                                  <span id="sysHealthBadge" class="badge" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:.7rem">กำลังตรวจสอบ...</span>
+                                                  <button type="button" class="btn btn-sm" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);font-size:.7rem;padding:2px 8px" onclick="loadSystemHealth()"><i class="fas fa-rotate"></i></button>
+                                              </div>
+                                          </div>
+                                          <div id="sysHealthWarningsList" style="font-size:.78rem;color:rgba(255,255,255,.7)">
+                                              <div class="text-white-50">กำลังโหลด...</div>
+                                          </div>
+                                      </div>
+
                                       <!-- Tech Stack Badge Cloud -->
                                       <div style="background:rgba(0,0,0,.15);padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.05)">
                                           <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-bottom:8px" class="fw-bold uppercase"><i class="fas fa-code me-1" style="color:#60a5fa"></i> Tech Stack & Languages:</div>
@@ -5908,6 +5925,40 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             }).withFailureHandler(() => { applyFail(); window._driveStorageLoaded = false; }).webGetDriveStorageInfo();
         }
 
+        // ดึงสถานะสุขภาพระบบ (ชีตโตเกินไป, ลืมปิดเดือน, trigger/quota ใกล้เต็ม ฯลฯ) มาแสดงในหน้า Settings
+        function loadSystemHealth() {
+            const badge = document.getElementById('sysHealthBadge');
+            const list = document.getElementById('sysHealthWarningsList');
+            if (badge) { badge.style.background = 'rgba(255,255,255,.1)'; badge.style.color = 'rgba(255,255,255,.6)'; badge.innerText = 'กำลังตรวจสอบ...'; }
+            if (list) list.innerHTML = '<div class="text-white-50">กำลังโหลด...</div>';
+            if (typeof google === 'undefined' || !google.script || !google.script.run) {
+                if (badge) { badge.innerText = 'ไม่ทราบสถานะ'; }
+                if (list) list.innerHTML = '<div class="text-white-50">ไม่สามารถเชื่อมต่อได้</div>';
+                return;
+            }
+            google.script.run.withSuccessHandler(res => {
+                if (!badge || !list) return;
+                if (!res || !res.success) {
+                    badge.style.background = 'rgba(248,113,113,.15)'; badge.style.color = '#f87171';
+                    badge.innerText = 'ตรวจสอบไม่สำเร็จ';
+                    list.innerHTML = `<div class="text-white-50">${(res && res.error) || 'ไม่ทราบสาเหตุ'}</div>`;
+                    return;
+                }
+                if (res.status === 'ok') {
+                    badge.style.background = 'rgba(52,211,153,.15)'; badge.style.color = '#34d399';
+                    badge.innerText = 'ปกติดี';
+                    list.innerHTML = '<div style="color:#34d399"><i class="fas fa-check-circle me-1"></i>ไม่พบปัญหา ระบบทำงานปกติ</div>';
+                } else {
+                    badge.style.background = 'rgba(251,191,36,.15)'; badge.style.color = '#fbbf24';
+                    badge.innerText = (res.warnings || []).length + ' ข้อควรทราบ';
+                    list.innerHTML = (res.warnings || []).map(w => `<div class="mb-1">${w}</div>`).join('') || '<div class="text-white-50">ไม่มีรายละเอียด</div>';
+                }
+            }).withFailureHandler(() => {
+                if (badge) { badge.style.background = 'rgba(248,113,113,.15)'; badge.style.color = '#f87171'; badge.innerText = 'ตรวจสอบไม่สำเร็จ'; }
+                if (list) list.innerHTML = '<div class="text-white-50">เชื่อมต่อเซิร์ฟเวอร์ไม่ได้</div>';
+            }).webGetSystemHealth();
+        }
+
         function onDataLoaded(data, isSilentRefresh) {
             // ถ้าเป็นการรีเฟรชแบบเงียบ (auto-refresh) และข้อมูลเหมือนเดิมทุกประการ ให้ข้ามการวาดหน้าใหม่ทั้งหมด
             // เพื่อไม่ให้ช่องค้นหา/ตำแหน่งสกอลล์/สถานะ UI ต่างๆ ถูกรีเซ็ตทั้งที่ไม่มีข้อมูลใหม่จริง
@@ -5951,6 +6002,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 if (!window._driveStorageLoaded) {
                     window._driveStorageLoaded = true;
                     loadDriveStorageInfo();
+                }
+
+                // เช็คสุขภาพระบบครั้งเดียวต่อ session เช่นกัน (กดปุ่มรีเฟรชในการ์ดเพื่อเช็คซ้ำได้)
+                if (!window._systemHealthLoaded) {
+                    window._systemHealthLoaded = true;
+                    loadSystemHealth();
                 }
 
                 applySettingsUI(allData.settings);
