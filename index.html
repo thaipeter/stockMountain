@@ -5951,7 +5951,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 } else {
                     badge.style.background = 'rgba(251,191,36,.15)'; badge.style.color = '#fbbf24';
                     badge.innerText = (res.warnings || []).length + ' ข้อควรทราบ';
-                    list.innerHTML = (res.warnings || []).map(w => `<div class="mb-1">${w}</div>`).join('') || '<div class="text-white-50">ไม่มีรายละเอียด</div>';
+                    list.innerHTML = (res.warnings || []).map(w => `<div class="mb-1">${escapeHtml(w)}</div>`).join('') || '<div class="text-white-50">ไม่มีรายละเอียด</div>';
                 }
             }).withFailureHandler(() => {
                 if (badge) { badge.style.background = 'rgba(248,113,113,.15)'; badge.style.color = '#f87171'; badge.innerText = 'ตรวจสอบไม่สำเร็จ'; }
@@ -10579,9 +10579,21 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const statusBadge = log.status === 'SUCCESS'
                     ? '<span class="badge bg-success bg-opacity-10 text-success px-2 py-1"><i class="fas fa-check me-1"></i>สำเร็จ</span>'
                     : '<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1"><i class="fas fa-times me-1"></i>ล้มเหลว</span>';
-                const roleBadge = log.role === 'admin'
-                    ? '<span class="badge ms-1" style="font-size:0.68em;">Admin</span>'
-                    : '<span class="badge bg-light text-muted border ms-1" style="font-size:0.68em;">User</span>';
+                // ★ แก้บั๊ก: เดิมเช็คแบบ binary (role==='admin' ? Admin : User) ทำให้ role อื่นๆ ที่ไม่ใช่ "admin"
+                // เป๊ะๆ (เช่น "system" ของบอท LINE, "qr", "pending", "rejected", "staff", "-") ถูกจัดเป็น User
+                // ผิดหมด ทั้งที่บางรายการไม่ใช่การกระทำของ user เลย (เช่นบอทส่งข้อความไม่สำเร็จ)
+                const ROLE_BADGE_META = {
+                    admin:    { label: 'Admin',    cls: '' },
+                    staff:    { label: 'Staff',    cls: 'bg-info bg-opacity-25 text-info border-0' },
+                    user:     { label: 'User',     cls: 'bg-light text-muted border' },
+                    system:   { label: 'System',   cls: 'bg-secondary bg-opacity-25 text-secondary border-0' },
+                    qr:       { label: 'QR',       cls: 'bg-warning bg-opacity-25 text-warning border-0' },
+                    pending:  { label: 'Pending',  cls: 'bg-warning bg-opacity-25 text-warning border-0' },
+                    rejected: { label: 'Rejected', cls: 'bg-danger bg-opacity-25 text-danger border-0' },
+                };
+                const roleKey = String(log.role || '').trim().toLowerCase();
+                const roleMeta = ROLE_BADGE_META[roleKey] || { label: '-', cls: 'bg-light text-muted border' };
+                const roleBadge = `<span class="badge ${roleMeta.cls} ms-1" style="font-size:0.68em;">${roleMeta.label}</span>`;
                 const deviceIcon = (log.device || log.ua || '') === 'Mobile' ? 'fa-mobile-alt' : 'fa-desktop';
                 const deviceText = log.device || log.ua || 'Web';
                 const tr = document.createElement('tr');
@@ -10900,6 +10912,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const badgeInfo = typeBadgeMap[r.type] || { color: '#6b7280', text: r.type || 'คำขอ' };
                 let dateStr = '-';
                 try { dateStr = r.date ? new Date(r.date).toLocaleString('th-TH') : '-'; } catch(e) {}
+                // ★ แก้บั๊ก: เดิมใช้ r.imageUrl ดิบๆ ซึ่งเป็นลิงก์ Google Drive แบบ view/file ที่โหลดเป็น <img> ตรงๆ ไม่ได้
+                // ต้องแปลงผ่าน getProxyImgUrl() ให้เป็นลิงก์ thumbnail ก่อน เหมือนจุดอื่นๆ ในไฟล์นี้ที่แสดงรูปสินค้าได้ปกติ
+                const proxiedImg = typeof getProxyImgUrl === 'function' ? getProxyImgUrl(r.imageUrl) : r.imageUrl;
                 return `
                 <div class="col-md-6 col-lg-4" data-reqid="${r.reqId}">
                     <div class="p-3 rounded-3 h-100 pending-card">
@@ -10911,10 +10926,10 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             <span class="small pc-sub">${dateStr}</span>
                         </div>
                         <div class="d-flex gap-3 align-items-center mb-3">
-                            ${r.imageUrl ? `
-                                <img src="${r.imageUrl}" class="rounded-2" style="width: 55px; height: 55px; object-fit: cover; border: 1px solid rgba(255,255,255,.08);" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                            ${proxiedImg ? `
+                                <img src="${proxiedImg}" class="rounded-2" style="width: 55px; height: 55px; object-fit: cover; border: 1px solid rgba(255,255,255,.08);" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                             ` : ''}
-                            <div class="rounded-2 align-items-center justify-content-center" style="width: 55px; height: 55px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); display: ${r.imageUrl ? 'none' : 'flex'}; flex-shrink:0;">
+                            <div class="rounded-2 align-items-center justify-content-center" style="width: 55px; height: 55px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); display: ${proxiedImg ? 'none' : 'flex'}; flex-shrink:0;">
                                 <i class="fas fa-box" style="font-size: 1.1rem; opacity: 0.4;"></i>
                             </div>
                             <div style="min-width: 0; flex: 1;">
