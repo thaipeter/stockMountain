@@ -2985,6 +2985,9 @@ function submitNewItem() {
 function submitCart(mode) {
   const cart = mode === 'withdraw' ? withdrawCart : borrowCart;
   if (!cart.length) { showToast('ตะกร้าว่าง', 'error'); return; }
+  const remarkEl = document.getElementById(mode === 'withdraw' ? 'wRemark' : 'bRemark');
+  const remark = remarkEl ? remarkEl.value.trim() : '';
+  if (!remark) { showToast('กรุณาระบุเหตุผลก่อนยืนยัน', 'error'); if (remarkEl) remarkEl.focus(); return; }
   openSignatureModal(mode);
 }
 
@@ -3008,6 +3011,7 @@ function executeSubmitCart(mode, signatureBase64) {
     btn.disabled = false;
     btn.innerHTML = mode === 'withdraw' ? '<i class="fas fa-check"></i> ยืนยันเบิก' : '<i class="fas fa-clipboard-check"></i> ยืนยันการยืม';
     closeSheet(mode === 'withdraw' ? 'sheetWithdraw' : 'sheetBorrow');
+    savedSignatureDataURL = null; // ส่งสำเร็จแล้ว รอบถัดไปให้เริ่มเซ็นใหม่
     if (mode === 'withdraw') { withdrawCart = []; document.getElementById('withdrawSearch').value = ''; document.getElementById('wRemark').value = ''; }
     else                     { borrowCart = [];   document.getElementById('borrowSearch').value = '';  document.getElementById('bRemark').value = ''; }
     updateCartBar(mode);
@@ -3912,6 +3916,7 @@ let sigCanvas, sigCtx;
 let isDrawing = false;
 let sigMode = 'withdraw';
 let isCanvasClean = true;
+let savedSignatureDataURL = null; // เก็บลายเซ็นไว้กันหาย ถ้ามือไปโดนพื้นหลังจนโมดัลปิดโดยไม่ตั้งใจ ระหว่างเปิดใหม่จะวาดคืนให้แทนการล้างทิ้ง
 
 function initSignaturePad() {
   sigCanvas = document.getElementById('sigCanvas');
@@ -3929,7 +3934,19 @@ function initSignaturePad() {
   sigCtx.lineCap = 'round';
   sigCtx.lineJoin = 'round';
 
-  clearSignatureCanvas();
+  if (savedSignatureDataURL) {
+    // มีลายเซ็นเดิมค้างอยู่ (ยังไม่ได้กด "เขียนใหม่") → วาดคืนแทนการล้าง
+    const img = new Image();
+    img.onload = () => {
+      sigCtx.fillStyle = '#ffffff';
+      sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+      sigCtx.drawImage(img, 0, 0, sigCanvas.width / ratio, sigCanvas.height / ratio);
+    };
+    img.src = savedSignatureDataURL;
+    isCanvasClean = false;
+  } else {
+    clearSignatureCanvas();
+  }
 
   // เหตุการณ์เมาส์
   sigCanvas.removeEventListener('mousedown', startDrawing);
@@ -3987,7 +4004,10 @@ function draw(e) {
 }
 
 function stopDrawing() {
-  isDrawing = false;
+  if (isDrawing) {
+    isDrawing = false;
+    try { savedSignatureDataURL = sigCanvas.toDataURL('image/png'); } catch (e) {}
+  }
 }
 
 function drawSignatureWatermark() {
@@ -4010,6 +4030,7 @@ function clearSignatureCanvas() {
   sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
   drawSignatureWatermark();
   isCanvasClean = true;
+  savedSignatureDataURL = null; // กด "เขียนใหม่" คือความตั้งใจล้างจริง ๆ เท่านั้นที่ล้างลายเซ็นที่เก็บไว้
 }
 
 function openSignatureModal(mode) {
