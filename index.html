@@ -6011,6 +6011,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     loadSystemHealth();
                 }
 
+                // ★ แก้บั๊ก: เดิมกระดิ่งแจ้งเตือนคำขอเบิก/ยืมใหม่จะอัปเดตก็ต่อเมื่อเข้าไปหน้า "รายการอนุมัติ" เท่านั้น
+                // (เพราะ setInterval polling เดิมถูก start/stop ตามการเข้า-ออกหน้านั้นในฟังก์ชัน goTo)
+                // ทำให้ตอนอยู่หน้าแดชบอร์ดหรือหน้าอื่นๆ กระดิ่งไม่ขึ้นเองแบบเรียลไทม์ ต้องกดเข้าไปหน้านั้นก่อนถึงจะรีเฟรชให้เห็น
+                // แก้โดยเริ่ม poll เบาๆ (แค่เช็คจำนวน ไม่ render รายการเต็ม) ทันทีหลัง login ครั้งเดียว แล้วรันตลอด session
+                // ไม่ว่าจะอยู่หน้าไหนก็ตาม กระดิ่งจะได้ขึ้นเองโดยไม่ต้องกดเข้าไปหน้ารายการอนุมัติก่อน
+                if (!window._globalBadgePollStarted && currentUserProfile && currentUserProfile.role === 'admin') {
+                    window._globalBadgePollStarted = true;
+                    refreshPendingApprovalBadge();
+                    setInterval(refreshPendingApprovalBadge, 15000);
+                }
+
                 applySettingsUI(allData.settings);
                 
                 if (currentUserProfile.uid && allData.users) { let u = allData.users.find(x => x.userId === currentUserProfile.uid); if (u) { currentUserProfile.name = u.name; currentUserProfile.role = u.role; } }
