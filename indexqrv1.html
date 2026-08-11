@@ -4047,7 +4047,7 @@ function openReportDamageModal(code, name, maxQty) {
         <div style="color:#a0aec0;font-size:11px;margin-bottom:10px">รหัส: ${esc(code)}</div>
         
         <label style="display:block;margin-bottom:4px;font-weight:600">จำนวนที่ชำรุด/ใช้ไม่ได้ <span style="color:#ef4444">*</span></label>
-        <input id="swalDamageQty" type="number" min="1" max="${defaultQty}" value="${defaultQty}" class="swal2-input" style="width:100%;margin:0 0 10px 0;background:#232838;color:#fff;border:1px solid #2a2f3d;border-radius:8px">
+        <input id="swalDamageQty" type="number" min="1" max="${defaultQty}" value="${defaultQty}" class="swal2-input" style="width:100%;margin:0 0 10px 0;background:#232838;color:#fff;border:1px solid #2a2f3d;border-radius:8px" oninput="if(Number(this.value)>${defaultQty})this.value=${defaultQty}; if(Number(this.value)<1 && this.value!=='')this.value=1;">
 
         <label style="display:block;margin-bottom:4px;font-weight:600">ระบุอาการชำรุด / สาเหตุ <span style="color:#ef4444">*</span></label>
         <textarea id="swalDamageRemark" class="swal2-textarea" rows="2" placeholder="เช่น แตกหักจากการใช้งาน, เกลียวหวาน, ใช้งานไม่ได้..." style="width:100%;margin:0 0 8px 0;background:#232838;color:#fff;border:1px solid #2a2f3d;border-radius:8px;padding:8px"></textarea>
@@ -4063,6 +4063,8 @@ function openReportDamageModal(code, name, maxQty) {
       const qty = Number(document.getElementById('swalDamageQty').value);
       const remark = document.getElementById('swalDamageRemark').value.trim();
       if (!qty || qty <= 0) { Swal.showValidationMessage('กรุณาระบุจำนวนที่ถูกต้อง'); return false; }
+      // ★ แก้บั๊กเดียวกับ openReturnItemModal: attribute max ไม่ได้บังคับจริง ต้องเช็คซ้ำก่อนส่ง
+      if (qty > defaultQty) { Swal.showValidationMessage(`แจ้งชำรุดได้ไม่เกิน ${defaultQty} ชิ้น (จำนวนที่เบิกไป/ยังไม่ได้คืน)`); return false; }
       if (!remark) { Swal.showValidationMessage('กรุณาระบุอาการชำรุด/สาเหตุ'); return false; }
       return { qty, remark };
     }
@@ -4121,7 +4123,7 @@ function openReturnItemModal(code, name, maxQty) {
         <div style="color:#a0aec0;font-size:11px;margin-bottom:10px">รหัส: ${esc(code)}</div>
         
         <label style="display:block;margin-bottom:4px;font-weight:600">จำนวนที่ต้องการคืน <span style="color:#22c55e">*</span></label>
-        <input id="swalReturnQty" type="number" min="1" max="${defaultQty}" value="${defaultQty}" class="swal2-input" style="width:100%;margin:0 0 10px 0;background:#232838;color:#fff;border:1px solid #2a2f3d;border-radius:8px">
+        <input id="swalReturnQty" type="number" min="1" max="${defaultQty}" value="${defaultQty}" class="swal2-input" style="width:100%;margin:0 0 10px 0;background:#232838;color:#fff;border:1px solid #2a2f3d;border-radius:8px" oninput="if(Number(this.value)>${defaultQty})this.value=${defaultQty}; if(Number(this.value)<1 && this.value!=='')this.value=1;">
 
         <label style="display:block;margin-bottom:4px;font-weight:600">เหตุผลการคืน / หมายเหตุ</label>
         <textarea id="swalReturnRemark" class="swal2-textarea" rows="2" placeholder="เช่น ใช้ไม่หมด, เบิกเกิน, เบิกผิดรายการ..." style="width:100%;margin:0 0 8px 0;background:#232838;color:#fff;border:1px solid #2a2f3d;border-radius:8px;padding:8px"></textarea>
@@ -4138,6 +4140,8 @@ function openReturnItemModal(code, name, maxQty) {
       const qty = Number(document.getElementById('swalReturnQty').value);
       const remark = document.getElementById('swalReturnRemark').value.trim();
       if (!qty || qty <= 0) { Swal.showValidationMessage('กรุณาระบุจำนวนที่ถูกต้อง'); return false; }
+      // ★ แก้บั๊ก: attribute max="${defaultQty}" บน input เป็นแค่ hint ให้เบราว์เซอร์ ไม่ได้บังคับจริง — พิมพ์เกินจำนวนที่เบิกไปได้เฉยๆ ต้องเช็คซ้ำใน JS ก่อนส่ง
+      if (qty > defaultQty) { Swal.showValidationMessage(`คืนได้ไม่เกิน ${defaultQty} ชิ้น (จำนวนที่เบิกไป/ยังไม่ได้คืน)`); return false; }
       return { qty, remark: remark || 'ขอคืนอะไหล่ที่เบิกไป' };
     }
   }).then(res => {
