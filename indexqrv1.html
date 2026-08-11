@@ -433,6 +433,206 @@ body{display:flex;flex-direction:column}
   /* Mobile: 3 คอลัมน์ */
   .cat-grid{grid-template-columns:repeat(3,1fr)}
 }
+
+/* ── SweetAlert2 Custom Styling Overrides ── */
+:root {
+  --swal2-success-line-color: var(--green) !important;
+  --swal2-success-ring-color: rgba(102, 187, 106, 0.2) !important;
+  --swal2-error-line-color: var(--red) !important;
+  --swal2-error-ring-color: rgba(239, 83, 80, 0.2) !important;
+  --swal2-warning-color: var(--amber) !important;
+  --swal2-info-color: var(--blue) !important;
+  --swal2-question-color: var(--blue) !important;
+}
+.swal2-container {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+.swal2-popup {
+  background: rgba(22, 25, 34, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6) !important;
+  font-family: 'Sarabun', sans-serif !important;
+  padding: 24px 20px !important;
+}
+.swal2-title {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  font-family: 'Sarabun', sans-serif !important;
+  margin-bottom: 8px !important;
+}
+.swal2-html-container {
+  color: var(--text) !important;
+  font-family: 'Sarabun', sans-serif !important;
+  font-size: 13px !important;
+  margin: 12px 0 0 0 !important;
+  line-height: 1.5 !important;
+}
+.swal2-input, .swal2-textarea, .swal2-select {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+  font-family: 'Sarabun', sans-serif !important;
+  font-size: 14px !important;
+  padding: 12px !important;
+  margin: 10px 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: auto !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+.swal2-input:focus, .swal2-textarea:focus, .swal2-select:focus {
+  border-color: var(--amber) !important;
+  box-shadow: 0 0 12px rgba(232, 160, 32, 0.25) !important;
+}
+.swal2-actions {
+  margin-top: 20px !important;
+  gap: 10px !important;
+}
+.swal2-confirm, .swal2-styled.swal2-confirm {
+  background: linear-gradient(135deg, var(--amber), #f59e0b) !important;
+  color: #000 !important;
+  font-weight: 800 !important;
+  border-radius: 12px !important;
+  font-family: 'Sarabun', sans-serif !important;
+  font-size: 13px !important;
+  padding: 10px 20px !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(232, 160, 32, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+.swal2-confirm:hover, .swal2-styled.swal2-confirm:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(232, 160, 32, 0.45) !important;
+}
+.swal2-confirm:active, .swal2-styled.swal2-confirm:active {
+  transform: scale(0.96) !important;
+}
+
+/* Custom background styles for confirm buttons to support red, blue, green, and indigo types */
+.swal2-styled.swal2-confirm[style*="background-color: rgb(239, 68, 68)"],
+.swal2-styled.swal2-confirm[style*="background-color: #ef4444"],
+.swal2-styled.swal2-confirm[style*="background-color: rgb(239, 83, 80)"],
+.swal2-styled.swal2-confirm[style*="background-color: #ef5350"] {
+  background: linear-gradient(135deg, var(--red), #dc2626) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(239, 83, 80, 0.3) !important;
+}
+.swal2-styled.swal2-confirm[style*="background-color: rgb(239, 68, 68)"]:hover,
+.swal2-styled.swal2-confirm[style*="background-color: #ef4444"]:hover,
+.swal2-styled.swal2-confirm[style*="background-color: rgb(239, 83, 80)"]:hover,
+.swal2-styled.swal2-confirm[style*="background-color: #ef5350"]:hover {
+  box-shadow: 0 6px 16px rgba(239, 83, 80, 0.45) !important;
+}
+
+.swal2-styled.swal2-confirm[style*="background-color: rgb(59, 130, 246)"],
+.swal2-styled.swal2-confirm[style*="background-color: #3b82f6"],
+.swal2-styled.swal2-confirm[style*="background-color: rgb(66, 165, 245)"],
+.swal2-styled.swal2-confirm[style*="background-color: #42a5f5"] {
+  background: linear-gradient(135deg, var(--blue), #2563eb) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(66, 165, 245, 0.3) !important;
+}
+.swal2-styled.swal2-confirm[style*="background-color: rgb(59, 130, 246)"]:hover,
+.swal2-styled.swal2-confirm[style*="background-color: #3b82f6"]:hover,
+.swal2-styled.swal2-confirm[style*="background-color: rgb(66, 165, 245)"]:hover,
+.swal2-styled.swal2-confirm[style*="background-color: #42a5f5"]:hover {
+  box-shadow: 0 6px 16px rgba(66, 165, 245, 0.45) !important;
+}
+
+.swal2-styled.swal2-confirm[style*="background-color: rgb(79, 70, 229)"],
+.swal2-styled.swal2-confirm[style*="background-color: #4f46e5"] {
+  background: linear-gradient(135deg, #4f46e5, #3730a3) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
+}
+.swal2-styled.swal2-confirm[style*="background-color: rgb(79, 70, 229)"]:hover,
+.swal2-styled.swal2-confirm[style*="background-color: #4f46e5"]:hover {
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45) !important;
+}
+
+.swal2-styled.swal2-confirm[style*="background-color: rgb(102, 187, 106)"],
+.swal2-styled.swal2-confirm[style*="background-color: #66bb6a"] {
+  background: linear-gradient(135deg, var(--green), #4caf50) !important;
+  color: #000 !important;
+  box-shadow: 0 4px 12px rgba(102, 187, 106, 0.3) !important;
+}
+.swal2-styled.swal2-confirm[style*="background-color: rgb(102, 187, 106)"]:hover,
+.swal2-styled.swal2-confirm[style*="background-color: #66bb6a"]:hover {
+  box-shadow: 0 6px 16px rgba(102, 187, 106, 0.45) !important;
+}
+
+.swal2-cancel, .swal2-styled.swal2-cancel {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--text) !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+  font-family: 'Sarabun', sans-serif !important;
+  font-size: 13px !important;
+  padding: 10px 20px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+.swal2-cancel:hover, .swal2-styled.swal2-cancel:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+.swal2-cancel:active, .swal2-styled.swal2-cancel:active {
+  transform: scale(0.96) !important;
+}
+.swal2-validation-message {
+  background: rgba(239, 83, 80, 0.1) !important;
+  color: #ef5350 !important;
+  border: 1px solid rgba(239, 83, 80, 0.2) !important;
+  border-radius: 10px !important;
+  font-family: 'Sarabun', sans-serif !important;
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+  margin-top: 10px !important;
+}
+.swal2-close {
+  color: var(--text2) !important;
+  font-family: sans-serif !important;
+}
+.swal2-close:hover {
+  color: #fff !important;
+}
+.swal2-icon.swal2-success {
+  border-color: var(--green) !important;
+}
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: var(--green) !important;
+}
+.swal2-icon.swal2-success .swal2-success-ring {
+  border: .25em solid rgba(102, 187, 106, 0.2) !important;
+}
+.swal2-icon.swal2-error {
+  border-color: var(--red) !important;
+}
+.swal2-icon.swal2-error [class^='swal2-error-line'] {
+  background-color: var(--red) !important;
+}
+.swal2-icon.swal2-warning {
+  border-color: var(--amber) !important;
+  color: var(--amber) !important;
+}
+.swal2-icon.swal2-info {
+  border-color: var(--blue) !important;
+  color: var(--blue) !important;
+}
+.swal2-icon.swal2-question {
+  border-color: var(--blue) !important;
+  color: var(--blue) !important;
+}
 </style>
 </head>
 <body>
@@ -2993,6 +3193,17 @@ function submitCart(mode) {
 }
 
 function executeSubmitCart(mode, signatureBase64) {
+  // ★ แก้บั๊ก: เดิมเรียก Swal.fire({...}) เนื้อหาเดียวกันซ้ำ 2 ครั้งติดกัน (copy-paste ซ้ำ) ทำให้ popup loading เด้งซ้อน/กระตุกโดยไม่จำเป็น เหลือแค่ครั้งเดียว
+  Swal.fire({
+    title: 'กำลังส่งคำขอ...',
+    text: 'กรุณารอสักครู่ ระบบกำลังบันทึกข้อมูลและส่งใบเบิก',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
   const cart   = mode === 'withdraw' ? withdrawCart : borrowCart;
   const remark = document.getElementById(mode === 'withdraw' ? 'wRemark' : 'bRemark').value.trim();
   const typeText = mode === 'withdraw' ? 'เบิก' : 'ยืม';
@@ -3087,10 +3298,31 @@ function doReturn(reqId, name, qty) {
     confirmButtonColor: '#66bb6a', background: '#1e1e1e', color: '#c0c0c0',
   }).then(r => {
     if (!r.isConfirmed) return;
+    Swal.fire({
+      title: 'กำลังทำรายการ...',
+      text: 'กำลังบันทึกรายการคืนอะไหล่',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
     callGAS('webReturnItem', [reqId, me.name, me.uid], () => {
-      showToast('คืนเรียบร้อย!', 'success');
+      Swal.fire({
+        icon: 'success',
+        title: 'คืนเรียบร้อย!',
+        timer: 1500,
+        showConfirmButton: false
+      });
       callGAS('getInventoryData', [], d => { allData = d; renderReturnList(); }, null);
-    }, e => showToast('เกิดข้อผิดพลาด: ' + e, 'error'));
+    }, e => {
+      Swal.fire({
+        icon: 'error',
+        title: 'เกิดข้อผิดพลาด',
+        text: String(e)
+      });
+    });
   });
 }
 
@@ -3577,6 +3809,16 @@ function cancelMyPendingRequest(reqId) {
     confirmButtonColor: '#ef4444', background: '#1a1f2e', color: '#c0c0c0'
   }).then(r => {
     if (!r.isConfirmed) return;
+    Swal.fire({
+      title: 'กำลังยกเลิกคำขอ...',
+      text: 'กรุณารอสักครู่ ระบบกำลังลบรายการคำขอ',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
     callGAS('webCancelMyPendingRequest', [{ reqId: reqId, userId: me.uid }], res => {
       if (res && res.success) {
         Swal.fire({icon: 'success', title: 'ยกเลิกแล้ว', timer: 1300, showConfirmButton: false, background: '#1a1f2e', color: '#c0c0c0'});
@@ -3618,6 +3860,16 @@ function submitMyRetroWithdraw(sessionId, itemCode, suggestedQty) {
   const remarkEl = document.getElementById('retroReason_' + itemCode);
   const remark = remarkEl ? remarkEl.value.trim() : '';
   if (!remark) { Swal.fire({icon:'warning', title:'กรุณาระบุเหตุผล', background:'#1a1f2e', color:'#c0c0c0'}); return; }
+  Swal.fire({
+    title: 'กำลังส่งข้อมูล...',
+    text: 'กรุณารอสักครู่ ระบบกำลังบันทึกเหตุผลตกเบิก',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
   callGAS('webSubmitRetroWithdrawByUser', [{
     sessionId: sessionId, itemCode: itemCode, qty: suggestedQty, remark: remark, userId: me.uid
   }], res => {
@@ -3819,8 +4071,24 @@ function openReportDamageModal(code, name, maxQty) {
     const { qty, remark } = res.value;
     const payload = [{ code, qty, type: 'แจ้งชำรุด', user: me.name, uid: me.uid, remark: 'แจ้งชำรุด: ' + remark }];
 
+    Swal.fire({
+      title: 'กำลังส่งข้อมูล...',
+      text: 'กรุณารอสักครู่ ระบบกำลังบันทึกรายการแจ้งชำรุด',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
     callGASQueued('webBatchTransaction', [payload, ''], r => {
-      showToast('แจ้งชำรุดเรียบร้อย', 'success');
+      Swal.fire({
+        icon: 'success',
+        title: 'แจ้งชำรุดเรียบร้อย!',
+        timer: 1500,
+        showConfirmButton: false
+      });
       loadMineData();
       callGAS('getInventoryData', [], d => { allData = d; }, null);
     }, err => {
@@ -3832,7 +4100,12 @@ function openReportDamageModal(code, name, maxQty) {
         code: code, itemCode: code, itemName: name, qty: qty, amount: '-' + qty,
         user: me.name, remark: 'แจ้งชำรุด: ' + remark
       });
-      showToast('แจ้งชำรุดเรียบร้อย (Demo)', 'success');
+      Swal.fire({
+        icon: 'success',
+        title: 'แจ้งชำรุดเรียบร้อย (Demo)',
+        timer: 1500,
+        showConfirmButton: false
+      });
       renderMineHistory();
     });
   });
@@ -3871,6 +4144,17 @@ function openReturnItemModal(code, name, maxQty) {
     if (!res.isConfirmed || !res.value) return;
     const { qty, remark } = res.value;
     const payload = [{ code, qty, type: 'คืน', user: me.name, uid: me.uid, remark: 'ขอคืนอะไหล่: ' + remark }];
+
+    Swal.fire({
+      title: 'กำลังส่งข้อมูล...',
+      text: 'กรุณารอสักครู่ ระบบกำลังบันทึกคำขอคืนอะไหล่',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
 
     callGASQueued('webBatchTransaction', [payload, ''], r => {
       Swal.fire({
