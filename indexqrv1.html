@@ -3777,8 +3777,10 @@ function renderMineApproval() {
   const list = document.getElementById('mineApprovalList');
   if (!list) return;
   const items = mineData.pendingApproval || [];
+  // ★ นับเฉพาะที่ยัง "รออนุมัติ" จริงๆ สำหรับ badge ตัวเลข — รายการที่ถูกปฏิเสธไปแล้วไม่นับ (ไม่ใช่รายการที่ต้องรออะไรอีก แค่โชว์เป็นประวัติ)
+  const pendingOnlyCount = items.filter(it => it.status !== 'rejected').length;
   const countEl = document.getElementById('mineApprovalCount');
-  if (countEl) countEl.textContent = items.length;
+  if (countEl) countEl.textContent = pendingOnlyCount;
 
   if (!items.length) {
     list.innerHTML = '<div class="mine-empty"><i class="fas fa-check-circle" style="color:var(--green)"></i><p>ไม่มีรายการค้างรออนุมัติ 🎉</p></div>';
@@ -3786,20 +3788,32 @@ function renderMineApproval() {
   }
   list.innerHTML = items.map(it => {
     const typeIcon = it.type === 'ยืม' ? '🤝' : '📦';
+    // ★ เพิ่ม: แสดงรายการที่ถูกแอดมินปฏิเสธด้วย (เดิมพอถูกปฏิเสธจะหายไปเงียบๆ จากลิสต์นี้ ผู้ใช้ไม่รู้ว่าเกิดอะไรขึ้นถ้าพลาดป๊อปอัพตอนนั้น)
+    const isRejected = it.status === 'rejected';
     const imgTag = it.imageUrl
-      ? `<img src="${it.imageUrl}" alt="${esc(it.itemName)}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+      ? `<img src="${it.imageUrl}" alt="${esc(it.itemName)}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0${isRejected ? ';filter:grayscale(60%);opacity:.75' : ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
          <div style="width:64px;height:64px;border-radius:10px;background:rgba(251,191,36,.12);display:none;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${typeIcon}</div>`
-      : `<div style="width:64px;height:64px;border-radius:10px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${typeIcon}</div>`;
-    return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(251,191,36,.3);border-radius:14px;margin-bottom:8px">
+      : `<div style="width:64px;height:64px;border-radius:10px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px${isRejected ? ';filter:grayscale(60%);opacity:.75' : ''}">${typeIcon}</div>`;
+    const statusBadge = isRejected
+      ? `<span style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:20px;background:#ef444422;color:#f87171;border:1px solid #ef444455">ถูกปฏิเสธ</span>`
+      : `<span style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:20px;background:#fbbf2422;color:#fbbf24;border:1px solid #fbbf2455">รออนุมัติ</span>`;
+    const actionBtn = isRejected
+      ? '' // ปฏิเสธไปแล้ว ไม่มีอะไรให้ยกเลิกอีก
+      : `<button onclick="cancelMyPendingRequest('${it.reqId}')" style="font-size:.68rem;font-weight:600;padding:3px 9px;border-radius:14px;background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.35);cursor:pointer">ยกเลิก</button>`;
+    const rejectedInfo = isRejected && (it.rejectedBy || it.rejectedAt)
+      ? `<div style="font-size:.68rem;color:#f87171;margin-top:3px">✗ ปฏิเสธโดย ${esc(it.rejectedBy || 'แอดมิน')}${it.rejectedAt ? ' • ' + esc(it.rejectedAt) : ''}</div>`
+      : '';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.04);border:1px solid ${isRejected ? 'rgba(239,68,68,.3)' : 'rgba(251,191,36,.3)'};border-radius:14px;margin-bottom:8px${isRejected ? ';opacity:.85' : ''}">
       ${imgTag}
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;color:#fff;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(it.itemName)}</div>
         <div style="font-size:.75rem;color:rgba(255,255,255,.45);margin-top:2px">${esc(it.itemCode)} • ${esc(it.qty)} • ${esc(it.date)}</div>
         ${it.remark ? `<div style="font-size:.72rem;color:rgba(255,255,255,.3);margin-top:3px">📝 ${esc(it.remark)}</div>` : ''}
+        ${rejectedInfo}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-        <span style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:20px;background:#fbbf2422;color:#fbbf24;border:1px solid #fbbf2455">รออนุมัติ</span>
-        <button onclick="cancelMyPendingRequest('${it.reqId}')" style="font-size:.68rem;font-weight:600;padding:3px 9px;border-radius:14px;background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.35);cursor:pointer">ยกเลิก</button>
+        ${statusBadge}
+        ${actionBtn}
       </div>
     </div>`;
   }).join('');
@@ -3855,7 +3869,8 @@ function _updateApprovalBellBadge() {
   const btn = document.getElementById('approvalBellBtn');
   const badge = document.getElementById('approvalBellBadge');
   if (!btn || !badge) return;
-  const n = (mineData.pendingApproval || []).length;
+  // ★ นับเฉพาะ "pending" จริงๆ เหมือนกับ mineApprovalCount — รายการที่ถูกปฏิเสธไปแล้วไม่ต้องรอผู้ใช้ทำอะไรอีก ไม่ควรทำให้กระดิ่งเด้ง
+  const n = (mineData.pendingApproval || []).filter(it => it.status !== 'rejected').length;
   btn.style.display = n > 0 ? 'flex' : 'none';
   badge.textContent = n;
 }
