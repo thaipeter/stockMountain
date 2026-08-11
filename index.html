@@ -2470,6 +2470,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <option value="">📝 แสดงทุกประเภท</option>
         <option value="รับเข้า">📥 รับเข้า (In)</option>
         <option value="เบิก">📤 เบิกออก (Out)</option>
+        <option value="คืน">↩️ คืน (Return)</option>
         <option value="new item">🆕 รับเข้า (ใหม่)</option>
         <option value="ซ่อมแซมแล้ว">✨ ซ่อมแซมแล้ว</option>
         <option value="แจ้งชำรุด">💔 แจ้งชำรุด</option>
@@ -6516,7 +6517,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         const endDt = endDateStr ? new Date(endDateStr) : null; if(endDt) endDt.setHours(23,59,59,999);
         const filteredLogs = allData.history.filter(log => {
             const act = String(log.action).trim().toLowerCase();
-            if(!['รับเข้า', 'เบิก', 'new item', 'ซ่อมแซมแล้ว', 'แจ้งชำรุด'].includes(act)) return false;
+            if(!['รับเข้า', 'เบิก', 'new item', 'ซ่อมแซมแล้ว', 'แจ้งชำรุด', 'คืน'].includes(act)) return false;
             // typeFilter: "รับเข้า" ครอบคลุม "new item" ด้วย, "เบิก" ครอบคลุม action ที่ขึ้นต้น "เบิก"
             if(typeFilter) {
                 if(typeFilter === 'รับเข้า' && !(act === 'รับเข้า' || act === 'new item')) return false;
