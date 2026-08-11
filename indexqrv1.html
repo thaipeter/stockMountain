@@ -1415,6 +1415,10 @@ body{display:flex;flex-direction:column}
         <i class="fas fa-exclamation-triangle me-1"></i> แจ้งชำรุด
       </button>
     </div>
+    <div id="hsAlreadyDoneMsg" style="margin-top: 12px; display: none; text-align:center;">
+      <span style="background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;display:inline-block"><i class="fas fa-check-circle me-1"></i> คืน/แจ้งชำรุดครบแล้ว</span>
+    </div>
+    <div id="hsBreakdown" style="margin-top: 8px; display: none; text-align:center; font-size:11px; color:#94a3b8;"></div>
 
     <div style="margin-top: 10px;">
       <button class="reg-cancel-btn" style="width: 100%; padding: 12px; font-size: 14px;" onclick="closeHistorySlipModal()">ปิดหน้าต่าง</button>
@@ -4008,22 +4012,37 @@ function renderMineHistory() {
     const escImg = esc(h.imageUrl || '').replace(/'/g, "\\'");
     
     const isWithdraw = (h.type === 'เบิก');
-    // ซ่อนปุ่ม "คืนเข้าคลัง/แจ้งชำรุด" ถ้าของรหัสนี้ถูกคืน/แจ้งชำรุดครบตามที่เบิกไปแล้ว (remainingQty <= 0)
-    // remainingQty เป็นยอดรวมทุกครั้งที่เบิกรหัสนี้ ไม่ใช่แค่รายการนี้รายการเดียว เพราะระบบไม่ผูก reqId เบิก-คืนแบบ 1:1
+    // ★ ปรับปรุง: ใช้ h.canReturn ที่คำนวณฝั่ง server แล้ว (เช็คทั้งยอดคงเหลือ + เกิน 7 วันหรือยัง)
+    // แทนที่จะเช็คแค่ remainingQty เฉยๆ เหมือนเดิม กันปัญหา parse วันที่ผิดพลาดฝั่ง client ด้วย
     const hasRemaining = (h.remainingQty === null || h.remainingQty === undefined) ? true : h.remainingQty > 0;
+    const canReturn = (h.canReturn === null || h.canReturn === undefined) ? hasRemaining : h.canReturn;
+    const isExpired = hasRemaining && !canReturn; // เหลืออยู่จริง แต่เกิน 7 วันแล้ว กดคืนไม่ได้แล้ว
     const returnMaxQty = (h.remainingQty !== null && h.remainingQty !== undefined) ? Math.min(h.qty, h.remainingQty) : h.qty;
+    const returnedQty = h.returnedQty || 0;
+    const damagedQty = h.damagedQty || 0;
+    const totalWithdrawnQty = h.totalWithdrawnQty || h.qty;
+    // 🆕 สรุปให้เห็นว่าเบิกไปทั้งหมด/คืนแล้ว/แจ้งชำรุดแล้วกี่ชิ้น เฉพาะตอนมีการคืน/แจ้งชำรุดไปแล้วบางส่วน(หรือครบ)
+    const breakdownParts = [];
+    if (returnedQty > 0) breakdownParts.push(`คืนแล้ว ${returnedQty}`);
+    if (damagedQty > 0) breakdownParts.push(`แจ้งชำรุด ${damagedQty}`);
+    const breakdownHtml = breakdownParts.length
+      ? `<div style="font-size:10px;color:#94a3b8;margin-top:4px">เบิกทั้งหมด ${totalWithdrawnQty} • ${breakdownParts.join(' • ')}${hasRemaining ? ' • เหลือ ' + (h.remainingQty || 0) : ''}</div>`
+      : '';
     const actionsHtml = isWithdraw
-      ? (hasRemaining ? `
+      ? (canReturn ? `
       <div style="display:flex;gap:6px;margin-top:6px" onclick="event.stopPropagation()">
         <button onclick="openReturnItemModal('${escCode}','${escName}',${returnMaxQty})" style="background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.3);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer"><i class="fas fa-undo me-1"></i> คืนเข้าคลัง</button>
         <button onclick="openReportDamageModal('${escCode}','${escName}',${returnMaxQty})" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer"><i class="fas fa-exclamation-triangle me-1"></i> แจ้งชำรุด</button>
-      </div>` : `
+      </div>${breakdownHtml}` : isExpired ? `
       <div style="margin-top:6px" onclick="event.stopPropagation()">
-        <span style="background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600"><i class="fas fa-check-circle me-1"></i> คืน/แจ้งชำรุดครบแล้ว</span>
-      </div>`)
+        <span style="background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.3);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600"><i class="fas fa-clock me-1"></i> เกิน 7 วัน ไม่สามารถคืน/แจ้งชำรุดได้แล้ว</span>
+      </div>${breakdownHtml}` : `
+      <div style="margin-top:6px" onclick="event.stopPropagation()">
+        <span style="background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600"><i class="fas fa-check-circle me-1"></i> ${damagedQty > 0 && returnedQty === 0 ? 'แจ้งชำรุดครบแล้ว' : returnedQty > 0 && damagedQty === 0 ? 'คืนเข้าคลังครบแล้ว' : 'คืน/แจ้งชำรุดครบแล้ว'}</span>
+      </div>${breakdownHtml}`)
       : '';
 
-    return `<div class="hist-card" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;margin-bottom:8px;cursor:pointer" onclick="openHistorySlip('${escName}', '${escCode}', '${escQty}', '${escUnit}', '${h.date}', '${esc(h.type)}', '${escRemark}', '${escImg}', '${escSig}')">
+    return `<div class="hist-card" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;margin-bottom:8px;cursor:pointer" onclick="openHistorySlip('${escName}', '${escCode}', '${escQty}', '${escUnit}', '${h.date}', '${esc(h.type)}', '${escRemark}', '${escImg}', '${escSig}', ${h.remainingQty === null || h.remainingQty === undefined ? 'null' : Number(h.remainingQty)}, ${h.canReturn === null || h.canReturn === undefined ? 'null' : !!h.canReturn}, ${returnedQty}, ${damagedQty}, ${totalWithdrawnQty})">
       ${imgHtml}
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;color:#fff;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(h.itemName)}</div>
@@ -4450,7 +4469,7 @@ function closeSignatureModal() {
 }
 
 /* ══ HISTORY SLIP MODAL LOGIC ══ */
-function openHistorySlip(itemName, itemCode, qty, unit, date, type, remark, imageUrl, signatureUrl) {
+function openHistorySlip(itemName, itemCode, qty, unit, date, type, remark, imageUrl, signatureUrl, remainingQty, canReturnParam, returnedQty, damagedQty, totalWithdrawnQty) {
   document.getElementById('hsItemName').textContent = itemName;
   document.getElementById('hsItemCode').textContent = itemCode;
   document.getElementById('hsQty').textContent = qty + ' ' + unit;
@@ -4480,21 +4499,56 @@ function openHistorySlip(itemName, itemCode, qty, unit, date, type, remark, imag
     sigContainer.innerHTML = `<span style="font-style: italic; color: #94a3b8; font-size: 12px;">ไม่มีลายเซ็น</span>`;
   }
   
-  // โหลดปุ่มจัดการสำหรับรายการเบิก
+  // ★ ปรับปรุง: ใช้ canReturn ที่คำนวณฝั่ง server (เช็คทั้งยอดคงเหลือ + เกิน 7 วันหรือยัง) แทน remainingQty เฉยๆ
+  // และแสดง breakdown คืนแล้ว/แจ้งชำรุดแล้วกี่ชิ้น เหมือนกับใน list การ์ดด้านนอก ให้สอดคล้องกัน
   const actionBtns = document.getElementById('hsActionBtns');
+  const alreadyDoneMsg = document.getElementById('hsAlreadyDoneMsg');
+  const breakdownEl = document.getElementById('hsBreakdown');
+  const hasRemaining = (remainingQty === null || remainingQty === undefined) ? true : remainingQty > 0;
+  const canReturn = (canReturnParam === null || canReturnParam === undefined) ? hasRemaining : canReturnParam;
+  const isExpired = hasRemaining && !canReturn;
+  const maxQty = (remainingQty !== null && remainingQty !== undefined) ? Math.min(Number(qty), remainingQty) : Number(qty);
+
+  if (breakdownEl) {
+    const parts = [];
+    if (returnedQty > 0) parts.push(`คืนแล้ว ${returnedQty}`);
+    if (damagedQty > 0) parts.push(`แจ้งชำรุด ${damagedQty}`);
+    if (parts.length) {
+      breakdownEl.style.display = 'block';
+      breakdownEl.textContent = `เบิกทั้งหมด ${totalWithdrawnQty || qty} • ${parts.join(' • ')}${hasRemaining ? ' • เหลือ ' + remainingQty : ''}`;
+    } else {
+      breakdownEl.style.display = 'none';
+    }
+  }
+
   if (actionBtns) {
-    if (type === 'เบิก') {
+    if (type === 'เบิก' && canReturn) {
       actionBtns.style.display = 'flex';
+      if (alreadyDoneMsg) alreadyDoneMsg.style.display = 'none';
       document.getElementById('hsBtnReturn').onclick = function() {
         closeHistorySlipModal();
-        openReturnItemModal(itemCode, itemName, Number(qty));
+        openReturnItemModal(itemCode, itemName, maxQty);
       };
       document.getElementById('hsBtnDamage').onclick = function() {
         closeHistorySlipModal();
-        openReportDamageModal(itemCode, itemName, Number(qty));
+        openReportDamageModal(itemCode, itemName, maxQty);
       };
+    } else if (type === 'เบิก' && isExpired) {
+      actionBtns.style.display = 'none';
+      if (alreadyDoneMsg) {
+        alreadyDoneMsg.style.display = 'block';
+        alreadyDoneMsg.innerHTML = '<span style="background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.3);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;display:inline-block"><i class="fas fa-clock me-1"></i> เกิน 7 วัน ไม่สามารถคืน/แจ้งชำรุดได้แล้ว</span>';
+      }
+    } else if (type === 'เบิก' && !hasRemaining) {
+      actionBtns.style.display = 'none';
+      if (alreadyDoneMsg) {
+        alreadyDoneMsg.style.display = 'block';
+        const label = damagedQty > 0 && returnedQty === 0 ? 'แจ้งชำรุดครบแล้ว' : returnedQty > 0 && damagedQty === 0 ? 'คืนเข้าคลังครบแล้ว' : 'คืน/แจ้งชำรุดครบแล้ว';
+        alreadyDoneMsg.innerHTML = `<span style="background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;display:inline-block"><i class="fas fa-check-circle me-1"></i> ${label}</span>`;
+      }
     } else {
       actionBtns.style.display = 'none';
+      if (alreadyDoneMsg) alreadyDoneMsg.style.display = 'none';
     }
   }
 
