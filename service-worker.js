@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mountain-wms-cache-v3';
+const CACHE_NAME = 'mountain-wms-cache-v4';
 const urlsToCache = [
   './index.html',
   './indexqrv1.html',
@@ -23,6 +23,16 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
+  // ★ สำคัญ: ปล่อยผ่านทุก request ที่ไม่ใช่ same-origin (เช่น รูปจาก img2.pic.in.th,
+  //   Google Apps Script, CDN ต่างๆ) ให้เบราว์เซอร์จัดการโหลดตามปกติ ไม่ต้องยุ่ง
+  //   เพราะ Service Worker ดักจับ request ข้ามโดเมนซ้ำแล้วมักโดนบล็อก/ล้มเหลว
+  //   (net::ERR_FAILED) และเมื่อ catch ไปหา caches.match() ที่ไม่เคยมี URL นี้อยู่
+  //   จะได้ undefined กลับมา ทำให้ respondWith(undefined) พังด้วย
+  //   "Failed to convert value to 'Response'"
+  if (new URL(event.request.url).origin !== self.location.origin) {
+    return;
+  }
+
   event.respondWith(
     // สำคัญ: cache:'no-store' บังคับให้เบราว์เซอร์ยิงไปเซิร์ฟเวอร์จริงเสมอ
     // ไม่ใช้ไฟล์จาก HTTP cache ของเบราว์เซอร์เอง (คนละชั้นกับ Cache API ที่ service worker คุม)
@@ -35,6 +45,16 @@ self.addEventListener('fetch', event => {
         }
         return networkResponse;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() =>
+        // ★ กันไม่ให้ respondWith ได้ค่า undefined เด็ดขาด — ถ้าไม่เจอใน cache จริงๆ
+        //   ให้คืน Response error ที่ถูกต้องแทน เพื่อไม่ให้เกิด TypeError ซ้ำ
+        caches.match(event.request).then(cached =>
+          cached || new Response('Offline หรือโหลดไฟล์ไม่สำเร็จ', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+          })
+        )
+      )
   );
 });
