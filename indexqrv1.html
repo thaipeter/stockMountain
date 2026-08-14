@@ -1482,26 +1482,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     startUserPoll();
   }, () => {
-    allData = demoData();
+    // ★ เอาโหมด Demo ออก — เดิมถ้าโหลดข้อมูลคลังตอนเปิดแอปครั้งแรกไม่สำเร็จ จะสลับไปใช้ "แคตตาล็อกสินค้าปลอม" ทั้งชุดแทน
+    // ผู้ใช้จะเห็นรายการสินค้า/รหัสที่ไม่มีอยู่จริงในระบบ ถ้าลองเบิกไปจริงๆ จะส่งรหัสสินค้าปลอมไปให้แอดมิน หาไม่เจอ อนุมัติไม่ได้
+    // เปลี่ยนเป็นโชว์หน้า error พร้อมปุ่มลองใหม่แทน ไม่ให้เข้าแอปด้วยข้อมูลปลอมอีก
     hide('loadingScreen');
-    
-    let restored = false;
-    try {
-      const sessionStr = localStorage.getItem('user_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (session && session.uid && (Date.now() - session.timestamp < 86400000)) {
-          loginSuccess(session.uid);
-          restored = true;
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
-    if (!restored) {
-      show('loginScreen'); document.getElementById('appWrap').classList.remove('visible');
-      populateUsers(allData.users || []);
+    show('loginScreen');
+    const errBox = document.getElementById('loginScreen');
+    if (errBox) {
+      errBox.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;text-align:center;gap:12px">
+        <i class="fas fa-triangle-exclamation" style="font-size:2.5rem;color:#f87171"></i>
+        <div style="font-weight:700;color:#fff;font-size:1.1rem">โหลดข้อมูลระบบไม่สำเร็จ</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.85rem">ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</div>
+        <button onclick="location.reload()" style="margin-top:8px;padding:10px 24px;border-radius:10px;background:#4f46e5;color:#fff;border:none;font-weight:600;cursor:pointer">ลองใหม่</button>
+      </div>`;
     }
   });
 });
@@ -1709,19 +1702,6 @@ function doLogin() {
   if (!uid || pin.length < PIN_LEN) return;
   const btn = document.getElementById('loginBtn');
   btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...';
-  
-  const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
-  if (isDemo) {
-    btn.textContent = 'เข้าสู่ระบบ';
-    if (pin === '1234' || pin === 'admin') {
-      failedAttemptsMap[uid] = 0;
-      loginSuccess(uid);
-    } else {
-      clearPin();
-      document.getElementById('loginError').style.display = 'block';
-    }
-    return;
-  }
 
   callGAS('webVerifyUserPin', [uid, pin], isValid => {
     btn.textContent = 'เข้าสู่ระบบ';
@@ -3248,48 +3228,22 @@ function executeSubmitCart(mode, signatureBase64) {
     callGAS('getInventoryData', [], d => { allData = d; renderList(mode, ''); renderReturnList(); }, null);
     loadMineApproval();
   }, err => {
-    const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
-    if (isDemo || err === 'no GAS' || err === 'demo mode') {
-      // โหมดตัวอย่าง / ออฟไลน์ → สร้างรายการค้างรออนุมัติลง localStorage เพื่อให้ระบบสแกนตรวจได้จริง
-      const nowStr = new Date().toLocaleDateString('th-TH', {day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
-      const newPendings = cart.map((item, idx) => ({
-        reqId: 'REQ_' + Date.now() + '_' + idx,
-        type: typeText,
-        itemCode: item.code,
-        itemName: item.name,
-        qty: item.qty,
-        user: me.name,
-        userId: me.uid,
-        date: nowStr,
-        remark: remark || 'เบิกผ่านหน้า QR Web App',
-        status: 'รออนุมัติ',
-        imageUrl: item.imageUrl
-      }));
-      if (!mineData.pendingApproval) mineData.pendingApproval = [];
-      mineData.pendingApproval.push(...newPendings);
-      
-      try {
-        let existingLocal = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
-        existingLocal.push(...newPendings);
-        localStorage.setItem('demo_pending_withdraws', JSON.stringify(existingLocal));
-      } catch(e) {}
-      
-      handleSuccess(payloads.length);
-    } else {
-      btn.disabled = false;
-      btn.innerHTML = mode === 'withdraw' ? '<i class="fas fa-check"></i> ยืนยันเบิก' : '<i class="fas fa-clipboard-check"></i> ยืนยันการยืม';
-      Swal.fire({
-        icon: 'error',
-        title: 'เกิดข้อผิดพลาดในการบันทึก!',
-        html: `<div class="text-start small">
-                 <div class="text-danger fw-bold mb-2">❌ ไม่สามารถบันทึกรายการได้ในขั้นตอนส่งข้อมูล:</div>
-                 <div>• สาเหตุ: <b>${esc(err)}</b></div>
-                 <div>• กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต หรือติดต่อผู้ดูแลระบบ</div>
-               </div>`,
-        confirmButtonColor: '#ef4444',
-        background: '#1a1f2e', color: '#e2e8f0'
-      });
-    }
+    // ★ เอาโหมด Demo/ออฟไลน์-หลอกสำเร็จออกทั้งหมด — เดิมถ้าเจอ error ใดๆ ที่ตรวจว่า "น่าจะเป็น demo" จะปลอมข้อมูลลง
+    // localStorage แล้วบอกผู้ใช้ว่า "ส่งคำขอแล้ว!" ทั้งที่ backend จริงไม่เคยได้รับข้อมูลเลย ผู้ใช้เข้าใจผิดว่าเบิกสำเร็จ
+    // ของจริงไม่ได้ถูกกันสต็อกให้เลย ตอนนี้ error อะไรก็ตามจะโชว์ตรงไปตรงมาเสมอ ไม่มีการหลอกว่าสำเร็จอีก
+    btn.disabled = false;
+    btn.innerHTML = mode === 'withdraw' ? '<i class="fas fa-check"></i> ยืนยันเบิก' : '<i class="fas fa-clipboard-check"></i> ยืนยันการยืม';
+    Swal.fire({
+      icon: 'error',
+      title: 'เกิดข้อผิดพลาดในการบันทึก!',
+      html: `<div class="text-start small">
+               <div class="text-danger fw-bold mb-2">❌ ไม่สามารถบันทึกรายการได้ในขั้นตอนส่งข้อมูล:</div>
+               <div>• สาเหตุ: <b>${esc(err)}</b></div>
+               <div>• กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต หรือติดต่อผู้ดูแลระบบ</div>
+             </div>`,
+      confirmButtonColor: '#ef4444',
+      background: '#1a1f2e', color: '#e2e8f0'
+    });
   });
 }
 
@@ -3514,7 +3468,7 @@ function callGAS(fn, args, onOk, onFail) {
     return;
   }
   
-  if (onFail) onFail('no GAS');
+  if (onFail) onFail('ไม่พบการตั้งค่า URL เซิร์ฟเวอร์ (GAS_URL) กรุณาแจ้งผู้ดูแลระบบ');
 }
 
 /* ══ REGISTER ══ */
@@ -3640,12 +3594,7 @@ function submitRegister() {
     callGAS('getLoginUsers', [], users => { if (users && users.length) { allData.users = users; populateUsers(users); } }, () => {});
   }, e => {
     btn.textContent = 'ส่งคำขอสมัคร'; btn.disabled = false;
-    if (e === 'demo mode') {
-      document.getElementById('regSuccessMsg').textContent = `[Demo] ส่งคำขอของ "${name}" เรียบร้อย!`;
-      err.style.display = 'none'; showRegStep(3);
-    } else {
-      err.textContent = 'เกิดข้อผิดพลาด: ' + e; err.style.display = 'block';
-    }
+    err.textContent = 'เกิดข้อผิดพลาด: ' + e; err.style.display = 'block';
   });
 }
 
@@ -3691,23 +3640,14 @@ function loadMineData() {
         `<div class="mine-empty"><i class="fas fa-exclamation-circle" style="color:var(--red)"></i><p>${esc(errMsg)}</p></div>`;
     }
   }, err => {
-    // GAS ไม่ตอบ / timeout / ไม่มี GAS → ใช้ demo
+    // ★ เอาโหมด Demo ออก — เดิมถ้าโหลดไม่ได้จะเงียบๆ สลับไปโชว์ข้อมูลตัวอย่างปลอมแทน ทำให้ผู้ใช้เข้าใจผิดว่าเป็นประวัติจริงของตัวเอง
     mineLoading = false;
     if (icon) icon.style.animation = '';
-    const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
-    if (isDemo || err === 'no GAS' || err === 'demo mode') {
-      mineData = buildDemoMineData();
-    } else {
-      mineData = { history: [], borrows: [], retro: [], retroPending: [] };
-      document.getElementById('mineHistoryList').innerHTML =
-        `<div class="mine-empty"><i class="fas fa-wifi" style="color:var(--red)"></i><p>เชื่อมต่อไม่ได้: ${esc(err)}</p></div>`;
-      document.getElementById('mineBorrowList').innerHTML =
-        `<div class="mine-empty"><i class="fas fa-wifi" style="color:var(--red)"></i><p>เชื่อมต่อไม่ได้: ${esc(err)}</p></div>`;
-      return;
-    }
-    renderMineHistory();
-    renderMineBorrows();
-    updateMineStats();
+    mineData = { history: [], borrows: [], retro: [], retroPending: [] };
+    document.getElementById('mineHistoryList').innerHTML =
+      `<div class="mine-empty"><i class="fas fa-wifi" style="color:var(--red)"></i><p>เชื่อมต่อไม่ได้: ${esc(err)}</p></div>`;
+    document.getElementById('mineBorrowList').innerHTML =
+      `<div class="mine-empty"><i class="fas fa-wifi" style="color:var(--red)"></i><p>เชื่อมต่อไม่ได้: ${esc(err)}</p></div>`;
   });
 }
 
@@ -3754,20 +3694,8 @@ function loadMineApproval() {
       }, () => {});
     }
   }, err => {
-    // ★ Demo/Offline fallback — อ่าน localStorage เพื่อแสดงรายการค้างรออนุมัติที่เคยบันทึกไว้จริง
-    const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
-    if (isDemo || err === 'no GAS' || err === 'demo mode') {
-      try {
-        const saved = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
-        // กรองเฉพาะรายการของ user ที่ login อยู่
-        const myItems = saved.filter(it => it.userId === me.uid || !it.userId);
-        mineData.pendingApproval = myItems;
-      } catch(e) {
-        mineData.pendingApproval = [];
-      }
-    } else {
-      mineData.pendingApproval = [];
-    }
+    // ★ เอาโหมด Demo ออก — เดิมถ้าโหลดไม่ได้จะไปอ่าน localStorage มาโชว์แทน อาจกลายเป็นข้อมูลเก่า/ปลอมที่ไม่ตรงกับสถานะจริงบน server
+    mineData.pendingApproval = [];
     renderMineApproval();
     _updateApprovalBellBadge();
   });
@@ -3845,21 +3773,8 @@ function cancelMyPendingRequest(reqId) {
         Swal.fire({icon: 'error', title: 'ยกเลิกไม่สำเร็จ', text: (res && res.error) || '', background: '#1a1f2e', color: '#c0c0c0'});
       }
     }, err => {
-      // ★ Demo/Offline fallback — ลบรายการออกจาก localStorage + memory ได้เลย
-      const isDemo = (!GAS_URL && (typeof google === 'undefined' || !google.script || !google.script.run)) || window.location.protocol === 'file:';
-      if (isDemo || err === 'no GAS' || err === 'demo mode') {
-        try {
-          let saved = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
-          saved = saved.filter(it => it.reqId !== reqId);
-          localStorage.setItem('demo_pending_withdraws', JSON.stringify(saved));
-        } catch(e) {}
-        mineData.pendingApproval = (mineData.pendingApproval || []).filter(it => it.reqId !== reqId);
-        renderMineApproval();
-        _updateApprovalBellBadge();
-        Swal.fire({icon: 'success', title: 'ยกเลิกแล้ว', timer: 1300, showConfirmButton: false, background: '#1a1f2e', color: '#c0c0c0'});
-      } else {
-        Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: String(err), background: '#1a1f2e', color: '#c0c0c0'});
-      }
+      // ★ เอาโหมด Demo ออก — เดิมถ้าเจอ error จะหลอกโชว์ "ยกเลิกแล้ว" ทั้งที่ backend จริงไม่รู้เรื่อง คำขออาจยังค้างอยู่จริง
+      Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: String(err), background: '#1a1f2e', color: '#c0c0c0'});
     });
   });
 }
@@ -3948,38 +3863,6 @@ function renderMineRetro() {
   }
 
   list.innerHTML = html;
-}
-
-function buildDemoMineData() {
-  const now = new Date();
-  const fmt = d => d.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit'});
-  const d1 = new Date(now); d1.setDate(d1.getDate()-2);
-  const d2 = new Date(now); d2.setDate(d2.getDate()-5);
-  const d3 = new Date(now); d3.setDate(d3.getDate()-10);
-  const d4 = new Date(now); d4.setDate(d4.getDate()-20);
-
-  // ★ อ่าน pendingApproval จาก localStorage ที่เคยบันทึกไว้จริง ๆ
-  let savedPending = [];
-  try {
-    const raw = JSON.parse(localStorage.getItem('demo_pending_withdraws')) || [];
-    savedPending = raw.filter(it => it.userId === me.uid || !it.userId);
-  } catch(e) {}
-
-  return {
-    history: [
-      { txId:'TX001', itemName:'น้ำมันหล่อลื่น 68', itemCode:'OL-003', qty:2, unit:'ลิตร', type:'เบิก', date: fmt(d1), remark:'บำรุงรักษา' },
-      { txId:'TX002', itemName:'ฟิลเตอร์อากาศ',      itemCode:'FL-009', qty:1, unit:'อัน',  type:'เบิก', date: fmt(d2), remark:'ซ่อม Line 1' },
-      { txId:'TX003', itemName:'น็อต M8×30',          itemCode:'PN-007', qty:10, unit:'ตัว', type:'เบิก', date: fmt(d3), remark:'' },
-      { txId:'TX004', itemName:'ประแจปากตาย 13',      itemCode:'TL-001', qty:1, unit:'อัน',  type:'ยืม',  date: fmt(d4), remark:'งานซ่อมปั๊ม' },
-    ],
-    activeBorrows: [
-      { reqId:'BW001', itemName:'ประแจปากตาย 13', itemCode:'TL-001', qty:1, unit:'อัน', borrowDate: fmt(d4), daysAgo: 20 },
-    ],
-    pendingApproval: savedPending,
-    borrows: [],
-    retro: [],
-    retroPending: []
-  };
 }
 
 function updateMineStats() {
@@ -4108,7 +3991,7 @@ function openReportDamageModal(code, name, maxQty, sourceRef) {
     // 🆕 ถ้ากดมาจากใบเบิกใบใดใบหนึ่งโดยเฉพาะ (มี sourceRef) ให้ฝัง [ref:xxx] ไว้ใน remark (มองไม่เห็นในหน้าจอ)
     // เพื่อให้ backend (getUserHistory) ผูกการแจ้งชำรุดครั้งนี้กลับไปยังใบเบิกใบนั้นแบบ 1:1 แทนการหาร FIFO เฉลี่ยรวม
     const finalRemark = 'แจ้งชำรุด: ' + remark + (sourceRef ? ` [ref:${sourceRef}]` : '');
-    const payload = [{ code, qty, type: 'แจ้งชำรุด', user: me.name, uid: me.uid, remark: finalRemark }];
+    const payload = [{ code, qty, type: 'แจ้งชำรุด', user: me.name, uid: me.uid, remark: finalRemark, deviceInfo: getDeviceInfoString() }];
 
     Swal.fire({
       title: 'กำลังส่งข้อมูล...',
@@ -4131,21 +4014,17 @@ function openReportDamageModal(code, name, maxQty, sourceRef) {
       loadMineData();
       callGAS('getInventoryData', [], d => { allData = d; }, null);
     }, err => {
-      // Demo / offline fallback
-      if (!mineData.history) mineData.history = [];
-      const nowStr = new Date().toLocaleDateString('th-TH', {day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
-      mineData.history.unshift({
-        time: nowStr, date: nowStr, action: 'แจ้งชำรุด', type: 'แจ้งชำรุด',
-        code: code, itemCode: code, itemName: name, qty: qty, amount: '-' + qty,
-        user: me.name, remark: 'แจ้งชำรุด: ' + remark
-      });
+      // ★ แก้ไข: เดิมตรงนี้จะหลอกโชว์ว่า "สำเร็จ (Demo)" แล้วเก็บแค่ใน localStorage เครื่องนี้เครื่องเดียว
+      // ทำให้ข้อมูลไม่ไปถึง Admin จริง แต่ผู้ใช้เข้าใจผิดว่าส่งสำเร็จแล้ว (เช่นเวลาเกินจำนวนที่ backend เพิ่งเพิ่มเช็คไปก็จะถูกกลืน error ทิ้งเงียบๆ)
+      // เปลี่ยนเป็นโชว์ error จริงแทน เหมือนที่แก้ไปแล้วใน openReturnItemModal
       Swal.fire({
-        icon: 'success',
-        title: 'แจ้งชำรุดเรียบร้อย (Demo)',
-        timer: 1500,
-        showConfirmButton: false
+        icon: 'error',
+        title: 'แจ้งชำรุดไม่สำเร็จ',
+        text: 'เชื่อมต่อระบบหลังบ้านไม่ได้ (' + err + ') กรุณาลองใหม่อีกครั้ง หรือแจ้ง Admin ถ้ายังไม่ได้',
+        confirmButtonColor: '#ef4444',
+        background: '#1a2230',
+        color: '#e0e0e0'
       });
-      renderMineHistory();
     });
   });
 }
@@ -4186,7 +4065,7 @@ function openReturnItemModal(code, name, maxQty, sourceRef) {
     const { qty, remark } = res.value;
     // 🆕 ผูกกลับไปยังใบเบิกต้นทางแบบ 1:1 ผ่าน [ref:xxx] เหมือนกับ openReportDamageModal (ดูคอมเมนต์ที่นั่น)
     const finalRemark = 'ขอคืนอะไหล่: ' + remark + (sourceRef ? ` [ref:${sourceRef}]` : '');
-    const payload = [{ code, qty, type: 'คืน', user: me.name, uid: me.uid, remark: finalRemark }];
+    const payload = [{ code, qty, type: 'คืน', user: me.name, uid: me.uid, remark: finalRemark, deviceInfo: getDeviceInfoString() }];
 
     Swal.fire({
       title: 'กำลังส่งข้อมูล...',
@@ -4295,46 +4174,6 @@ function getFullImgUrl(url) {
 }
 function show(id) { document.getElementById(id).classList.remove('hidden'); }
 function hide(id) { document.getElementById(id).classList.add('hidden'); }
-
-function demoData() {
-  try {
-    const saved = localStorage.getItem('demo_inventory_data');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (e) {
-    console.error('Failed to load demo data:', e);
-  }
-  const defaultData = {
-    items: [
-      {code:'BL-001',name:'สายยางอุตสาหกรรม 1/2"',category:'ระบบน้ำ',unit:'เมตร',stock:48,min:10},
-      {code:'EL-012',name:'สายไฟ VAF 2×1.5',category:'ไฟฟ้า',unit:'เมตร',stock:5,min:10},
-      {code:'ME-041',name:'สายพาน V-Belt B62',category:'เครื่องจักร',unit:'เส้น',stock:0,min:5},
-      {code:'PN-007',name:'น็อต M8×30',category:'ของเบ็ดเตล็ด',unit:'ตัว',stock:200,min:50},
-      {code:'OL-003',name:'น้ำมันหล่อลื่น 68',category:'น้ำมัน',unit:'ลิตร',stock:12,min:5},
-      {code:'FL-009',name:'ฟิลเตอร์อากาศ',category:'ระบบลม',unit:'อัน',stock:3,min:4},
-    ],
-    tools: [
-      {code:'TL-001',name:'ประแจปากตาย 13',category:'เครื่องมือ',unit:'อัน',stock:3,min:1},
-      {code:'TL-002',name:'สว่านไฟฟ้า Bosch',category:'เครื่องมือไฟฟ้า',unit:'เครื่อง',stock:2,min:1},
-      {code:'TL-003',name:'ไขควงชุด 6 ชิ้น',category:'เครื่องมือ',unit:'ชุด',stock:5,min:2},
-    ],
-    activeBorrows: [
-      {reqId:'BW001',itemCode:'TL-001',itemName:'ประแจปากตาย 13',qty:1,borrower:'สมชาย',date:'01/06/68'},
-    ],
-    users: [
-      {userId:'u001',name:'สมชาย ใจดี',role:'user'},
-      {userId:'u002',name:'วิชัย เก่งงาน',role:'staff'},
-      {userId:'u_admin',name:'Admin',role:'admin'},
-      {userId:'u_qr',name:'QR Station',role:'qr'},
-    ],
-    settings: {}
-  };
-  try {
-    localStorage.setItem('demo_inventory_data', JSON.stringify(defaultData));
-  } catch (e) {}
-  return defaultData;
-}
 
 /* ══ SIGNATURE PAD LOGIC ══ */
 let sigCanvas, sigCtx;
