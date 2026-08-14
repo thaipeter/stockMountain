@@ -3327,8 +3327,8 @@ function handleQR(code) {
 
 /* ══ HELPERS ══ */
 // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
-const MY_GAS_URL = "วาง_URL_ของ_Web_App_หลังบ้านที่นี่";
-const GAS_URL = (MY_GAS_URL && MY_GAS_URL.indexOf("วาง_URL") === -1) ? MY_GAS_URL : ((typeof __GAS_URL__ !== 'undefined') ? __GAS_URL__ : '');
+// GAS_URL ถูกตั้งค่ากลางไว้ที่ตัวแปร __GAS_URL__ ด้านบนของไฟล์แล้ว (ไม่ต้องแก้ตรงนี้)
+const GAS_URL = (typeof __GAS_URL__ !== 'undefined') ? __GAS_URL__ : '';
 
 // 🆕 ═══════════════════════════════════════════════════
 //  OFFLINE DETECTION + RETRY QUEUE (เพิ่มใหม่ ไม่แตะ logic เดิมของ callGAS)
