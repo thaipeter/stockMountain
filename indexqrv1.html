@@ -3714,7 +3714,7 @@ function renderMineApproval() {
     list.innerHTML = '<div class="mine-empty"><i class="fas fa-check-circle" style="color:var(--green)"></i><p>ไม่มีรายการค้างรออนุมัติ 🎉</p></div>';
     return;
   }
-  list.innerHTML = items.map(it => {
+  list.innerHTML = items.slice().reverse().map(it => {
     const typeIcon = it.type === 'ยืม' ? '🤝' : '📦';
     // ★ เพิ่ม: แสดงรายการที่ถูกแอดมินปฏิเสธด้วย (เดิมพอถูกปฏิเสธจะหายไปเงียบๆ จากลิสต์นี้ ผู้ใช้ไม่รู้ว่าเกิดอะไรขึ้นถ้าพลาดป๊อปอัพตอนนั้น)
     const isRejected = it.status === 'rejected';
