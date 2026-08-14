@@ -3700,7 +3700,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                               <i class="fas fa-microchip" style="color:#60a5fa;font-size:1.1rem"></i>
                                               <h6 class="fw-bold mb-0" style="color:rgba(255,255,255,.92)">ภาษา & เทคโนโลยีที่ใช้สร้าง (Core Tech & Storage)</h6>
                                           </div>
-                                          <span class="badge" style="background:rgba(96,165,250,.15);color:#93c5fd;border:1px solid rgba(96,165,250,.3);font-size:.7rem">System Spec v2.5</span>
+                                          <span style="color:#93c5fd;font-size:.7rem">System Spec v2.5</span>
                                       </div>
 
                                       <!-- Active Users & Drive Storage Metrics Row -->
@@ -3762,16 +3762,16 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                           </div>
                                       </div>
 
-                                      <!-- Tech Stack Badge Cloud -->
-                                      <div style="background:rgba(0,0,0,.15);padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.05)">
+                                      <!-- Tech Stack (Plain Text — ไม่มีกล่อง/พื้นหลัง ตามที่ขอ) -->
+                                      <div>
                                           <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-bottom:8px" class="fw-bold uppercase"><i class="fas fa-code me-1" style="color:#60a5fa"></i> Tech Stack & Languages:</div>
-                                          <div class="d-flex flex-wrap gap-2">
-                                              <span class="badge" style="background:rgba(227,76,38,.18);color:#f97316;border:1px solid rgba(227,76,38,.3)"><i class="fab fa-html5 me-1"></i>HTML5</span>
-                                              <span class="badge" style="background:rgba(247,223,30,.18);color:#fde047;border:1px solid rgba(247,223,30,.3)"><i class="fab fa-js me-1"></i>JavaScript (ES6+)</span>
-                                              <span class="badge" style="background:rgba(121,82,179,.18);color:#c4b5fd;border:1px solid rgba(121,82,179,.3)"><i class="fab fa-bootstrap me-1"></i>Bootstrap 5</span>
-                                              <span class="badge" style="background:rgba(66,133,244,.18);color:#60a5fa;border:1px solid rgba(66,133,244,.3)"><i class="fab fa-google me-1"></i>Google Apps Script</span>
-                                              <span class="badge" style="background:rgba(139,92,246,.18);color:#a78bfa;border:1px solid rgba(139,92,246,.3)"><i class="fas fa-brain me-1"></i>Gemini AI 2.5 Engine</span>
-                                              <span class="badge" style="background:rgba(16,185,129,.18);color:#34d399;border:1px solid rgba(16,185,129,.3)"><i class="fab fa-google-drive me-1"></i>Google Drive API</span>
+                                          <div class="d-flex flex-wrap gap-3">
+                                              <span style="color:#f97316"><i class="fab fa-html5 me-1"></i>HTML5</span>
+                                              <span style="color:#fde047"><i class="fab fa-js me-1"></i>JavaScript (ES6+)</span>
+                                              <span style="color:#c4b5fd"><i class="fab fa-bootstrap me-1"></i>Bootstrap 5</span>
+                                              <span style="color:#60a5fa"><i class="fab fa-google me-1"></i>Google Apps Script</span>
+                                              <span style="color:#a78bfa"><i class="fas fa-brain me-1"></i>Gemini AI 2.5 Engine</span>
+                                              <span style="color:#34d399"><i class="fab fa-google-drive me-1"></i>Google Drive API</span>
                                           </div>
                                       </div>
                                   </div>
@@ -8862,19 +8862,28 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 
         function downloadBackup() {
             if (currentUserProfile.role !== 'admin') return Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
-            document.getElementById('loading').style.display = 'flex';
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(function(res) {
-                    document.getElementById('loading').style.display = 'none';
-                    if(!res.success) return Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error});
-                    const backupData = JSON.parse(res.data); const wb = XLSX.utils.book_new();
-                    for(const sheetName in backupData) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(backupData[sheetName]), sheetName);
-                    XLSX.writeFile(wb, `Mountain_Inventory_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
-                    if (res.truncated) {
-                        Swal.fire({icon: 'warning', title: 'ดาวน์โหลดสำเร็จ (มีบางชีตถูกตัด)', html: 'บางชีตมีข้อมูลเยอะเกินไป ระบบเอาเฉพาะแถวล่าสุดมาให้:<br><br>' + res.truncatedSheets.join('<br>')});
-                    }
-                }).webGetBackupData();
-            } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองดาวน์โหลดสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
+            Swal.fire({
+                title: 'ยืนยันตัวตน', text: "กรอกรหัส PIN เพื่อดาวน์โหลด Backup ข้อมูลทั้งหมด",
+                input: 'password', inputPlaceholder: 'กรอกรหัส PIN',
+                showCancelButton: true, confirmButtonText: 'ดาวน์โหลด', cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                const pin = result.value;
+                if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัส PIN', 'error');
+                document.getElementById('loading').style.display = 'flex';
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.withSuccessHandler(function(res) {
+                        document.getElementById('loading').style.display = 'none';
+                        if(!res.success) return Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error});
+                        const backupData = JSON.parse(res.data); const wb = XLSX.utils.book_new();
+                        for(const sheetName in backupData) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(backupData[sheetName]), sheetName);
+                        XLSX.writeFile(wb, `Mountain_Inventory_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
+                        if (res.truncated) {
+                            Swal.fire({icon: 'warning', title: 'ดาวน์โหลดสำเร็จ (มีบางชีตถูกตัด)', html: 'บางชีตมีข้อมูลเยอะเกินไป ระบบเอาเฉพาะแถวล่าสุดมาให้:<br><br>' + res.truncatedSheets.join('<br>')});
+                        }
+                    }).webGetBackupData(currentUserProfile.uid, pin);
+                } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองดาวน์โหลดสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
+            });
         }
 
         function confirmClearLogs() {
@@ -10180,9 +10189,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     .webSavePrintLog(records);
             } else {
                 // fetch mode (qr.html / standalone)
-                const GAS_URL = (typeof __GAS_URL__ !== 'undefined') ? __GAS_URL__ : '';
-                if (GAS_URL) {
-                    fetch(GAS_URL, { method:'POST', body: JSON.stringify({ fn:'webSavePrintLog', args:[records] }) }).catch(function(){});
+                const _gasUrl = window.GAS_URL || '';
+                if (_gasUrl) {
+                    fetch(_gasUrl, { method:'POST', body: JSON.stringify({ fn:'webSavePrintLog', args:[records] }) }).catch(function(){});
                 }
                 updateHistoryStats();
             }
@@ -10683,8 +10692,10 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (currentUserProfile.role !== 'admin') return Swal.fire({icon:'error', title:'ปฏิเสธ', text:'เฉพาะ Admin เท่านั้น'});
             Swal.fire({
                 title: 'ล้าง Audit Log?',
-                text: 'บันทึกกิจกรรมทั้งหมดจะถูกลบออกจาก Google Sheet ไม่สามารถย้อนกลับได้',
+                text: 'บันทึกกิจกรรมทั้งหมดจะถูกลบออกจาก Google Sheet ไม่สามารถย้อนกลับได้ กรุณากรอกรหัส PIN เพื่อยืนยัน',
                 icon: 'warning',
+                input: 'password',
+                inputPlaceholder: 'กรอกรหัส PIN',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#64748b',
@@ -10692,6 +10703,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 cancelButtonText: 'ยกเลิก'
             }).then(r => {
                 if (r.isConfirmed) {
+                    const pin = r.value;
+                    if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัส PIN', 'error');
                     document.getElementById('loading').style.display = 'flex';
                     const handleClearSuccess = function(res) {
                         document.getElementById('loading').style.display = 'none';
@@ -10709,9 +10722,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         google.script.run
                             .withSuccessHandler(handleClearSuccess)
                             .withFailureHandler(handleClearFailure)
-                            .webClearAuditLog(currentUserProfile.name);
+                            .webClearAuditLog(currentUserProfile.uid, pin);
                     } else if (typeof webPost === 'function') {
-                        webPost('webClearAuditLog', [currentUserProfile.name])
+                        webPost('webClearAuditLog', [currentUserProfile.uid, pin])
                             .then(handleClearSuccess)
                             .catch(handleClearFailure);
                     } else {
