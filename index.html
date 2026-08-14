@@ -4568,7 +4568,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             "purpose": "any maskable"
                         }
                     ],
-                    "start_url": "./index.html",
+                    "start_url": new URL('./index.html', location.href).href,
                     "background_color": "#0f0f0f",
                     "theme_color": "#e8a020",
                     "display": "standalone",
