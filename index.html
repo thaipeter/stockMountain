@@ -12518,8 +12518,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : '';
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
                     google.script.run
-                        .withSuccessHandler(function(res) { resolve(res); })
-                        .withFailureHandler(function(err) { resolve({ success: false, error: String(err) }); })
+                        .withSuccessHandler(function(res) { resolve(Object.assign({}, res, { _log: log })); })
+                        .withFailureHandler(function(err) { resolve({ success: false, error: String(err), _log: log }); })
                         .webGetReceiptData(log.code, log.time, displayUser, log.amount, log.action);
                 } else {
                     // Demo Mode
@@ -12527,7 +12527,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         resolve({
                             success: true, transId: 'WD' + Math.floor(Math.random()*100000), date: log.time, user: displayUser,
                             itemCode: log.code, itemName: log.itemName, qty: log.amount, category: '-', remark: log.remark || '-',
-                            signatureUrl: '', machine: '-', dept: '-', type: log.action.includes('ยืม') ? 'ยืม' : 'เบิก'
+                            signatureUrl: '', machine: '-', dept: '-', type: log.action.includes('ยืม') ? 'ยืม' : 'เบิก', _log: log
                         });
                     }, 100);
                 }
@@ -12590,17 +12590,50 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const results = await Promise.all(logsToFetch.map(rcpFetchOne));
                 document.getElementById('loading').style.display = 'none';
                 const okResults = results.filter(function(r) { return r && r.success; });
-                const failCount = results.length - okResults.length;
+                const failResults = results.filter(function(r) { return !r || !r.success; });
+                const failCount = failResults.length;
                 if (okResults.length === 0) {
                     Swal.fire({ icon: 'error', title: 'ไม่สามารถดำเนินการได้', text: 'ไม่พบใบเบิกต้นฉบับของรายการที่เลือกเลยสักใบ' });
                     return null;
                 }
-                return { okResults: okResults, failCount: failCount, total: results.length };
+                return { okResults: okResults, failResults: failResults, failCount: failCount, total: results.length };
             } catch (e) {
                 document.getElementById('loading').style.display = 'none';
                 Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(e) });
                 return null;
             }
+        }
+
+        // 🆕 แสดงรายละเอียดว่าแต่ละรายการที่พิมพ์ไม่ได้ ติดสาเหตุอะไร (ช่วย debug ข้อมูลไม่ตรงกันระหว่างชีต)
+        function showRcpFailDetails(failResults) {
+            const rowsHtml = failResults.map(function(r) {
+                const log = r._log || {};
+                return '<tr>' +
+                    '<td style="text-align:left;padding:4px 8px;border-bottom:1px solid #333">' + (log.code || '-') + '</td>' +
+                    '<td style="text-align:left;padding:4px 8px;border-bottom:1px solid #333">' + (log.itemName || '-') + '</td>' +
+                    '<td style="text-align:left;padding:4px 8px;border-bottom:1px solid #333">' + (log.time || '-') + '</td>' +
+                    '<td style="text-align:left;padding:4px 8px;border-bottom:1px solid #333">' + (log.user || '-') + ' (' + (log.amount || '-') + ')</td>' +
+                    '<td style="text-align:left;padding:4px 8px;border-bottom:1px solid #333;color:#f87171">' + (r.error || 'ไม่ทราบสาเหตุ') + '</td>' +
+                '</tr>';
+            }).join('');
+            Swal.fire({
+                title: 'รายละเอียดรายการที่พิมพ์ไม่ได้ (' + failResults.length + ' รายการ)',
+                width: '90%',
+                html: '<div style="max-height:60vh;overflow:auto;font-size:12px">' +
+                    '<table style="width:100%;border-collapse:collapse">' +
+                        '<thead><tr style="color:#94a3b8">' +
+                            '<th style="text-align:left;padding:4px 8px">รหัส</th>' +
+                            '<th style="text-align:left;padding:4px 8px">ชื่อ</th>' +
+                            '<th style="text-align:left;padding:4px 8px">วันที่</th>' +
+                            '<th style="text-align:left;padding:4px 8px">ผู้เบิก (จำนวน)</th>' +
+                            '<th style="text-align:left;padding:4px 8px">สาเหตุ</th>' +
+                        '</tr></thead>' +
+                        '<tbody>' + rowsHtml + '</tbody>' +
+                    '</table>' +
+                '</div>',
+                confirmButtonText: 'ปิด',
+                confirmButtonColor: 'var(--theme-color)'
+            });
         }
 
         async function printSelectedReceipts() {
@@ -12615,10 +12648,15 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     title: 'พบรายการที่พิมพ์ไม่ได้ ' + fetched.failCount + ' รายการ',
                     text: 'พิมพ์ได้ ' + fetched.okResults.length + ' จาก ' + fetched.total + ' รายการ (รายการที่หาไม่เจอจะถูกข้ามไป) ต้องการดำเนินการต่อหรือไม่?',
                     showCancelButton: true,
+                    showDenyButton: true,
+                    denyButtonText: 'ดูรายละเอียด',
                     confirmButtonText: 'พิมพ์ ' + fetched.okResults.length + ' ใบที่เจอ',
                     cancelButtonText: 'ยกเลิก',
                     confirmButtonColor: 'var(--theme-color)'
-                }).then(function(r) { if (r.isConfirmed) doOpenPrint(); });
+                }).then(function(r) {
+                    if (r.isConfirmed) doOpenPrint();
+                    else if (r.isDenied) showRcpFailDetails(fetched.failResults);
+                });
             } else {
                 doOpenPrint();
             }
@@ -12637,10 +12675,15 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     title: 'พบรายการที่แสดงตัวอย่างไม่ได้ ' + fetched.failCount + ' รายการ',
                     text: 'แสดงตัวอย่างได้ ' + fetched.okResults.length + ' จาก ' + fetched.total + ' รายการ (รายการที่หาไม่เจอจะถูกข้ามไป) ต้องการดำเนินการต่อหรือไม่?',
                     showCancelButton: true,
+                    showDenyButton: true,
+                    denyButtonText: 'ดูรายละเอียด',
                     confirmButtonText: 'ดูตัวอย่าง ' + fetched.okResults.length + ' ใบที่เจอ',
                     cancelButtonText: 'ยกเลิก',
                     confirmButtonColor: 'var(--theme-color)'
-                }).then(function(r) { if (r.isConfirmed) doOpenPreview(); });
+                }).then(function(r) {
+                    if (r.isConfirmed) doOpenPreview();
+                    else if (r.isDenied) showRcpFailDetails(fetched.failResults);
+                });
             } else {
                 doOpenPreview();
             }
