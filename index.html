@@ -3983,6 +3983,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     </div>
 
                                     <div class="col-12 col-md-6 col-lg-4">
+                                        <div class="settings-box p-3 text-center justify-content-between align-items-center h-100" style="border-top-color:#38bdf8; background:linear-gradient(145deg,rgba(56,189,248,.1) 0%,rgba(56,189,248,.02) 100%); border-color:rgba(56,189,248,.3);">
+                                            <div style="background:transparent!important;border:none!important;box-shadow:none!important">
+                                                <i class="fas fa-wrench mb-2" style="font-size:1.6rem;color:#38bdf8"></i>
+                                                <div class="fw-bold mb-1" style="color:rgba(255,255,255,.9);font-size:.95rem">เติมข้อมูลใบเบิกย้อนหลัง</div>
+                                                <div class="settings-toggle-sub mb-3 text-center" style="font-size:.73rem">ซ่อมรายการเบิกเก่าที่พิมพ์ใบเบิกไม่ได้ (เบิกผ่านปุ่ม "เบิกออก" ก่อนอัปเดต)</div>
+                                            </div>
+                                            <button class="btn btn-sm fw-bold w-100 py-2" onclick="runBackfillMissingWithdraws()" style="background:#38bdf8;color:#000;border-radius:8px"><i class="fas fa-tools me-1"></i> ตรวจ & เติมข้อมูล</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 col-md-6 col-lg-4">
                                         <div class="settings-box p-3 text-center justify-content-between align-items-center h-100" style="border-top-color:#fbbf24; background:linear-gradient(145deg,rgba(251,191,36,.1) 0%,rgba(251,191,36,.02) 100%); border-color:rgba(251,191,36,.3);">
                                             <div style="background:transparent!important;border:none!important;box-shadow:none!important">
                                                 <i class="fas fa-broom mb-2" style="font-size:1.6rem;color:#fbbf24"></i>
@@ -8962,6 +8973,46 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 setProgress('กำลังโหลดระบบ...');
                 Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(e) });
             }
+        }
+
+        // ★ เติมข้อมูลใบเบิกย้อนหลังที่ตกหล่นไปจากชีต Withdraws (ซ่อมรายการเก่าที่เบิกผ่านปุ่ม "เบิกออก" ก่อนแก้บั๊ก)
+        function runBackfillMissingWithdraws() {
+            if (currentUserProfile.role !== 'admin') return Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
+            Swal.fire({
+                title: 'ตรวจ & เติมข้อมูลใบเบิกย้อนหลัง?',
+                html: 'ระบบจะไล่เช็ครายการเบิกเก่าที่ "พิมพ์ใบเบิกไม่ได้" แล้วเติมข้อมูลให้อัตโนมัติเฉพาะรายการที่ยืนยันได้ว่าเป็น "เบิก" จริงเท่านั้น (ปลอดภัย ไม่ทำให้ข้อมูลซ้ำถ้ากดซ้ำ)<br><br>กรอกรหัส PIN เพื่อยืนยัน',
+                input: 'password', inputPlaceholder: 'กรอกรหัส PIN',
+                showCancelButton: true, confirmButtonText: 'เริ่มตรวจ & เติมข้อมูล', cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                const pin = result.value;
+                if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัส PIN', 'error');
+                document.getElementById('loading').style.display = 'flex';
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run
+                        .withSuccessHandler(function(res) {
+                            document.getElementById('loading').style.display = 'none';
+                            if (!res.success) return Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error});
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ตรวจสอบเสร็จสิ้น!',
+                                html: `เติมข้อมูลสำเร็จ <b>${res.backfilled}</b> รายการ<br>` +
+                                      `ข้าม ${res.skippedNotWithdraw} รายการ (ไม่ใช่ "เบิก" หรือหาข้อมูลยืนยันไม่เจอ)<br>` +
+                                      `<span class="text-muted small">ตรวจทั้งหมด ${res.totalChecked} รายการ</span>`
+                            });
+                        })
+                        .withFailureHandler(function(err) {
+                            document.getElementById('loading').style.display = 'none';
+                            Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: String(err)});
+                        })
+                        .webBackfillMissingWithdraws(currentUserProfile.uid, pin);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('loading').style.display = 'none';
+                        Swal.fire({icon: 'success', title: 'สำเร็จ! (จำลอง)', text: 'เติมข้อมูลจำลองสำเร็จ 3 รายการ', timer: 2000, showConfirmButton: false});
+                    }, 500);
+                }
+            });
         }
 
         function confirmClearLogs() {
