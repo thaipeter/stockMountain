@@ -12512,24 +12512,39 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             document.getElementById('rcpSelectedCount').innerText = rcpSelectedKeys.size;
         }
 
-        // ดึงข้อมูลใบเบิก 1 รายการ ห่อเป็น Promise (ใช้ของเดิม webGetReceiptData)
-        function rcpFetchOne(log) {
+        // ดึงข้อมูลใบเบิกของหลายรายการในคำขอเดียว (webGetReceiptDataBatch) แทนการยิงทีละรายการ
+        // เพื่อเลี่ยง error "มีการส่งคำขอพร้อมกันมากเกินไป" ตอนเลือกหลายสิบ/ร้อยรายการพร้อมกัน
+        function rcpFetchBatch(logs) {
             return new Promise(function(resolve) {
-                const displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : '';
+                const payloadItems = logs.map(function(log) {
+                    const displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : '';
+                    return { code: log.code, time: log.time, user: displayUser, amount: log.amount, action: log.action };
+                });
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
                     google.script.run
-                        .withSuccessHandler(function(res) { resolve(Object.assign({}, res, { _log: log })); })
-                        .withFailureHandler(function(err) { resolve({ success: false, error: String(err), _log: log }); })
-                        .webGetReceiptData(log.code, log.time, displayUser, log.amount, log.action);
+                        .withSuccessHandler(function(res) {
+                            if (!res || !res.success) {
+                                resolve(logs.map(function(log) { return { success: false, error: (res && res.error) || 'ไม่ทราบสาเหตุ', _log: log }; }));
+                                return;
+                            }
+                            resolve(res.results.map(function(r, i) { return Object.assign({}, r, { _log: logs[i] }); }));
+                        })
+                        .withFailureHandler(function(err) {
+                            resolve(logs.map(function(log) { return { success: false, error: String(err), _log: log }; }));
+                        })
+                        .webGetReceiptDataBatch(payloadItems);
                 } else {
                     // Demo Mode
                     setTimeout(function() {
-                        resolve({
-                            success: true, transId: 'WD' + Math.floor(Math.random()*100000), date: log.time, user: displayUser,
-                            itemCode: log.code, itemName: log.itemName, qty: log.amount, category: '-', remark: log.remark || '-',
-                            signatureUrl: '', machine: '-', dept: '-', type: log.action.includes('ยืม') ? 'ยืม' : 'เบิก', _log: log
-                        });
-                    }, 100);
+                        resolve(logs.map(function(log) {
+                            const displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : '';
+                            return {
+                                success: true, transId: 'WD' + Math.floor(Math.random()*100000), date: log.time, user: displayUser,
+                                itemCode: log.code, itemName: log.itemName, qty: log.amount, category: '-', remark: log.remark || '-',
+                                signatureUrl: '', machine: '-', dept: '-', type: log.action.includes('ยืม') ? 'ยืม' : 'เบิก', _log: log
+                            };
+                        }));
+                    }, 200);
                 }
             });
         }
@@ -12587,7 +12602,18 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }
             document.getElementById('loading').style.display = 'flex';
             try {
-                const results = await Promise.all(logsToFetch.map(rcpFetchOne));
+                // แบ่งเป็นชุดละสูงสุด 200 รายการต่อคำขอ (กันกรณีเลือกเยอะมากจนคำขอเดียวใหญ่/ช้าเกินไป)
+                // แต่ละชุดยิงแบบ "เรียงลำดับ" (ไม่ใช่ Promise.all) เพื่อไม่ให้ชนคิวสเปรดชีตอีก
+                const CHUNK_SIZE = 200;
+                const chunks = [];
+                for (let i = 0; i < logsToFetch.length; i += CHUNK_SIZE) {
+                    chunks.push(logsToFetch.slice(i, i + CHUNK_SIZE));
+                }
+                let results = [];
+                for (const chunk of chunks) {
+                    const chunkResults = await rcpFetchBatch(chunk);
+                    results = results.concat(chunkResults);
+                }
                 document.getElementById('loading').style.display = 'none';
                 const okResults = results.filter(function(r) { return r && r.success; });
                 const failResults = results.filter(function(r) { return !r || !r.success; });
