@@ -8870,20 +8870,98 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (!result.isConfirmed) return;
                 const pin = result.value;
                 if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัส PIN', 'error');
-                document.getElementById('loading').style.display = 'flex';
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run.withSuccessHandler(function(res) {
-                        document.getElementById('loading').style.display = 'none';
-                        if(!res.success) return Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error});
-                        const backupData = JSON.parse(res.data); const wb = XLSX.utils.book_new();
-                        for(const sheetName in backupData) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(backupData[sheetName]), sheetName);
-                        XLSX.writeFile(wb, `Mountain_Inventory_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
-                        if (res.truncated) {
-                            Swal.fire({icon: 'warning', title: 'ดาวน์โหลดสำเร็จ (มีบางชีตถูกตัด)', html: 'บางชีตมีข้อมูลเยอะเกินไป ระบบเอาเฉพาะแถวล่าสุดมาให้:<br><br>' + res.truncatedSheets.join('<br>')});
-                        }
-                    }).webGetBackupData(currentUserProfile.uid, pin);
-                } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองดาวน์โหลดสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
+                _runBackupDownload(pin);
             });
+        }
+
+        // ★ ดึง backup ทีละชีต (แทนดึงทั้งไฟล์ในคำสั่งเดียว) เพื่อไม่ให้ชนโควต้า Apps Script 6 นาที
+        //   ตอนไฟล์มีหลายชีต/ชีตใหญ่ (Logs, AuditLog, Archive_* สะสมนานๆ) — แต่ละชีตแยกเป็นคนละคำสั่ง
+        //   ทำให้แต่ละคำสั่งเสร็จเร็ว และเห็น progress ระหว่างดึงด้วย
+        async function _runBackupDownload(pin) {
+            const loadingEl = document.getElementById('loading');
+            const progressTextEl = loadingEl.querySelector('.loading-pulse-text');
+            const setProgress = function(text) { if (progressTextEl) progressTextEl.textContent = text; };
+            loadingEl.style.display = 'flex';
+            setProgress('กำลังตรวจสอบรายชื่อชีตทั้งหมด...');
+
+            const isDemo = !(typeof google !== 'undefined' && google.script && google.script.run);
+
+            try {
+                let sheetList;
+                if (isDemo) {
+                    await new Promise(r => setTimeout(r, 300));
+                    sheetList = { success: true, sheets: [{ name: 'DemoSheet', rows: 10, cols: 5 }] };
+                } else {
+                    sheetList = await new Promise(function(resolve) {
+                        google.script.run
+                            .withSuccessHandler(resolve)
+                            .withFailureHandler(function(err) { resolve({ success: false, error: String(err) }); })
+                            .webGetBackupSheetList(currentUserProfile.uid, pin);
+                    });
+                }
+
+                if (!sheetList.success) {
+                    loadingEl.style.display = 'none';
+                    setProgress('กำลังโหลดระบบ...');
+                    return Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: sheetList.error });
+                }
+
+                const sheets = sheetList.sheets;
+                const wb = XLSX.utils.book_new();
+                const truncatedSheets = [];
+                const failedSheets = [];
+
+                for (let i = 0; i < sheets.length; i++) {
+                    const s = sheets[i];
+                    setProgress(`กำลังดึงชีต "${s.name}" (${i + 1}/${sheets.length})...`);
+
+                    let sheetRes;
+                    if (isDemo) {
+                        await new Promise(r => setTimeout(r, 150));
+                        sheetRes = { success: true, rows: [['Col1', 'Col2'], ['ตัวอย่าง', '123']], truncated: false };
+                    } else {
+                        sheetRes = await new Promise(function(resolve) {
+                            google.script.run
+                                .withSuccessHandler(resolve)
+                                .withFailureHandler(function(err) { resolve({ success: false, error: String(err) }); })
+                                .webGetBackupSheetData(currentUserProfile.uid, pin, s.name);
+                        });
+                    }
+
+                    if (!sheetRes.success) {
+                        failedSheets.push(`${s.name} (${sheetRes.error || 'ไม่ทราบสาเหตุ'})`);
+                        continue;
+                    }
+                    if (sheetRes.rows && sheetRes.rows.length > 0) {
+                        // ชื่อชีตใน Excel ห้ามเกิน 31 ตัวอักษร และห้ามมีอักขระพิเศษบางตัว
+                        const safeName = String(s.name).replace(/[\\/*?:\[\]]/g, '_').substring(0, 31);
+                        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sheetRes.rows), safeName);
+                    }
+                    if (sheetRes.truncated) {
+                        truncatedSheets.push(`${s.name} (มี ${sheetRes.totalRows} แถว เอามาแค่แถวล่าสุด)`);
+                    }
+                }
+
+                setProgress('กำลังสร้างไฟล์ Excel...');
+                await new Promise(r => setTimeout(r, 50)); // ให้ UI อัปเดตข้อความก่อนเริ่มงานหนัก
+                XLSX.writeFile(wb, `Mountain_Inventory_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+                loadingEl.style.display = 'none';
+                setProgress('กำลังโหลดระบบ...');
+
+                if (truncatedSheets.length > 0 || failedSheets.length > 0) {
+                    let html = '';
+                    if (truncatedSheets.length > 0) html += 'บางชีตมีข้อมูลเยอะเกินไป ระบบเอาเฉพาะแถวล่าสุดมาให้:<br>' + truncatedSheets.join('<br>');
+                    if (failedSheets.length > 0) html += (html ? '<br><br>' : '') + 'ชีตที่ดึงไม่สำเร็จ:<br>' + failedSheets.join('<br>');
+                    Swal.fire({ icon: 'warning', title: 'ดาวน์โหลดสำเร็จ (มีบางส่วนไม่สมบูรณ์)', html: html });
+                } else {
+                    Swal.fire({ icon: 'success', title: 'ดาวน์โหลด Backup สำเร็จ!', timer: 2000, showConfirmButton: false });
+                }
+            } catch (e) {
+                loadingEl.style.display = 'none';
+                setProgress('กำลังโหลดระบบ...');
+                Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(e) });
+            }
         }
 
         function confirmClearLogs() {
