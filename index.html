@@ -6449,7 +6449,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 if (emptyEl) emptyEl.style.display = 'none';
                 damagedItems.slice(0, 4).forEach(item => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td class="text-muted font-monospace py-3">${item.code}</td><td class="fw-bold text-dark py-3">${item.name}</td><td class="text-center py-3"><span class="badge bg-danger rounded-pill fs-6">${formatNumber(item.qty)}</span></td><td class="text-end py-3"><button class="btn btn-sm btn-light text-primary border" onclick="goTo('monthlyOrders'); setTimeout(() => document.querySelector('button[data-bs-target=\\'#tabToolsOrders\\']').click(), 200);"><i class="fas fa-wrench"></i></button></td>`;
+                    tr.innerHTML = `<td class="text-muted font-monospace py-3">${escapeHtml(item.code)}</td><td class="fw-bold text-dark py-3">${escapeHtml(item.name)}</td><td class="text-center py-3"><span class="badge bg-danger rounded-pill fs-6">${formatNumber(item.qty)}</span></td><td class="text-end py-3"><button class="btn btn-sm btn-light text-primary border" onclick="goTo('monthlyOrders'); setTimeout(() => document.querySelector('button[data-bs-target=\\'#tabToolsOrders\\']').click(), 200);"><i class="fas fa-wrench"></i></button></td>`;
                     tbody.appendChild(tr);
                 });
             } catch(e) { console.error(e); }
@@ -6482,11 +6482,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                 if (itBody) {
                     if (lowItems.length === 0) itBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ไม่มีอะไหล่ต้องสั่งเติม</td></tr>';
-                    else lowItems.forEach(i => { const tr = document.createElement('tr'); tr.innerHTML = `<td class="font-monospace">${i.code}</td><td class="fw-bold">${i.name}</td><td class="text-center">${formatNumber(i.stock)}</td><td class="text-center">${formatNumber(i.min)}</td><td>${i.unit||''}</td>`; itBody.appendChild(tr); });
+                    else lowItems.forEach(i => { const tr = document.createElement('tr'); tr.innerHTML = `<td class="font-monospace">${escapeHtml(i.code)}</td><td class="fw-bold">${escapeHtml(i.name)}</td><td class="text-center">${formatNumber(i.stock)}</td><td class="text-center">${formatNumber(i.min)}</td><td>${escapeHtml(i.unit||'')}</td>`; itBody.appendChild(tr); });
                 }
                 if (tlBody) {
                     if (lowTools.length === 0) tlBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ไม่มีเครื่องมือต้องซ่อม/เติม</td></tr>';
-                    else lowTools.forEach(t => { const tr = document.createElement('tr'); tr.innerHTML = `<td class="font-monospace">${t.code}</td><td class="fw-bold">${t.name}</td><td class="text-center">${formatNumber(t.stock)}</td><td class="text-center">${formatNumber(t.min)}</td><td>${t.unit||''}</td>`; tlBody.appendChild(tr); });
+                    else lowTools.forEach(t => { const tr = document.createElement('tr'); tr.innerHTML = `<td class="font-monospace">${escapeHtml(t.code)}</td><td class="fw-bold">${escapeHtml(t.name)}</td><td class="text-center">${formatNumber(t.stock)}</td><td class="text-center">${formatNumber(t.min)}</td><td>${escapeHtml(t.unit||'')}</td>`; tlBody.appendChild(tr); });
                 }
             } catch(e) { console.error(e); }
         }
@@ -6513,7 +6513,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     let item = {};
                     if (toolCodes.has(b.itemCode)) item = (allData.tools||[]).find(x=>x.code===b.itemCode) || {};
                     else item = (allData.items||[]).find(x=>x.code===b.itemCode) || {};
-                    const tr = document.createElement('tr'); tr.innerHTML = `<td class="font-monospace">${b.itemCode}</td><td class="fw-bold">${b.itemName||item.name||'-'}</td><td class="text-center">${formatNumber(b.qty)}</td><td>${b.borrower||b.borrowerName||'-'}</td>`; body.appendChild(tr);
+                    const tr = document.createElement('tr'); tr.innerHTML = `<td class="font-monospace">${escapeHtml(b.itemCode)}</td><td class="fw-bold">${escapeHtml(b.itemName||item.name||'-')}</td><td class="text-center">${formatNumber(b.qty)}</td><td>${escapeHtml(b.borrower||b.borrowerName||'-')}</td>`; body.appendChild(tr);
                 });
             } catch(e) { console.error(e); }
         }
@@ -6582,7 +6582,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 let safeAction = String(log.action || '').replace(/'/g, "\\'");
                 slipBtn = `<button class="btn btn-xs btn-outline-primary py-1 px-2 fw-bold" style="font-size:0.72rem; border-radius: 6px;" onclick="viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>`;
             }
-            tr.innerHTML = `<td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${log.time}</span></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${iconClass} me-1"></i> ${displayAction}</span></td><td class="fw-bold">${log.itemName} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${log.code}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount} <span class="text-muted fw-normal small ms-1">${log.unit||''}</span></td><td class="text-center text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${displayUser}</td><td><small class="text-muted">${remarkText}</small></td><td class="text-center">${slipBtn}</td>`;
+            tr.innerHTML = `<td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${escapeHtml(log.time)}</span></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${iconClass} me-1"></i> ${escapeHtml(displayAction)}</span></td><td class="fw-bold">${escapeHtml(log.itemName)} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${escapeHtml(log.code)}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount} <span class="text-muted fw-normal small ms-1">${escapeHtml(log.unit||'')}</span></td><td class="text-center text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${escapeHtml(displayUser)}</td><td><small class="text-muted">${escapeHtml(remarkText)}</small></td><td class="text-center">${slipBtn}</td>`;
             tbody.appendChild(tr);
         });
     } catch(e) { console.error(e); }
@@ -6595,7 +6595,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 damagedItems.forEach(item => {
                     let tr = document.createElement('tr'); let safeName = String(item.name || '').replace(/'/g, "\\'"); let safeCode = String(item.code || '').replace(/'/g, "\\'"); let safeUnit = String(item.unit || '').replace(/'/g, "\\'");
                     let actionBtn = currentUserProfile.role === 'admin' ? `<button class="btn btn-sm btn-success shadow-sm fw-bold w-100" onclick="openRepairModal('${safeCode}', '${safeName}', '${safeUnit}', ${item.qty})"><i class="fas fa-tools"></i> ซ่อมแล้ว</button>` : `<span class="badge bg-light text-muted border w-100 py-2">เฉพาะ Admin</span>`;
-                    tr.innerHTML = `<td><span class="badge badge-code">${item.code}</span></td><td class="fw-bold text-dark">${item.name}</td><td class="text-center"><span class="badge bg-danger rounded-pill px-3 py-2 fs-6 shadow-sm">${formatNumber(item.qty)}</span></td><td class="text-muted">${item.unit}</td><td class="text-center">${actionBtn}</td>`;
+                    tr.innerHTML = `<td><span class="badge badge-code">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark">${escapeHtml(item.name)}</td><td class="text-center"><span class="badge bg-danger rounded-pill px-3 py-2 fs-6 shadow-sm">${formatNumber(item.qty)}</span></td><td class="text-muted">${escapeHtml(item.unit)}</td><td class="text-center">${actionBtn}</td>`;
                     tbody.appendChild(tr);
                 });
             } catch(e) { console.error(e); }
@@ -6664,7 +6664,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     else {
                         lowItems.forEach(i => { 
                             let tr = document.createElement('tr'); 
-                            tr.innerHTML = `<td><span class="badge badge-code">${i.code}</span></td><td class="fw-bold text-dark">${i.name}</td><td><span class="badge bg-info bg-opacity-10 text-info px-2 py-1">${getItemCategory(i)}</span></td><td class="text-center text-danger fw-bold fs-5">${formatNumber(i.stock)}</td><td class="text-center text-primary fw-bold">${formatNumber(i.min)}</td><td class="text-muted">${i.unit}</td>`; tItems.appendChild(tr); 
+                            tr.innerHTML = `<td><span class="badge badge-code">${escapeHtml(i.code)}</span></td><td class="fw-bold text-dark">${escapeHtml(i.name)}</td><td><span class="badge bg-info bg-opacity-10 text-info px-2 py-1">${escapeHtml(getItemCategory(i))}</span></td><td class="text-center text-danger fw-bold fs-5">${formatNumber(i.stock)}</td><td class="text-center text-primary fw-bold">${formatNumber(i.min)}</td><td class="text-muted">${escapeHtml(i.unit)}</td>`; tItems.appendChild(tr); 
                         });
                     }
                 }
@@ -6698,7 +6698,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             } else {
                                 actionBtns = isCancelled ? `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1">ยกเลิกแล้ว</span>` : `<span class="badge bg-light text-muted border">รอของ</span>`;
                             }
-                            tr.innerHTML = `<td><span class="badge bg-dark px-2 py-1">${p.poCode}</span></td><td class="text-muted small">${p.date}</td><td class="fw-bold text-dark">${p.supplier}</td><td class="fw-medium">${p.itemName}</td><td class="text-end fw-bold text-danger fs-6">${formatNumber(p.qty)}</td><td class="text-center"><span class="badge bg-warning text-dark px-2 py-1">${p.status}</span></td><td><small class="text-muted">${p.remark}</small></td><td class="text-center">${fileBtn}</td><td class="text-center" style="min-width:150px;">${actionBtns}</td>`; 
+                            tr.innerHTML = `<td><span class="badge bg-dark px-2 py-1">${escapeHtml(p.poCode)}</span></td><td class="text-muted small">${escapeHtml(p.date)}</td><td class="fw-bold text-dark">${escapeHtml(p.supplier)}</td><td class="fw-medium">${escapeHtml(p.itemName)}</td><td class="text-end fw-bold text-danger fs-6">${formatNumber(p.qty)}</td><td class="text-center"><span class="badge bg-warning text-dark px-2 py-1">${escapeHtml(p.status)}</span></td><td><small class="text-muted">${escapeHtml(p.remark)}</small></td><td class="text-center">${fileBtn}</td><td class="text-center" style="min-width:150px;">${actionBtns}</td>`; 
                             tPO.appendChild(tr); 
                         });
                     }
@@ -6713,7 +6713,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 borrows.forEach(b => { 
                     let tr = document.createElement('tr'); let safeName = String(b.itemName || '').replace(/'/g, "\\'"); let safeCode = String(b.itemCode || '').replace(/'/g, "\\'"); let safeReqId = String(b.reqId || '').replace(/'/g, "\\'");
                     let actionBtn = currentUserProfile.role === 'admin' ? `<button class="btn btn-sm btn-info text-white fw-bold shadow-sm w-100" onclick="returnBorrowedItem('${safeReqId}', '${safeCode}', '${safeName}', ${b.qty})"><i class="fas fa-undo me-1"></i> กดรับคืน</button>` : `<span class="badge bg-warning text-dark px-3 py-2 w-100">รอส่งคืน</span>`;
-                    tr.innerHTML = `<td><small class="text-muted font-monospace bg-light px-2 py-1 rounded">${b.date}</small></td><td class="fw-bold text-dark">${b.itemName} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${b.itemCode}</span></td><td><span class="badge bg-info bg-opacity-10 text-info px-2 py-1"><i class="fas fa-map-marker-alt me-1"></i> ${b.machine}</span></td><td class="text-center fw-bold text-danger fs-5">${formatNumber(b.qty)}</td><td class="fw-medium text-secondary"><i class="fas fa-user-tag me-1"></i> ${b.borrower}</td><td><small class="text-muted">${b.remark}</small></td><td class="text-center" style="width:120px;">${actionBtn}</td>`; tbody.appendChild(tr); 
+                    tr.innerHTML = `<td><small class="text-muted font-monospace bg-light px-2 py-1 rounded">${escapeHtml(b.date)}</small></td><td class="fw-bold text-dark">${escapeHtml(b.itemName)} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${escapeHtml(b.itemCode)}</span></td><td><span class="badge bg-info bg-opacity-10 text-info px-2 py-1"><i class="fas fa-map-marker-alt me-1"></i> ${escapeHtml(b.machine)}</span></td><td class="text-center fw-bold text-danger fs-5">${formatNumber(b.qty)}</td><td class="fw-medium text-secondary"><i class="fas fa-user-tag me-1"></i> ${escapeHtml(b.borrower)}</td><td><small class="text-muted">${escapeHtml(b.remark)}</small></td><td class="text-center" style="width:120px;">${actionBtn}</td>`; tbody.appendChild(tr); 
                 });
             } catch(e) { console.error(e); }
         }
@@ -6759,7 +6759,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         slipBtn = `<button class="btn btn-xs btn-outline-primary py-1 px-2 fw-bold" style="font-size:0.72rem; border-radius: 6px;" onclick="viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>`;
                     }
 
-                    tr.innerHTML = `<td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${log.time}</span></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${icon} me-1"></i> ${displayAction}</span></td><td class="fw-bold text-dark">${log.itemName} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${log.code}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount}</td><td class="text-center text-muted fw-bold">${log.balance || '-'}</td><td class="text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${displayUser}</td><td><small class="text-muted">${remarkText}</small></td><td class="text-center">${slipBtn}</td>`;
+                    tr.innerHTML = `<td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${escapeHtml(log.time)}</span></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${icon} me-1"></i> ${escapeHtml(displayAction)}</span></td><td class="fw-bold text-dark">${escapeHtml(log.itemName)} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${escapeHtml(log.code)}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount}</td><td class="text-center text-muted fw-bold">${escapeHtml(String(log.balance || '-'))}</td><td class="text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${escapeHtml(displayUser)}</td><td><small class="text-muted">${escapeHtml(remarkText)}</small></td><td class="text-center">${slipBtn}</td>`;
                     tbody.appendChild(tr);
                 });
             } catch(e) { console.error(e); }
@@ -6953,7 +6953,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     const isDamaged = window.damagedCodesSet && window.damagedCodesSet.has(String(item.code));
                     const statusBadge = isDamaged ? `<span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2"><i class="fas fa-heart-broken me-1"></i> ชำรุด/รอซ่อม</span>` : isLow ? `<span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2"><i class="fas fa-exclamation-circle me-1"></i> ควรสั่งเพิ่ม</span>` : `<span class="badge bg-success bg-opacity-10 text-success px-3 py-2"><i class="fas fa-check-circle me-1"></i> สต็อกปกติ</span>`;
                     let actionButtons = ''; let safeName = String(item.name || '').replace(/'/g, "\\'"); let safeCode = String(item.code || '').replace(/'/g, "\\'"); let displayCat = getItemCategory(item); let safeCat = String(displayCat).replace(/'/g, "\\'"); let safeUnit = String(item.unit || '').replace(/'/g, "\\'"); let safeType = String(type || '').replace(/'/g, "\\'"); let safeLocation = String(item.location || '').replace(/'/g, "\\'");
-                    let displayLocation = item.location ? `<span class="badge bg-light text-secondary border"><i class="fas fa-map-marker-alt text-danger me-1"></i> ${item.location}</span>` : '<small class="text-muted">-</small>';
+                    let displayLocation = item.location ? `<span class="badge bg-light text-secondary border"><i class="fas fa-map-marker-alt text-danger me-1"></i> ${escapeHtml(item.location)}</span>` : '<small class="text-muted">-</small>';
                     
                     // รูปภาพอะไหล่
                     let imageCell = '';
@@ -6993,7 +6993,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         let qrBtn = `<button class="btn btn-sm btn-light text-primary border" onclick="showQRCode('${safeCode}', '${safeName}')" title="แสดง QR Code"><i class="fas fa-qrcode"></i></button>`;
                         if (type === 'item') { actionButtons = `<div class="d-flex justify-content-center">${qrBtn}</div>`; } else if (type === 'tool') { actionButtons = `<div class="d-flex justify-content-center gap-1">${qrBtn}<button class="btn btn-sm btn-outline-danger" onclick="openDamageModal('${safeCode}', '${safeName}', '${safeUnit}')"><i class="fas fa-heart-broken"></i> ส่งแจ้งเสีย</button></div>`; }
                     }
-                    tr.innerHTML = `<td><span class="badge badge-code px-2 py-1">${item.code}</span></td><td class="fw-bold text-dark fs-6">${item.name}</td><td><span class="badge badge-cat px-2 py-1">${displayCat}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td><td class="text-center ${isLow?'text-danger':'text-primary'} fw-bold fs-5">${formatNumber(item.stock)}</td><td class="text-muted fw-medium">${item.unit}</td><td class="text-center">${statusBadge}</td><td class="text-center">${actionButtons}</td>`;
+                    tr.innerHTML = `<td><span class="badge badge-code px-2 py-1">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark fs-6">${escapeHtml(item.name)}</td><td><span class="badge badge-cat px-2 py-1">${escapeHtml(displayCat)}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td><td class="text-center ${isLow?'text-danger':'text-primary'} fw-bold fs-5">${formatNumber(item.stock)}</td><td class="text-muted fw-medium">${escapeHtml(item.unit)}</td><td class="text-center">${statusBadge}</td><td class="text-center">${actionButtons}</td>`;
                     tr.style.cursor = 'pointer';
                     tr.title = 'คลิกเพื่อดูประวัติการรับเข้า';
                     tr.addEventListener('click', function(e) {
@@ -7016,7 +7016,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             document.getElementById('rhItemName').textContent = item.name;
             document.getElementById('rhItemCode').textContent = item.code;
             document.getElementById('rhItemCat').textContent = getItemCategory(item) || '-';
-            document.getElementById('rhItemLoc').innerHTML = `<i class="fas fa-map-marker-alt text-danger me-1"></i> ${item.location || '-'}`;
+            document.getElementById('rhItemLoc').innerHTML = `<i class="fas fa-map-marker-alt text-danger me-1"></i> ${escapeHtml(item.location || '-')}`;
             document.getElementById('rhItemStock').textContent = `คงเหลือ: ${formatNumber(item.stock)} ${item.unit || ''}`;
             // รูปสินค้า
             const imgUrl = item.imageUrl ? getProxyImgUrl(item.imageUrl) : null;
@@ -7138,7 +7138,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     else if (u.role === 'qr') { badgeHtml = '<span class="badge bg-warning text-dark px-3 py-2"><i class="fas fa-qrcode me-1"></i> QR Only</span>'; actionHtml = `<div class="btn-group shadow-sm"><button class="btn btn-sm btn-light text-success border" onclick="updateUserRole('${safeUid}', 'staff')" title="อัปเกรดเป็น Staff"><i class="fas fa-arrow-up"></i> Staff</button><button class="btn btn-sm btn-light text-danger border" onclick="updateUserRole('${safeUid}', 'rejected')" title="ระงับสิทธิ์"><i class="fas fa-ban"></i></button></div>`; }
                     else if (u.role === 'pending') { pendingCount++; badgeHtml = '<span class="badge bg-warning text-dark px-3 py-2 shadow-sm">รออนุมัติ</span>'; actionHtml = `<div class="btn-group shadow-sm"><button class="btn btn-sm btn-success fw-bold" onclick="updateUserRole('${safeUid}', 'user')"><i class="fas fa-check"></i> อนุมัติ</button><button class="btn btn-sm btn-danger fw-bold" onclick="updateUserRole('${safeUid}', 'rejected')"><i class="fas fa-times"></i> ปฏิเสธ</button></div>`; tr.classList.add('table-warning'); } 
                     else { badgeHtml = '<span class="badge bg-danger px-3 py-2">ถูกระงับสิทธิ์</span>'; actionHtml = `<button class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="updateUserRole('${safeUid}', 'user')">ปลดแบน</button>`; tr.classList.add('text-muted'); }
-                    tr.innerHTML = `<td><small class="font-monospace text-secondary bg-light px-2 py-1 rounded">${u.userId.substring(0,10)}...</small></td><td class="fw-bold text-dark">${u.name}</td><td class="text-center">${badgeHtml}</td><td class="text-center">${actionHtml}</td>`;
+                    tr.innerHTML = `<td><small class="font-monospace text-secondary bg-light px-2 py-1 rounded">${escapeHtml(u.userId.substring(0,10))}...</small></td><td class="fw-bold text-dark">${escapeHtml(u.name)}</td><td class="text-center">${badgeHtml}</td><td class="text-center">${actionHtml}</td>`;
                     tbody.appendChild(tr);
                 });
                 const badge = document.getElementById('pendingUserCount'); if(badge) { badge.innerText = pendingCount; badge.style.display = pendingCount > 0 ? 'inline-block' : 'none'; }
@@ -12007,7 +12007,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         }).join('');
                     })
                     .withFailureHandler(function(err) { const errMsg = (err && (err.message || err.toString())) || 'ไม่ทราบสาเหตุ'; wrap.innerHTML = '<div class="text-center py-3 text-danger small">โหลดไม่สำเร็จ: ' + errMsg + '</div>'; })
-                    .webGetArchiveList();
+                    .webGetArchiveList(currentUserProfile.uid);
             } else {
                 wrap.innerHTML = '<div class="text-center py-3" style="color:#6b7280"><small>ใช้งานได้บน GAS จริงเท่านั้น</small></div>';
             }
