@@ -3901,9 +3901,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <div id="autoBackupOptions" style="display:none;padding-top:16px;border-top:1px solid rgba(74,222,128,.2)">
                                                 <div class="settings-row mb-3" style="flex-direction:row">
                                                     <div><label class="form-label">เวลา Backup</label><input type="time" class="form-control" id="setAutoBackupTime" value="23:00"></div>
+                                                    <div><label class="form-label">ความถี่</label>
+                                                        <select class="form-select" id="setAutoBackupFreqDays">
+                                                            <option value="1">ทุกวัน</option>
+                                                            <option value="2">ทุก 2 วัน</option>
+                                                            <option value="3">ทุก 3 วัน</option>
+                                                            <option value="7">ทุกสัปดาห์</option>
+                                                        </select>
+                                                    </div>
                                                     <div><label class="form-label">ส่งไปอีเมล</label><input type="email" class="form-control" id="setAutoBackupEmail" placeholder="admin@company.com"></div>
                                                 </div>
-                                                <div style="font-size:.7rem;color:rgba(255,255,255,.4)">ต้องตั้ง Time-driven Trigger ชื่อ <code>autoBackupTask</code> ใน Apps Script 1 ครั้ง (ดูคู่มือ) ระบบจะอ่านเวลาที่ตั้งไว้นี้เองทุกครั้งที่ trigger ทำงาน</div>
+                                                <div style="font-size:.7rem;color:rgba(255,255,255,.4)">ต้องตั้ง Time-driven Trigger ชื่อ <code>autoBackupTask</code> แบบ "ทุกชั่วโมง" (Hour timer) ใน Apps Script 1 ครั้ง (ดูคู่มือ) ระบบจะอ่านเวลา+ความถี่ที่ตั้งไว้นี้เองทุกครั้งที่ trigger ทำงาน — ห้ามเปลี่ยน trigger เป็น "ทุก 12 ชม." หรือ "ทุกวัน" เอง เพราะจะคำนวณเวลาคลาดเคลื่อนได้ ให้ปรับความถี่ backup ที่นี่แทน</div>
                                             </div>
                                         </div>
                                         <div class="settings-box">
@@ -5504,6 +5512,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
             if(document.getElementById('setAutoBackupEnabled')) { document.getElementById('setAutoBackupEnabled').checked = !!s.autoBackupEnabled; toggleAutoBackupOptions(!!s.autoBackupEnabled); }
             if(document.getElementById('setAutoBackupTime')) document.getElementById('setAutoBackupTime').value = s.autoBackupTime || '23:00';
+            if(document.getElementById('setAutoBackupFreqDays')) document.getElementById('setAutoBackupFreqDays').value = String(s.autoBackupFreqDays || 1);
             if(document.getElementById('setAutoBackupEmail')) document.getElementById('setAutoBackupEmail').value = s.autoBackupEmail || '';
 
             // --- Detailed Permissions: Items ---
@@ -5784,6 +5793,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 lowStockPercent: document.getElementById('setLowStockPercent') ? parseInt(document.getElementById('setLowStockPercent').value) : 100,
                 autoBackupEnabled: document.getElementById('setAutoBackupEnabled') ? document.getElementById('setAutoBackupEnabled').checked : false,
                 autoBackupTime: document.getElementById('setAutoBackupTime') ? document.getElementById('setAutoBackupTime').value : '23:00',
+                autoBackupFreqDays: document.getElementById('setAutoBackupFreqDays') ? Number(document.getElementById('setAutoBackupFreqDays').value) : 1,
                 autoBackupEmail: document.getElementById('setAutoBackupEmail') ? document.getElementById('setAutoBackupEmail').value.trim() : '',
                 // Items permissions
                 permAddItemUser: document.getElementById('setPermAddItemUser') ? document.getElementById('setPermAddItemUser').checked : false,
