@@ -8058,6 +8058,89 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             } catch(e) { console.error(e); }
         }
 
+        // ═══════════════════════════════════════════════════
+        // Draft auto-save/restore สำหรับฟอร์ม "ขึ้นทะเบียนรายการใหม่"
+        // ป้องกันข้อมูลหายเมื่อกดออก/ปิด modal โดยไม่ตั้งใจ
+        // ═══════════════════════════════════════════════════
+        const NEW_ITEM_DRAFT_KEY = 'newItemDraft_v1';
+        let _newItemDraftSaveTimer = null;
+
+        function collectNewItemDraft() {
+            const rows = Array.from(document.querySelectorAll('#newItemsTableBody tr')).map(row => ({
+                code: row.querySelector('[data-code-input]')?.value || '',
+                name: row.querySelector('[data-name-input]')?.value || '',
+                location: row.querySelector('[data-location-input]')?.value || '',
+                unit: row.querySelector('[data-unit-input]')?.value || '',
+                min: row.querySelector('[data-min-input]')?.value || '',
+                qty: row.querySelector('[data-qty-input]')?.value || ''
+            }));
+            return {
+                type: document.getElementById('newItemType')?.value || '',
+                cat: document.getElementById('newItemCat')?.value || '',
+                date: document.getElementById('newItemDate')?.value || '',
+                remark: document.getElementById('newItemGlobalRemark')?.value || '',
+                rows: rows
+            };
+        }
+
+        function isNewItemDraftMeaningful(draft) {
+            if (!draft) return false;
+            if ((draft.cat || '').trim() || (draft.remark || '').trim()) return true;
+            return (draft.rows || []).some(r => (r.name || '').trim() || (r.qty || '').toString().trim());
+        }
+
+        function scheduleSaveNewItemDraft() {
+            clearTimeout(_newItemDraftSaveTimer);
+            _newItemDraftSaveTimer = setTimeout(() => {
+                try {
+                    const draft = collectNewItemDraft();
+                    if (isNewItemDraftMeaningful(draft)) {
+                        localStorage.setItem(NEW_ITEM_DRAFT_KEY, JSON.stringify(draft));
+                    }
+                } catch (e) { /* ignore storage errors */ }
+            }, 400);
+        }
+
+        function loadNewItemDraft() {
+            try {
+                const raw = localStorage.getItem(NEW_ITEM_DRAFT_KEY);
+                if (!raw) return null;
+                const draft = JSON.parse(raw);
+                return isNewItemDraftMeaningful(draft) ? draft : null;
+            } catch (e) { return null; }
+        }
+
+        function clearNewItemDraft() {
+            clearTimeout(_newItemDraftSaveTimer);
+            try { localStorage.removeItem(NEW_ITEM_DRAFT_KEY); } catch (e) { /* ignore */ }
+        }
+
+        function applyNewItemDraft(draft) {
+            const ts = document.getElementById('newItemType');
+            const ci = document.getElementById('newItemCat');
+            ts.value = draft.type || ts.value;
+            populateCategoryDatalist('categoryOptions', ts.value);
+            ci.value = draft.cat || '';
+            if (draft.date) document.getElementById('newItemDate').value = draft.date;
+            document.getElementById('newItemGlobalRemark').value = draft.remark || '';
+
+            const tbody = document.getElementById('newItemsTableBody');
+            tbody.innerHTML = '';
+            window.newItemRowCounter = 0;
+            const rows = (draft.rows && draft.rows.length) ? draft.rows : [{}];
+            rows.forEach(r => {
+                addNewItemRow();
+                const row = tbody.lastElementChild;
+                if (!row) return;
+                if (r.code) { const inp = row.querySelector('[data-code-input]'); if (inp) inp.value = r.code; }
+                if (r.name) { const inp = row.querySelector('[data-name-input]'); if (inp) inp.value = r.name; }
+                if (r.location) { const inp = row.querySelector('[data-location-input]'); if (inp) inp.value = r.location; }
+                if (r.unit) { const inp = row.querySelector('[data-unit-input]'); if (inp) inp.value = r.unit; }
+                if (r.min) { const inp = row.querySelector('[data-min-input]'); if (inp) inp.value = r.min; }
+                if (r.qty) { const inp = row.querySelector('[data-qty-input]'); if (inp) inp.value = r.qty; }
+            });
+        }
+
         function openNewItemModal(forcedType) {
             if (currentUserProfile.role !== 'admin') return Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
             document.getElementById('newItemForm').reset();
@@ -8080,8 +8163,34 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             tbody.innerHTML = '';
             window.newItemRowCounter = 0;
             addNewItemRow();
-            
+
+            const draft = loadNewItemDraft();
+            if (draft) {
+                Swal.fire({
+                    icon: 'question',
+                    title: 'พบข้อมูลที่กรอกค้างไว้',
+                    text: 'ต้องการกู้คืนรายการที่กรอกไว้ล่าสุดหรือไม่?',
+                    showCancelButton: true,
+                    confirmButtonText: 'กู้คืนข้อมูล',
+                    cancelButtonText: 'เริ่มใหม่'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        applyNewItemDraft(draft);
+                    } else {
+                        clearNewItemDraft();
+                    }
+                });
+            }
+
             newItemModal.show();
+
+            // ผูก listener สำหรับ auto-save draft ทุกครั้งที่มีการแก้ไขในฟอร์ม (ครั้งเดียวพอ)
+            const form = document.getElementById('newItemForm');
+            if (form && !form._draftAutoSaveBound) {
+                form._draftAutoSaveBound = true;
+                form.addEventListener('input', scheduleSaveNewItemDraft);
+                form.addEventListener('change', scheduleSaveNewItemDraft);
+            }
         }
 
         function addNewItemRow() {
@@ -8335,6 +8444,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     document.getElementById('loading').style.display = 'none';
                     if (!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error});
                     else {
+                        clearNewItemDraft();
                         writeAudit('NEW_ITEM', `ขึ้นทะเบียนใหม่ ${payloads.length} รายการ — ประเภท: ${type} | หมวด: ${category} | รหัส: ${payloads.map(p=>p.code).join(', ')}`);
                         // อัปโหลดรูปที่มี base64 ทุกรายการ (ไม่รอ ทำ background)
                         const imgPayloads = payloads.filter(p => p._imgBase64);
@@ -8362,6 +8472,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             } else {
                 setTimeout(() => {
                     document.getElementById('loading').style.display = 'none';
+                    clearNewItemDraft();
                     writeAudit('NEW_ITEM', `ขึ้นทะเบียนใหม่ ${payloads.length} รายการ — ประเภท: ${type} | หมวด: ${category} (Demo)`);
                     Swal.fire({icon: 'success', title: 'สำเร็จ!', text: `จำลองเพิ่มรายการใหม่ ${payloads.length} รายการสำเร็จ`, timer: 2000, showConfirmButton: false});
                     const itemList = type === 'Tools' ? allData.tools : allData.items;
