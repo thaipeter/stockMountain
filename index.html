@@ -1105,6 +1105,14 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
     /* กล่อง badge/ป้ายสถานะยาว ให้ตัดคำแทนดันเลย์เอาต์ */
     .badge { white-space: normal; }
+
+    /* AI Command Console: ลดความสูง/ระยะห่างให้พอดีจอมือถือ, ให้แชทกับการ์ดสินค้าซ้อนกันแทนบีบข้าง */
+    .ai-chat-glass-card { min-height: 420px !important; }
+    #aiChatMessages { max-height: 45vh !important; padding: 16px !important; }
+    .ai-insight-card-v2 { padding: 10px !important; }
+
+    /* List ประวัติคร่าวๆ ในการ์ดแนวโน้มสต็อก: ตัดคำสั้นลงกันล้นจอแคบ */
+    #stockTrendHistoryList .text-truncate { max-width: 150px !important; }
 }
 </style>
 
@@ -1592,30 +1600,30 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </div>
                             <div class="card-body">
                                 <div class="row g-3">
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label text-muted small fw-bold">ประเภท <span class="text-danger">*</span></label>
                                         <select class="form-select shadow-sm border-theme" id="newItemType" required>
                                             <option value="Items">📦 คลังอะไหล่ (Consumables)</option>
                                             <option value="Tools">🛠️ เครื่องมือ (Tools/Equipments)</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label text-muted small fw-bold">หมวดหมู่ <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control shadow-sm" id="newItemCat" list="categoryOptions" placeholder="เลือก หรือพิมพ์ใหม่" required>
                                         <datalist id="categoryOptions"></datalist>
                                         <datalist id="locationOptions"></datalist>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label text-muted small fw-bold">วันที่ขึ้นทะเบียน <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control shadow-sm" id="newItemDate" required>
                                     </div>
                                 </div>
                                 <div class="row g-3 mt-1">
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <label class="form-label text-muted small fw-bold">ผู้ทำรายการ</label>
                                         <input type="text" class="form-control text-center shadow-sm bg-light text-muted" id="newItemUser" readonly>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <label class="form-label text-muted small fw-bold">หมายเหตุทั่วไป</label>
                                         <input type="text" class="form-control shadow-sm" id="newItemGlobalRemark" placeholder="หมายเหตุสำหรับทุกรายการ">
                                     </div>
@@ -1666,15 +1674,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 <div class="modal-body p-4">
                     <form id="addPOForm">
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">เลขที่ PO <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control font-monospace shadow-sm" id="poCode" placeholder="PO-XXXX" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">วันที่สั่งซื้อ <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control shadow-sm" id="poDate" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">ซัพพลายเออร์ (Supplier) <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control shadow-sm" id="poSupplier" placeholder="ชื่อร้านค้า / บริษัท" required>
                             </div>
@@ -1739,15 +1747,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 <div class="modal-body p-4">
                     <form id="editPOForm">
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">เลขที่ PO</label>
                                 <input type="text" class="form-control font-monospace shadow-sm" id="editPoCode" readonly style="background:#f1f5f9;">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">วันที่สั่งซื้อ</label>
                                 <input type="text" class="form-control shadow-sm" id="editPoDate" readonly style="background:#f1f5f9;">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">ซัพพลายเออร์</label>
                                 <input type="text" class="form-control shadow-sm" id="editPoSupplier" readonly style="background:#f1f5f9;">
                             </div>
@@ -1778,11 +1786,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-muted small fw-bold">หมายเหตุติดตาม</label>
                                 <input type="text" class="form-control shadow-sm" id="editPoRemark" placeholder="เช่น ติดตามวันส่ง เข้ารับ 20/05...">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-muted small fw-bold">สถานะ PO</label>
                                 <select class="form-select shadow-sm" id="editPoStatus">
                                     <option value="รอจัดส่ง">รอจัดส่ง (Pending)</option>
@@ -1858,8 +1866,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
                     </div>
                     <div class="px-4 py-3">
-                        <div style="overflow-y:auto;max-height:340px;border-radius:10px;border:1px solid #2a2f3d">
-                            <table class="table mb-0 align-middle" style="color:#e0e0e0">
+                        <div style="overflow-y:auto;overflow-x:auto;max-height:340px;border-radius:10px;border:1px solid #2a2f3d">
+                            <table class="table mb-0 align-middle" style="color:#e0e0e0;min-width:520px">
                                 <thead style="position:sticky;top:0;background:#232838;z-index:1">
                                     <tr>
                                         <th class="small py-2 px-3" style="color:#6b7280;border:none;width:130px">วันที่ / เวลา</th>
@@ -1912,15 +1920,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <select id="txItemCode" placeholder="🔍 พิมพ์ค้นหารหัส หรือ ชื่อรายการ..." autocomplete="off" required></select>
                         </div>
                         <div class="row g-4 mb-4 border-top border-secondary border-opacity-25 pt-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-white fw-bold">จำนวน <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control form-control-lg text-center fw-bold text-warning shadow-sm" id="txQty" min="1" step="1" placeholder="ระบุจำนวน" required style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-white fw-bold">วันที่ทำรายการ <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control form-control-lg shadow-sm text-center text-white" id="txDate" required style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-white fw-bold">ชื่อผู้ทำรายการ <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control form-control-lg shadow-sm text-white" id="txUser" placeholder="ชื่อพนักงาน" required style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
                             </div>
@@ -1953,21 +1961,21 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <select id="borrowItemCode" placeholder="🔍 พิมพ์ค้นหาชื่อหรือรหัสเครื่องมือ..." autocomplete="off" required></select>
                         </div>
                         <div class="row g-4 mb-4 border-top pt-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-white fw-bold">จำนวนที่ยืม <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control form-control-lg text-center fw-bold text-warning shadow-sm" id="borrowQty" min="1" step="1" placeholder="1" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-white fw-bold">วันที่ยืม <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control form-control-lg shadow-sm text-center" id="borrowDate" required>
                             </div>
                         </div>
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-white fw-bold">ชื่อคนยืม / ผู้รับเหมา <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control shadow-sm" id="borrowerName" placeholder="ระบุชื่อชัดเจน" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-white fw-bold">สถานที่นำไปใช้งาน <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control shadow-sm" id="borrowMachine" placeholder="เช่น ซ่อมปั๊มน้ำชั้น 3" required>
                             </div>
@@ -2148,7 +2156,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <!-- Statistics Cards with Sparklines -->
                     <div class="row g-2 mb-4">
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-6 col-md-3 col-sm-6">
                             <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-primary border-4">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -2161,7 +2169,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-1"></canvas></div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-6 col-md-3 col-sm-6">
                             <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-info border-4">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -2174,7 +2182,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-2"></canvas></div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-6 col-md-3 col-sm-6">
                             <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-danger border-4">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -2187,7 +2195,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-3"></canvas></div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-6 col-md-3 col-sm-6">
                             <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-success border-4">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -2203,7 +2211,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <!-- Main Content -->
                     <div class="row g-4 mt-0 mb-4">
-                        <div class="col-xl-8">
+                        <div class="col-12 col-xl-8">
                             <div class="card h-100" style="border:1px solid rgba(255,255,255,.1)">
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -2213,13 +2221,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                         <div class="fw-bold text-white font-headers" style="font-size: 20px;" id="chartTotalTx">0</div>
                                     </div>
-                                    <div style="height: 240px; width: 100%; overflow-y: auto;" id="stockTrendHistoryList">
+                                    <div style="max-height: 240px; min-height: 60px; width: 100%; overflow-y: auto;" id="stockTrendHistoryList">
                                         <div class="text-center text-muted py-5">กำลังโหลดประวัติ...</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-4">
+                        <div class="col-12 col-xl-4">
                             <div class="card h-100" style="border:1px solid rgba(255,255,255,.1)">
                                 <div class="card-body p-4 d-flex flex-column justify-content-between" style="min-height: 300px;">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -2314,7 +2322,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <!-- Low Stock Details -->
                     <div class="row g-4 mb-4">
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="card shadow-sm">
                                 <div class="card-header bg-light border-bottom">
                                     <h6 class="fw-bold mb-0 text-danger"><i class="fas fa-bell text-danger me-2"></i>อะไหล่ต้องสั่งเติม</h6>
@@ -2329,7 +2337,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="card shadow-sm">
                                 <div class="card-header bg-light border-bottom">
                                     <h6 class="fw-bold mb-0 text-info"><i class="fas fa-toolbox text-info me-2"></i>เครื่องมือต้องซ่อม/เติม</h6>
@@ -2347,7 +2355,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <!-- Category & Borrow Summary -->
                     <div class="row g-4">
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="card shadow-sm">
                                 <div class="card-header bg-light border-bottom">
                                     <h6 class="fw-bold mb-0 text-primary"><i class="fas fa-list text-primary me-2"></i>สรุปตามหมวดหมู่</h6>
@@ -2362,7 +2370,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="card shadow-sm">
                                 <div class="card-header bg-light border-bottom">
                                     <h6 class="fw-bold mb-0 text-warning"><i class="fas fa-hand-holding text-warning me-2"></i>สินค้าที่กำลังยืม</h6>
@@ -2404,7 +2412,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <div class="card mt-4 border-0 shadow-sm" style="background: linear-gradient(145deg, rgba(30,41,59,0.8), rgba(15,23,42,0.95)); border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 16px;">
                         <div class="card-body p-4">
                             <div class="row align-items-center g-3">
-                                <div class="col-lg-5 col-md-6">
+                                <div class="col-12 col-lg-5 col-md-6">
                                     <div class="d-flex align-items-center gap-3">
                                         <div style="width:44px; height:44px; min-width:44px; border-radius:12px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; color:#fbbf24; font-size:1.25rem;">
                                             <i class="fas fa-laptop-code"></i>
@@ -2420,7 +2428,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-4 col-md-6">
+                                <div class="col-12 col-lg-4 col-md-6">
                                     <div class="d-flex align-items-center gap-3">
                                         <div style="width:44px; height:44px; min-width:44px; border-radius:12px; background:rgba(16,185,129,0.15); display:flex; align-items:center; justify-content:center; color:#34d399; font-size:1.25rem;">
                                             <i class="fab fa-google-drive"></i>
@@ -2437,7 +2445,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-3 col-md-12 text-lg-end">
+                                <div class="col-12 col-lg-3 col-md-12 text-lg-end">
                                     <div class="d-inline-flex flex-column align-items-lg-end w-100">
                                         <div class="badge bg-dark bg-opacity-60 border border-secondary px-3 py-2 rounded-pill text-muted fw-medium d-flex align-items-center justify-content-center gap-2 mb-2 w-100 w-lg-auto" style="border-color:rgba(255,255,255,0.12) !important;">
                                             <i class="far fa-clock text-warning"></i> อัปเดตล่าสุด: <span id="dashFooterLastUpdate" class="text-white fw-bold">-</span>
@@ -2661,7 +2669,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         <div class="card bg-light border mb-3 p-3">
                                             <h6 class="fw-bold mb-3"><i class="fas fa-filter text-primary me-2"></i> ตัวกรองข้อมูล</h6>
                                             <div class="row g-3">
-                                                <div class="col-md-3">
+                                                <div class="col-12 col-md-3">
                                                     <label class="form-label small fw-bold">สถานะ PO</label>
                                                     <select class="form-select form-select-sm shadow-sm" id="poHistoryStatusFilter" onchange="filterPOHistory()">
                                                         <option value="all">ทั้งหมด</option>
@@ -2672,19 +2680,19 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                                         <option value="ยกเลิกแล้ว">ยกเลิกแล้ว</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-3">
+                                                <div class="col-12 col-md-3">
                                                     <label class="form-label small fw-bold">ค้นหา Supplier</label>
                                                     <input type="text" class="form-control form-control-sm shadow-sm" id="poHistorySupplierFilter" placeholder="ชื่อบริษัท..." onkeyup="filterPOHistory()">
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-12 col-md-2">
                                                     <label class="form-label small fw-bold">วันที่ เริ่มต้น</label>
                                                     <input type="date" class="form-control form-control-sm shadow-sm" id="poHistoryDateFrom" onchange="filterPOHistory()">
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-12 col-md-2">
                                                     <label class="form-label small fw-bold">วันที่ สิ้นสุด</label>
                                                     <input type="date" class="form-control form-control-sm shadow-sm" id="poHistoryDateTo" onchange="filterPOHistory()">
                                                 </div>
-                                                <div class="col-md-2 d-flex align-items-end">
+                                                <div class="col-12 col-md-2 d-flex align-items-end">
                                                     <button class="btn btn-outline-secondary btn-sm w-100 shadow-sm" onclick="document.getElementById('poHistoryStatusFilter').value='all'; document.getElementById('poHistorySupplierFilter').value=''; document.getElementById('poHistoryDateFrom').value=''; document.getElementById('poHistoryDateTo').value=''; filterPOHistory();">
                                                         <i class="fas fa-redo me-1"></i> ล้างตัวกรอง
                                                     </button>
@@ -2817,7 +2825,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     </div>
                                 </div>
                                 <div class="row g-4">
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <div class="card shadow-sm border p-4 bg-light">
                                             <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-pager me-2"></i> ขนาดสติกเกอร์ & ระยะขอบ</h5>
                                             <div class="row g-3 mb-3">
@@ -2849,7 +2857,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <div class="card shadow-sm border p-4 bg-light">
                                             <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-info-circle me-2"></i> ข้อมูลที่ต้องการแสดงบนป้าย</h5>
                                             <div class="form-check mb-3">
@@ -2889,7 +2897,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <div class="tab-pane fade p-4" id="tabQRStats">
                                 <h3 class="fw-bold mb-4"><i class="fas fa-chart-bar text-success me-2"></i> สถิติการใช้งาน QR Code & Barcode</h3>
                                 <div class="row mb-4">
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-12 col-md-3 mb-3">
                                         <div class="stat-card">
                                             <div class="stat-icon" style="background:linear-gradient(135deg,#4f46e5,#3b82f6);color:#b0b0b0;">
                                                 <i class="fas fa-print"></i>
@@ -2899,7 +2907,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <small class="text-muted">ครั้ง</small>
                                         </div>
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-12 col-md-3 mb-3">
                                         <div class="stat-card">
                                             <div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669);color:#b0b0b0;">
                                                 <i class="fas fa-list"></i>
@@ -2909,7 +2917,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <small class="text-muted">รายการ</small>
                                         </div>
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-12 col-md-3 mb-3">
                                         <div class="stat-card">
                                             <div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#b0b0b0;">
                                                 <i class="fas fa-calendar-today"></i>
@@ -2921,7 +2929,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     </div>
                                 </div>
                                 <div class="row g-4 mb-4">
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <div class="card shadow-sm border p-3" style="background:#161616;">
                                             <h6 class="fw-bold mb-3" style="color:#b0b0b0;"><i class="fas fa-chart-pie text-success me-2"></i> สัดส่วนการพิมพ์แยกตามประเภท</h6>
                                             <div style="height: 220px; position: relative;">
@@ -2929,7 +2937,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <div class="card shadow-sm border p-3" style="background:#161616;">
                                             <h6 class="fw-bold mb-3" style="color:#b0b0b0;"><i class="fas fa-chart-line text-warning me-2"></i> ปริมาณการพิมพ์ในรอบ 7 วันที่ผ่านมา</h6>
                                             <div style="height: 220px; position: relative;">
@@ -3165,7 +3173,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <!-- 🎛️ GLASSMORPHISM PRO WORKSPACE (SPLIT 7:5) -->
                     <div class="row g-4">
                         <!-- LEFT PANEL: AI CHAT CONSOLE -->
-                        <div class="col-lg-7">
+                        <div class="col-12 col-lg-7">
                             <div class="ai-chat-glass-card h-100 d-flex flex-column" style="min-height:580px">
                                 <!-- Console Header -->
                                 <div class="p-3 px-4 d-flex align-items-center justify-content-between" style="border-bottom:1px solid rgba(139,92,246,.2);background:rgba(12,15,26,.7)">
@@ -3197,7 +3205,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
 
                         <!-- RIGHT PANEL: LIVE VISUAL EVIDENCE & ITEM CARDS -->
-                        <div class="col-lg-5">
+                        <div class="col-12 col-lg-5">
                             <div class="ai-chat-glass-card h-100 d-flex flex-column">
                                 <div class="p-3 px-4 d-flex align-items-center justify-content-between" style="border-bottom:1px solid rgba(139,92,246,.2);background:rgba(12,15,26,.7)">
                                     <div class="d-flex align-items-center gap-2">
@@ -3291,7 +3299,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                     <div id="rcpTabSettingsPane" style="display:none">
                     <div class="row g-3">
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="table-container p-4 bg-white h-100">
                                 <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-sliders me-1 text-warning"></i> ตั้งค่ารูปแบบใบเบิก</h6>
                                 <div class="mb-3">
@@ -3344,7 +3352,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="table-container p-3 bg-white h-100">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-eye me-1 text-warning"></i> ตัวอย่างก่อนพิมพ์</h6>
@@ -3375,7 +3383,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                     <!-- ปิดเดือน -->
                     <div class="row g-4 mb-4">
-                        <div class="col-lg-5">
+                        <div class="col-12 col-lg-5">
                             <div class="card border-0 shadow-sm" style="background:#1a2230;border-radius:16px">
                                 <div class="card-body p-4">
                                     <h5 class="fw-bold mb-1" style="color:#fff"><i class="fas fa-box-archive me-2" style="color:#22c55e"></i> ปิดเดือน</h5>
@@ -3414,7 +3422,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
 
                         <!-- รายการ Archive -->
-                        <div class="col-lg-7">
+                        <div class="col-12 col-lg-7">
                             <div class="card border-0 shadow-sm" style="background:#1a2230;border-radius:16px">
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -3455,7 +3463,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                     <div id="stTabKeyPane">
                         <div class="row g-4 mb-4">
-                        <div class="col-lg-8">
+                        <div class="col-12 col-lg-8">
                             <div class="card border-0 shadow-sm" style="background:#1a2230;border-radius:16px">
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -3469,8 +3477,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                     </div>
                                     <p class="small mb-3" style="color:rgba(255,255,255,.4)">คีย์ยอดแทนพนักงานที่นับจากกระดาษได้ที่นี่ — ถ้ายอดไม่ตรงกับระบบจะปรับสต็อกให้อัตโนมัติทันที</p>
-                                    <div style="max-height:520px;overflow-y:auto">
-                                        <table class="table table-sm align-middle mb-0" style="color:#e0e0e0">
+                                    <div style="max-height:520px;overflow-y:auto;overflow-x:auto">
+                                        <table class="table table-sm align-middle mb-0" style="color:#e0e0e0;min-width:480px">
                                             <thead style="position:sticky;top:0;background:#1a2230;z-index:1">
                                                 <tr style="color:rgba(255,255,255,.4);font-size:.72rem;text-transform:uppercase">
                                                     <th>สินค้า</th><th class="text-center">ยอดระบบ</th><th class="text-center">ยอดนับ</th><th class="text-center">ส่วนต่าง</th><th class="text-center">คีย์ยอด</th>
@@ -3489,8 +3497,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <div class="card border-0 shadow-sm mb-4" style="background:#1a2230;border-radius:16px;padding:20px">
                             <h5 class="fw-bold mb-2" style="color:#fff"><i class="fas fa-exclamation-triangle text-warning me-2"></i> รายการส่วนต่าง / ตกเบิก</h5>
                             <p class="small mb-3" style="color:rgba(255,255,255,.6)">รายการที่ยอดนับไม่ตรงกับระบบ — สต็อกถูกปรับให้ตรงแล้วอัตโนมัติ แต่ยังไม่รู้สาเหตุ กด "เบิกย้อนหลัง" เพื่อบันทึกสาเหตุพร้อมสร้างรายการเบิกจริงเพื่อการตรวจสอบย้อนหลัง</p>
-                            <div style="max-height:560px;overflow-y:auto">
-                                <table class="table table-sm align-middle mb-0" style="color:#e0e0e0">
+                            <div style="max-height:560px;overflow-y:auto;overflow-x:auto">
+                                <table class="table table-sm align-middle mb-0" style="color:#e0e0e0;min-width:560px">
                                     <thead style="position:sticky;top:0;background:#1a2230;z-index:1">
                                         <tr style="color:rgba(255,255,255,.6);font-size:.8rem;text-transform:uppercase">
                                             <th>สินค้า</th><th class="text-center">ยอดระบบ</th><th class="text-center">ยอดนับ</th><th class="text-center">ส่วนต่าง</th><th class="text-center">สถานะ</th><th class="text-center">จัดการ</th>
@@ -6374,6 +6382,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const historyListEl = document.getElementById('stockTrendHistoryList');
                 if (historyListEl) {
                     const recentTx = (data.history || [])
+                        .filter(h => h.time && dayBuckets.some(d => h.time.includes(d)))
                         .filter(h => isAction(h, 'รับเข้า') || String(h.action).trim().toLowerCase() === 'new item' || isAction(h, 'เบิก') || String(h.action).trim().toLowerCase().startsWith('เบิก'))
                         .slice(0, 12);
                     if (recentTx.length === 0) {
@@ -11178,7 +11187,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 // ต้องแปลงผ่าน getProxyImgUrl() ให้เป็นลิงก์ thumbnail ก่อน เหมือนจุดอื่นๆ ในไฟล์นี้ที่แสดงรูปสินค้าได้ปกติ
                 const proxiedImg = typeof getProxyImgUrl === 'function' ? getProxyImgUrl(r.imageUrl) : r.imageUrl;
                 return `
-                <div class="col-md-6 col-lg-4" data-reqid="${r.reqId}">
+                <div class="col-12 col-md-6 col-lg-4" data-reqid="${r.reqId}">
                     <div class="p-3 rounded-3 h-100 pending-card">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div class="form-check">
@@ -11259,7 +11268,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const uid  = String(r.userId || '').replace(/'/g, "\\'");
                 const name = String(r.name   || '').replace(/'/g, "\\'");
                 return `
-                <div class="col-md-6 col-lg-4">
+                <div class="col-12 col-md-6 col-lg-4">
                     <div class="p-3 rounded-3 h-100 pending-card">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <span class="badge" style="background:#e8a020;color:#000;font-size:.7rem">👤 สมัครใหม่</span>
@@ -11588,7 +11597,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         + (lines > 1 ? '<span style="font-size:.65rem;color:rgba(255,255,255,.2)">'+lines+' บรรทัด</span>' : '')
                     + '</div>'
                 + '</div>';
-                return '<div class="col-sm-6 col-lg-4 col-xl-3">' + cardInner + '</div>';
+                return '<div class="col-6 col-sm-6 col-lg-4 col-xl-3">' + cardInner + '</div>';
             }).join('');
         }
 
