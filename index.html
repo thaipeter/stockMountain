@@ -2213,7 +2213,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                         <div class="fw-bold text-white font-headers" style="font-size: 20px;" id="chartTotalTx">0</div>
                                     </div>
-                                    <div style="height: 240px; width: 100%;"><canvas id="inventoryValueChart"></canvas></div>
+                                    <div style="height: 240px; width: 100%; overflow-y: auto;" id="stockTrendHistoryList">
+                                        <div class="text-center text-muted py-5">กำลังโหลดประวัติ...</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3901,17 +3903,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <div id="autoBackupOptions" style="display:none;padding-top:16px;border-top:1px solid rgba(74,222,128,.2)">
                                                 <div class="settings-row mb-3" style="flex-direction:row">
                                                     <div><label class="form-label">เวลา Backup</label><input type="time" class="form-control" id="setAutoBackupTime" value="23:00"></div>
-                                                    <div><label class="form-label">ความถี่</label>
-                                                        <select class="form-select" id="setAutoBackupFreqDays">
-                                                            <option value="1">ทุกวัน</option>
-                                                            <option value="2">ทุก 2 วัน</option>
-                                                            <option value="3">ทุก 3 วัน</option>
-                                                            <option value="7">ทุกสัปดาห์</option>
-                                                        </select>
-                                                    </div>
                                                     <div><label class="form-label">ส่งไปอีเมล</label><input type="email" class="form-control" id="setAutoBackupEmail" placeholder="admin@company.com"></div>
                                                 </div>
-                                                <div style="font-size:.7rem;color:rgba(255,255,255,.4)">ต้องตั้ง Time-driven Trigger ชื่อ <code>autoBackupTask</code> แบบ "ทุกชั่วโมง" (Hour timer) ใน Apps Script 1 ครั้ง (ดูคู่มือ) ระบบจะอ่านเวลา+ความถี่ที่ตั้งไว้นี้เองทุกครั้งที่ trigger ทำงาน — ห้ามเปลี่ยน trigger เป็น "ทุก 12 ชม." หรือ "ทุกวัน" เอง เพราะจะคำนวณเวลาคลาดเคลื่อนได้ ให้ปรับความถี่ backup ที่นี่แทน</div>
+                                                <div style="font-size:.7rem;color:rgba(255,255,255,.4)">ต้องตั้ง Time-driven Trigger ชื่อ <code>autoBackupTask</code> ใน Apps Script 1 ครั้ง (ดูคู่มือ) ระบบจะอ่านเวลาที่ตั้งไว้นี้เองทุกครั้งที่ trigger ทำงาน</div>
                                             </div>
                                         </div>
                                         <div class="settings-box">
@@ -5512,7 +5506,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
             if(document.getElementById('setAutoBackupEnabled')) { document.getElementById('setAutoBackupEnabled').checked = !!s.autoBackupEnabled; toggleAutoBackupOptions(!!s.autoBackupEnabled); }
             if(document.getElementById('setAutoBackupTime')) document.getElementById('setAutoBackupTime').value = s.autoBackupTime || '23:00';
-            if(document.getElementById('setAutoBackupFreqDays')) document.getElementById('setAutoBackupFreqDays').value = String(s.autoBackupFreqDays || 1);
             if(document.getElementById('setAutoBackupEmail')) document.getElementById('setAutoBackupEmail').value = s.autoBackupEmail || '';
 
             // --- Detailed Permissions: Items ---
@@ -5793,7 +5786,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 lowStockPercent: document.getElementById('setLowStockPercent') ? parseInt(document.getElementById('setLowStockPercent').value) : 100,
                 autoBackupEnabled: document.getElementById('setAutoBackupEnabled') ? document.getElementById('setAutoBackupEnabled').checked : false,
                 autoBackupTime: document.getElementById('setAutoBackupTime') ? document.getElementById('setAutoBackupTime').value : '23:00',
-                autoBackupFreqDays: document.getElementById('setAutoBackupFreqDays') ? Number(document.getElementById('setAutoBackupFreqDays').value) : 1,
                 autoBackupEmail: document.getElementById('setAutoBackupEmail') ? document.getElementById('setAutoBackupEmail').value.trim() : '',
                 // Items permissions
                 permAddItemUser: document.getElementById('setPermAddItemUser') ? document.getElementById('setPermAddItemUser').checked : false,
@@ -6378,38 +6370,33 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const totalTxWeek = receivedByDay.reduce((a,b) => a+b, 0) + dispatchedByDay.reduce((a,b) => a+b, 0);
                 if (elTotalTx) elTotalTx.textContent = formatNumber(totalTxWeek) + ' รายการ';
 
-                // 5. Draw Main Line Chart using real transaction counts (รับเข้า + เบิก) per day, not fabricated currency values
-                const ctx = document.getElementById('inventoryValueChart');
-                if (ctx) {
-                    if (window.inventoryValueChartObj) window.inventoryValueChartObj.destroy();
-                    window.inventoryValueChartObj = new Chart(ctx.getContext('2d'), {
-                        type: 'line',
-                        data: {
-                            labels: dayBuckets,
-                            datasets: [{
-                                label: 'จำนวนรายการเคลื่อนไหว',
-                                data: dayBuckets.map((_, i) => receivedByDay[i] + dispatchedByDay[i]),
-                                borderColor: '#e8a020',
-                                backgroundColor: 'rgba(232, 160, 32, 0.05)',
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.4,
-                                pointBackgroundColor: '#e8a020',
-                                pointBorderColor: '#fff',
-                                pointBorderWidth: 2,
-                                pointRadius: 4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Sarabun' } } },
-                                y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Sarabun' }, precision: 0 } }
-                            }
-                        }
-                    });
+                // 5. แสดงประวัติการเคลื่อนไหวแบบคร่าวๆ (list) แทนกราฟเส้น — ใช้ข้อมูล 7 วันล่าสุดชุดเดียวกับด้านบน
+                const historyListEl = document.getElementById('stockTrendHistoryList');
+                if (historyListEl) {
+                    const recentTx = (data.history || [])
+                        .filter(h => isAction(h, 'รับเข้า') || String(h.action).trim().toLowerCase() === 'new item' || isAction(h, 'เบิก') || String(h.action).trim().toLowerCase().startsWith('เบิก'))
+                        .slice(0, 12);
+                    if (recentTx.length === 0) {
+                        historyListEl.innerHTML = '<div class="text-center text-muted py-5">ไม่มีการเคลื่อนไหวในช่วงนี้</div>';
+                    } else {
+                        historyListEl.innerHTML = recentTx.map(h => {
+                            const actLower = String(h.action).trim().toLowerCase();
+                            const isOut = actLower.startsWith('เบิก');
+                            const icon = isOut ? 'fa-arrow-down text-danger' : 'fa-arrow-up text-success';
+                            const displayAction = actLower === 'new item' ? 'รับเข้า (ใหม่)' : h.action;
+                            const displayUser = h.user ? String(h.user).replace(/\[.*?\]/g, '').trim() : '';
+                            return `<div class="d-flex align-items-center justify-content-between py-2" style="border-bottom:1px solid rgba(255,255,255,.05)">
+                                <div class="d-flex align-items-center gap-2" style="min-width:0;">
+                                    <i class="fas ${icon}"></i>
+                                    <div style="min-width:0;">
+                                        <div class="text-white small fw-bold text-truncate" style="max-width:220px;">${displayAction} — ${h.itemName || h.item || ''}</div>
+                                        <div class="text-muted" style="font-size:11px;">${h.time || ''}${displayUser ? ' · ' + displayUser : ''}</div>
+                                    </div>
+                                </div>
+                                <div class="fw-bold ${isOut ? 'text-danger' : 'text-success'} small">${isOut ? '-' : '+'}${h.amount}</div>
+                            </div>`;
+                        }).join('');
+                    }
                 }
 
                 // 4. Populate Unified Inventory Table (ค้นหาได้จากข้อมูลทั้งหมด ไม่ใช่แค่ตัวอย่าง)
