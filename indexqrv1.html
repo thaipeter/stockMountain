@@ -3287,6 +3287,29 @@ function doReturn(reqId, name, qty) {
 /* ══ QR SCANNER ══ */
 function openScanner(target) {
   scanTarget = target;
+
+  // ตรวจสอบก่อนเปิดกล้องว่าอุปกรณ์/เบราว์เซอร์รองรับไหม กันเคส error เงียบๆ ที่ผู้ใช้งงว่า "เปิดกล้องไม่ได้"
+  // 1) ต้องเป็น HTTPS หรือ localhost เท่านั้น เบราว์เซอร์ถึงจะอนุญาตให้ขอกล้องได้
+  if (!window.isSecureContext) {
+    Swal.fire({ icon: 'error', title: 'เปิดกล้องไม่ได้', text: 'ต้องเปิดผ่านลิงก์ https:// เท่านั้น กล้องจะใช้งานไม่ได้ถ้าเปิดผ่าน http://' });
+    return;
+  }
+  // 2) เบราว์เซอร์/เว็บวิวบางตัว (โดยเฉพาะเบราว์เซอร์ในแอป LINE รุ่นเก่า) ไม่รองรับ mediaDevices.getUserMedia เลย
+  const isLineInApp = /\bLine\//i.test(navigator.userAgent);
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    if (isLineInApp) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'เบราว์เซอร์ในแอป LINE ไม่รองรับกล้อง',
+        html: 'กรุณาเปิดหน้านี้ผ่าน Safari หรือ Chrome แทน:<br>แตะปุ่ม <b>⋯</b> มุมขวาบนของ LINE แล้วเลือก <b>"เปิดในเบราว์เซอร์"</b>',
+        confirmButtonText: 'เข้าใจแล้ว'
+      });
+    } else {
+      Swal.fire({ icon: 'error', title: 'เปิดกล้องไม่ได้', text: 'เบราว์เซอร์นี้ไม่รองรับการใช้กล้อง กรุณาลองเปิดผ่าน Chrome หรือ Safari เวอร์ชันล่าสุด' });
+    }
+    return;
+  }
+
   document.getElementById('scannerOverlay').classList.add('open');
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
     .then(s => {
@@ -3303,7 +3326,19 @@ function openScanner(target) {
         if (qr) { closeScanner(); handleQR(qr.data.replace(/^SCAN:/i, '').trim()); }
       }, 200);
     })
-    .catch(() => { closeScanner(); showToast('ไม่สามารถเปิดกล้องได้', 'error'); });
+    .catch(err => {
+      closeScanner();
+      // แจกแจงสาเหตุที่พบบ่อย แทนข้อความรวมๆ เดียว ให้ผู้ใช้แก้เองได้ทันที
+      if (err && err.name === 'NotAllowedError') {
+        Swal.fire({ icon: 'error', title: 'ไม่ได้รับอนุญาตให้ใช้กล้อง', text: 'กรุณาไปที่ตั้งค่าเบราว์เซอร์ > สิทธิ์การเข้าถึง > อนุญาตกล้องสำหรับเว็บไซต์นี้ แล้วลองใหม่' });
+      } else if (err && err.name === 'NotFoundError') {
+        Swal.fire({ icon: 'error', title: 'ไม่พบกล้อง', text: 'อุปกรณ์นี้ไม่มีกล้อง หรือกล้องถูกใช้งานโดยแอปอื่นอยู่' });
+      } else if (isLineInApp) {
+        Swal.fire({ icon: 'warning', title: 'เปิดกล้องไม่ได้ในแอป LINE', html: 'กรุณาเปิดหน้านี้ผ่าน Safari หรือ Chrome แทน:<br>แตะปุ่ม <b>⋯</b> มุมขวาบนของ LINE แล้วเลือก <b>"เปิดในเบราว์เซอร์"</b>' });
+      } else {
+        showToast('ไม่สามารถเปิดกล้องได้', 'error');
+      }
+    });
 }
 
 function closeScanner() {
