@@ -8079,7 +8079,12 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (type === 'tools' || type === 'tool') list = allData.tools;
                 else if (type === 'items' || type === 'item') list = allData.items;
                 else list = allData.items.concat(allData.tools);
-                let uniqueCats = getCombinedCategories(list);
+                // ใช้เฉพาะหมวดหมู่ที่มีอยู่จริงในข้อมูลของประเภทนั้นๆ เท่านั้น
+                // (ไม่ใช้ allData.settings.categories ตรงนี้ เพราะเป็น master list รวม prefix ของทั้งอะไหล่+เครื่องมือปนกัน
+                //  ถ้าใช้จะทำให้ dropdown โชว์หมวดหมู่ของอีกประเภทหนึ่งปนมาด้วย)
+                const uniqueCats = [...new Set((list || []).map(item => getItemCategory(item)))]
+                    .filter(c => c && c !== 'undefined' && String(c).trim() !== '')
+                    .sort();
                 uniqueCats.forEach(cat => { let opt = document.createElement('option'); opt.value = cat; datalist.appendChild(opt); });
             } catch(e) { console.error(e); }
         }
