@@ -1438,6 +1438,22 @@ let borrowCart   = [];
 let receiveCart  = [];
 let pinBuffer    = '';
 let failedAttemptsMap = {};
+
+// ═══════════════════════════════════════════════
+// ตัวช่วยค้นหากลาง (logic เดียวกับที่ใช้ในหน้า Dashboard index3.html)
+// ตัดช่องว่าง/ขีดกลาง/ขีดล่างออกก่อนเทียบ + แยกคำค้นหาหลายคำได้ ไม่ต้องเรียงติดกัน
+// ═══════════════════════════════════════════════
+function _normalizeSearchText(s) {
+  return String(s || '').toLowerCase().replace(/[\s\-_]+/g, '');
+}
+function _matchesSearchQuery(haystackRaw, queryRaw) {
+  const query = String(queryRaw || '').trim();
+  if (!query) return true;
+  const tokens = query.split(/\s+/).map(_normalizeSearchText).filter(Boolean);
+  if (tokens.length === 0) return true;
+  const haystack = _normalizeSearchText(haystackRaw);
+  return tokens.every(t => haystack.includes(t));
+}
 let scannerStream = null, scanInterval = null, scanTarget = 'withdraw';
 const PIN_LEN = 4;
 
@@ -1586,9 +1602,9 @@ function populateUsers(users) {
 
 function renderUserDropdown(query) {
   const dd = document.getElementById('loginDropdown');
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   const filtered = q
-    ? _allUsers.filter(u => u.name.toLowerCase().includes(q))
+    ? _allUsers.filter(u => _matchesSearchQuery(u.name, q))
     : _allUsers;
   if (!filtered.length) {
     dd.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">ไม่พบชื่อที่ค้นหา</div>';
@@ -2386,8 +2402,8 @@ function stLoad() {
 
 function stRender(kw) {
   const el = document.getElementById('stList');
-  kw = (kw || '').toLowerCase();
-  const items = stState.items.filter(i => !kw || i.name.toLowerCase().includes(kw) || i.code.toLowerCase().includes(kw));
+  kw = (kw || '').trim();
+  const items = stState.items.filter(i => !kw || _matchesSearchQuery(`${i.name} ${i.code}`, kw));
   if (!items.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><p>ไม่พบสินค้า</p></div>'; return; }
   // ที่ยังไม่นับขึ้นก่อน ตามด้วยที่นับแล้ว
   items.sort((a, b) => (a.counted === b.counted) ? 0 : (a.counted ? 1 : -1));
@@ -2492,7 +2508,7 @@ function renderList(mode, kw, cat) {
   const cart = mode === 'withdraw' ? withdrawCart : borrowCart;
   let list   = mode === 'borrow' ? (allData.tools || []) : (allData.items || []);
   if (cat && cat !== '__all__') list = list.filter(i => (i.category || 'อื่นๆ') === cat);
-  if (kw) list = list.filter(i => i.name.toLowerCase().includes(kw) || i.code.toLowerCase().includes(kw));
+  if (kw) list = list.filter(i => _matchesSearchQuery(`${i.name} ${i.code}`, kw));
   if (!list.length) {
     el.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><p>' + (kw ? 'ไม่พบ "' + esc(kw) + '"' : 'ไม่มีสินค้าในหมวดนี้') + '</p></div>';
     return;
@@ -2684,9 +2700,7 @@ function openReceivePicker() {
 }
 
 function renderReceivePicker(kw) {
-  const items = getAllItems().filter(i =>
-    !kw || i.name.toLowerCase().includes(kw.toLowerCase()) || i.code.toLowerCase().includes(kw.toLowerCase())
-  );
+  const items = getAllItems().filter(i => _matchesSearchQuery(`${i.name} ${i.code}`, kw));
   const el = document.getElementById('receivePickerList');
   if (!items.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><p>ไม่พบสินค้า</p></div>'; return; }
   el.innerHTML = items.map(function(item) {
