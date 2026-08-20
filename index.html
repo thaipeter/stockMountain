@@ -6202,14 +6202,34 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         let lastGlobalSearchValue = '';
         let lastDashboardData = null; // เก็บข้อมูลล่าสุดไว้ เพื่อให้ค้นหาได้จากข้อมูลทั้งหมด ไม่ใช่แค่ตัวอย่าง 8 แถวที่โชว์
 
+        // ═══════════════════════════════════════════════
+        // ตัวช่วยค้นหากลาง ใช้ร่วมกันทั้ง Dashboard และตารางคลังอะไหล่/เครื่องมือ
+        // เพื่อให้ผลลัพธ์การค้นหาสอดคล้องกันไม่ว่าค้นจากหน้าไหน
+        // ═══════════════════════════════════════════════
+        // ตัดช่องว่าง/ขีดกลาง/ขีดล่างออกทั้งหมดก่อนเทียบ กัน "A-01" ไม่เจอเวลาพิมพ์ "a01" หรือ "A 01"
+        function _normalizeSearchText(s) {
+            return String(s || '').toLowerCase().replace(/[\s\-_]+/g, '');
+        }
+        // แยกคำค้นหาเป็นหลายคำ (คั่นด้วยช่องว่าง) แล้วเช็คว่า "ทุกคำ" ต้องเจอในข้อความเป้าหมาย
+        // ไม่จำเป็นต้องเรียงติดกันเหมือนเดิม เช่น ค้นหา "6หุน น็อต" จะเจอแม้ชื่อในระบบเก็บเป็น "น็อต 6 หุน"
+        function _matchesSearchQuery(haystackRaw, queryRaw) {
+            const query = String(queryRaw || '').trim();
+            if (!query) return true;
+            const tokens = query.split(/\s+/).map(_normalizeSearchText).filter(Boolean);
+            if (tokens.length === 0) return true;
+            const haystack = _normalizeSearchText(haystackRaw);
+            return tokens.every(t => haystack.includes(t));
+        }
+
         function buildDashUnifiedRows(data, query) {
-            const q = (query || '').toLowerCase().trim();
+            const q = (query || '').trim();
             const itemsList = (data.items || []).map(x => ({...x, type: 'อะไหล่'}));
             const toolsList = (data.tools || []).map(x => ({...x, type: 'เครื่องมือ'}));
             let combined = [...itemsList, ...toolsList];
             if (q) {
                 // มีคำค้นหา: ค้นจากข้อมูลทั้งหมดในคลัง ไม่ใช่แค่ตัวอย่าง 4+4 รายการแรก
-                combined = combined.filter(x => `${x.code || ''} ${x.name || ''} ${x.location || ''}`.toLowerCase().includes(q));
+                // ค้นจาก รหัส + ชื่อ + ตำแหน่ง + หมวดหมู่ แบบตัดช่องว่าง/ขีด และแยกคำค้นหาได้หลายคำ
+                combined = combined.filter(x => _matchesSearchQuery(`${x.code || ''} ${x.name || ''} ${x.location || ''} ${getItemCategory(x)}`, q));
                 return { rows: combined.slice(0, 50), truncated: combined.length > 50, total: combined.length, searching: true };
             }
             // ไม่มีคำค้นหา: โชว์ตัวอย่าง 4 อะไหล่ + 4 เครื่องมือ เหมือนเดิม
@@ -6948,12 +6968,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         function filterTable(tableId) {
             try {
                 const isItems = (tableId === 'itemsTable');
-                const searchInput = document.querySelector(`#${isItems ? 'items' : 'tools'} .search-box input`); const text = searchInput ? searchInput.value.toLowerCase().trim().replace(/\s+/g, '') : ''; 
+                const searchInput = document.querySelector(`#${isItems ? 'items' : 'tools'} .search-box input`); const text = searchInput ? searchInput.value.trim() : '';
                 const categorySelect = document.getElementById(isItems ? 'itemCategoryFilter' : 'toolCategoryFilter'); const category = categorySelect ? categorySelect.value.toLowerCase().trim() : '';
                 const baseData = isItems ? allData.items : allData.tools; const type = isItems ? 'item' : 'tool';
                 const filteredData = baseData.filter(item => {
-                    const txt = (String(item.code) + " " + String(item.name)).toLowerCase().replace(/\s+/g, ''); const catText = String(getItemCategory(item)).toLowerCase().trim();
-                    if (text !== '' && !txt.includes(text)) return false; if (category !== '' && !catText.includes(category)) return false; return true;
+                    const catText = String(getItemCategory(item)).toLowerCase().trim();
+                    if (text !== '' && !_matchesSearchQuery(`${item.code || ''} ${item.name || ''}`, text)) return false; if (category !== '' && !catText.includes(category)) return false; return true;
                 });
                 renderTable(tableId, filteredData, type);
             } catch(e) { console.error(e); }
