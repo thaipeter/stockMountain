@@ -1841,7 +1841,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 <div class="modal-body p-0" style="background:#181c24">
                     <div class="px-4 pb-3 d-flex gap-4 align-items-start" style="border-bottom:1px solid #2a2f3d">
                         <!-- รูปสินค้า -->
-                        <div id="rhItemImgWrap" style="flex-shrink:0;width:90px;height:90px;border-radius:12px;overflow:hidden;background:#232838;border:1px solid #2a2f3d;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="if(document.getElementById('rhItemImgEl').src) viewItemImage(document.getElementById('rhItemImgEl').src, document.getElementById('rhItemName').textContent)">
+                        <div id="rhItemImgWrap" style="flex-shrink:0;width:90px;height:90px;border-radius:12px;overflow:hidden;background:transparent;border:1px solid #2a2f3d;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="if(document.getElementById('rhItemImgEl').src) viewItemImage(document.getElementById('rhItemImgEl').src, document.getElementById('rhItemName').textContent)">
                             <img id="rhItemImgEl" style="width:100%;height:100%;object-fit:cover;display:none">
                             <span id="rhItemImgPlaceholder" style="font-size:32px">📦</span>
                         </div>
@@ -1849,15 +1849,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <div class="flex-grow-1 pt-1">
                             <h5 class="fw-bold mb-2" id="rhItemName" style="color:#fff">-</h5>
                             <div class="d-flex gap-2 flex-wrap">
-                                <span class="badge font-monospace" id="rhItemCode" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d">-</span>
+                                <span class="badge font-monospace" id="rhItemCode" style="background:transparent;color:#a0aec0;border:1px solid #2a2f3d">-</span>
                                 <span class="badge" id="rhItemCat" style="background:#1e3a2f;color:#22c55e">-</span>
-                                <span class="badge" id="rhItemLoc" style="background:#232838;color:#a0aec0"><i class="fas fa-map-marker-alt text-danger me-1"></i> -</span>
+                                <span class="badge" id="rhItemLoc" style="background:transparent;color:#a0aec0;border:1px solid #2a2f3d"><i class="fas fa-map-marker-alt text-danger me-1"></i> -</span>
                                 <span class="badge" id="rhItemStock" style="background:#1e3a2f;color:#22c55e">คงเหลือ: -</span>
                             </div>
                         </div>
                         <!-- Filter -->
                         <div class="d-flex flex-column gap-2 align-items-end" style="flex-shrink:0">
-                            <select id="rhTypeFilter" class="form-select form-select-sm border-0" style="background:#232838;color:#e0e0e0;border-radius:8px;min-width:140px" onchange="renderItemHistory()">
+                            <select id="rhTypeFilter" class="form-select form-select-sm" style="background:transparent;color:#e0e0e0;border:1px solid #2a2f3d;border-radius:8px;min-width:140px" onchange="renderItemHistory()">
                                 <option value="">📋 ทั้งหมด</option>
                                 <option value="in">📥 รับเข้า</option>
                                 <option value="out">📤 เบิกออก</option>
@@ -1866,22 +1866,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
                     </div>
                     <div class="px-4 py-3">
-                        <div style="overflow-y:auto;overflow-x:auto;max-height:340px;border-radius:10px;border:1px solid #2a2f3d">
-                            <table class="table mb-0 align-middle" style="color:#e0e0e0;min-width:520px">
-                                <thead style="position:sticky;top:0;background:#232838;z-index:1">
-                                    <tr>
-                                        <th class="small py-2 px-3" style="color:#6b7280;border:none;width:130px">วันที่ / เวลา</th>
-                                        <th class="small py-2 px-3 text-center" style="color:#6b7280;border:none;width:100px">ประเภท</th>
-                                        <th class="small py-2 px-3 text-center" style="color:#6b7280;border:none;width:80px">จำนวน</th>
-                                        <th class="small py-2 px-3 text-center" style="color:#6b7280;border:none;width:80px">คงเหลือ</th>
-                                        <th class="small py-2 px-3" style="color:#6b7280;border:none">ผู้ดำเนินการ</th>
-                                        <th class="small py-2 px-3" style="color:#6b7280;border:none">หมายเหตุ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="receiveHistoryTableBody">
-                                    <tr><td colspan="6" class="text-center py-5" style="color:#6b7280">กำลังโหลด...</td></tr>
-                                </tbody>
-                            </table>
+                        <div id="rhTimelineWrap" style="max-height:400px;overflow-y:auto;background:transparent;padding:14px 0">
+                            <div class="text-center py-5" style="color:#6b7280">กำลังโหลด...</div>
                         </div>
                         <div id="rhNoData" class="text-center py-5 d-none" style="color:#6b7280">
                             <i class="fas fa-inbox fs-2 d-block mb-2 opacity-25"></i>
@@ -1894,7 +1880,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4 pt-0" style="background:#181c24">
-                    <button type="button" class="btn btn-sm px-4" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px" data-bs-dismiss="modal">ปิด</button>
+                    <button type="button" class="btn btn-sm px-4" style="background:transparent;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px" data-bs-dismiss="modal">ปิด</button>
                 </div>
             </div>
         </div>
@@ -7094,11 +7080,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             } catch (e) { console.warn('loadFullItemHistory error:', e); }
         }
 
+        const RH_PAGE_SIZE = 15;
+        const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
         function renderItemHistory() {
             const modal = document.getElementById('receiveHistoryModal');
             const itemCode = modal._itemCode;
             const typeFilter = document.getElementById('rhTypeFilter').value;
-            const tbody = document.getElementById('receiveHistoryTableBody');
+            const wrap = document.getElementById('rhTimelineWrap');
             const noData = document.getElementById('rhNoData');
             const loadingArchive = document.getElementById('rhLoadingArchive');
             const inActions  = ['รับเข้า', 'new item', 'ซ่อมแซมแล้ว', 'คืน', 'adjust'];
@@ -7118,8 +7106,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 return db - da;
             });
             document.getElementById('rhTotalCount').textContent = logs.length + ' ครั้ง';
-            tbody.innerHTML = '';
             if (!logs.length) {
+                wrap.innerHTML = '';
                 // ยังไม่รู้ผลจาก Archive แน่ชัด → โชว์ "กำลังโหลด" แทน "ไม่มีประวัติ" กันเข้าใจผิดว่าไม่มีข้อมูลทั้งที่ยังโหลดไม่เสร็จ
                 if (!modal._archiveLoaded) {
                     loadingArchive.classList.remove('d-none');
@@ -7132,7 +7120,19 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             }
             loadingArchive.classList.add('d-none');
             noData.classList.add('d-none');
-            logs.forEach(log => {
+            modal._rhAllLogs = logs; // เก็บชุดเต็มไว้ให้ "โหลดเพิ่มเติม" ใช้ต่อ
+            modal._rhVisibleCount = Math.min(RH_PAGE_SIZE, logs.length);
+            _rhRenderTimeline();
+        }
+        function _rhRenderTimeline() {
+            const modal = document.getElementById('receiveHistoryModal');
+            const wrap = document.getElementById('rhTimelineWrap');
+            const logs = modal._rhAllLogs || [];
+            const visible = logs.slice(0, modal._rhVisibleCount || RH_PAGE_SIZE);
+            const inActions  = ['รับเข้า', 'new item', 'ซ่อมแซมแล้ว', 'คืน', 'adjust'];
+            let html = '';
+            let lastMonthKey = null;
+            visible.forEach((log, idx) => {
                 const act = String(log.action || '').trim().toLowerCase();
                 const isIn = inActions.some(a => act.includes(a.toLowerCase()));
                 const timeParts = (log.time || '').split(' ');
@@ -7141,18 +7141,36 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 let actionLabel = isIn ? (act.includes('new item') ? 'รับเข้า (ใหม่)' : act.includes('คืน') ? 'คืน' : act.includes('ซ่อม') ? 'ซ่อมแล้ว' : 'รับเข้า') : (act.includes('ยืม') ? 'ยืม' : act.includes('ชำรุด') ? 'แจ้งชำรุด' : 'เบิก');
                 const actionColor = isIn ? '#22c55e' : '#ef4444';
                 const amountStr  = isIn ? '+' + formatNumber(amountNum) : '-' + formatNumber(amountNum);
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #232838';
-                tr.innerHTML = `
-                    <td class="px-3 py-2"><span class="fw-bold d-block" style="color:#e0e0e0;font-size:13px">${timeParts[0]||'-'}</span><span style="color:#6b7280;font-size:11px">${timeParts[1]||''}</span></td>
-                    <td class="px-3 py-2 text-center"><span class="badge" style="background:${isIn?'#1e3a2f':'#3a1e1e'};color:${actionColor};font-size:11px">${actionLabel}</span></td>
-                    <td class="px-3 py-2 text-center fw-bold" style="color:${actionColor};font-size:15px">${amountStr}</td>
-                    <td class="px-3 py-2 text-center fw-bold" style="color:#60a5fa">${log.balance||'-'}</td>
-                    <td class="px-3 py-2" style="color:#a0aec0;font-size:13px"><i class="fas fa-user-circle me-1" style="color:#6b7280"></i>${displayUser}</td>
-                    <td class="px-3 py-2" style="color:#6b7280;font-size:12px">${log.remark||'-'}</td>
-                `;
-                tbody.appendChild(tr);
+                // หัวข้อกลุ่มเดือน (sticky) — เปลี่ยนกลุ่มเมื่อเดือน/ปีต่างจากรายการก่อนหน้า
+                const d = parseThaiDate(log.time);
+                const monthKey = d ? `${d.getFullYear()}-${d.getMonth()}` : 'ไม่ทราบวันที่';
+                if (monthKey !== lastMonthKey) {
+                    lastMonthKey = monthKey;
+                    const monthLabel = d ? `${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}` : 'ไม่ทราบวันที่';
+                    html += `<div style="position:sticky;top:0;background:#181c24;padding:4px 0 8px;z-index:1"><span style="display:inline-flex;width:fit-content;background:#232838;color:#e0e0e0;font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;white-space:nowrap">${monthLabel}</span></div>`;
+                }
+                const isLast = idx === visible.length - 1;
+                html += `
+                    <div class="d-flex" style="gap:10px">
+                        <div class="d-flex flex-column align-items-center" style="flex-shrink:0">
+                            <div style="width:8px;height:8px;border-radius:50%;background:${actionColor};margin-top:6px"></div>
+                            ${isLast ? '' : `<div style="width:1px;flex:1;background:#2a2f3d;min-height:24px"></div>`}
+                        </div>
+                        <div style="flex:1;min-width:0;padding-bottom:14px">
+                            <p class="mb-0" style="font-size:13px"><span class="fw-bold" style="color:${actionColor}">${actionLabel} ${amountStr}</span> <span style="color:#6b7280">· เหลือ ${log.balance||'-'}</span></p>
+                            <p class="mb-0" style="color:#6b7280;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${timeParts[0]||'-'} ${timeParts[1]||''} · ${displayUser}${log.remark ? ' · ' + log.remark : ''}</p>
+                        </div>
+                    </div>`;
             });
+            if (logs.length > visible.length) {
+                html += `<button class="btn btn-sm w-100 mt-1" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px" onclick="_rhLoadMore()">โหลดเพิ่มเติม (เหลืออีก ${logs.length - visible.length} ครั้ง)</button>`;
+            }
+            wrap.innerHTML = html;
+        }
+        function _rhLoadMore() {
+            const modal = document.getElementById('receiveHistoryModal');
+            modal._rhVisibleCount = (modal._rhVisibleCount || RH_PAGE_SIZE) + RH_PAGE_SIZE;
+            _rhRenderTimeline();
         }
         function filterUsersTable() {
             try {
