@@ -1105,6 +1105,14 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
     /* กล่อง badge/ป้ายสถานะยาว ให้ตัดคำแทนดันเลย์เอาต์ */
     .badge { white-space: normal; }
+
+    /* AI Command Console: ลดความสูง/ระยะห่างให้พอดีจอมือถือ, ให้แชทกับการ์ดสินค้าซ้อนกันแทนบีบข้าง */
+    .ai-chat-glass-card { min-height: 420px !important; }
+    #aiChatMessages { max-height: 45vh !important; padding: 16px !important; }
+    .ai-insight-card-v2 { padding: 10px !important; }
+
+    /* List ประวัติคร่าวๆ ในการ์ดแนวโน้มสต็อก: ตัดคำสั้นลงกันล้นจอแคบ */
+    #stockTrendHistoryList .text-truncate { max-width: 150px !important; }
 }
 </style>
 
@@ -1592,30 +1600,30 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </div>
                             <div class="card-body">
                                 <div class="row g-3">
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label text-muted small fw-bold">ประเภท <span class="text-danger">*</span></label>
                                         <select class="form-select shadow-sm border-theme" id="newItemType" required>
                                             <option value="Items">📦 คลังอะไหล่ (Consumables)</option>
                                             <option value="Tools">🛠️ เครื่องมือ (Tools/Equipments)</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label text-muted small fw-bold">หมวดหมู่ <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control shadow-sm" id="newItemCat" list="categoryOptions" placeholder="เลือก หรือพิมพ์ใหม่" required>
                                         <datalist id="categoryOptions"></datalist>
                                         <datalist id="locationOptions"></datalist>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label text-muted small fw-bold">วันที่ขึ้นทะเบียน <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control shadow-sm" id="newItemDate" required>
                                     </div>
                                 </div>
                                 <div class="row g-3 mt-1">
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <label class="form-label text-muted small fw-bold">ผู้ทำรายการ</label>
                                         <input type="text" class="form-control text-center shadow-sm bg-light text-muted" id="newItemUser" readonly>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <label class="form-label text-muted small fw-bold">หมายเหตุทั่วไป</label>
                                         <input type="text" class="form-control shadow-sm" id="newItemGlobalRemark" placeholder="หมายเหตุสำหรับทุกรายการ">
                                     </div>
@@ -1666,15 +1674,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 <div class="modal-body p-4">
                     <form id="addPOForm">
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">เลขที่ PO <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control font-monospace shadow-sm" id="poCode" placeholder="PO-XXXX" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">วันที่สั่งซื้อ <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control shadow-sm" id="poDate" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">ซัพพลายเออร์ (Supplier) <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control shadow-sm" id="poSupplier" placeholder="ชื่อร้านค้า / บริษัท" required>
                             </div>
@@ -1739,15 +1747,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 <div class="modal-body p-4">
                     <form id="editPOForm">
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">เลขที่ PO</label>
                                 <input type="text" class="form-control font-monospace shadow-sm" id="editPoCode" readonly style="background:#f1f5f9;">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">วันที่สั่งซื้อ</label>
                                 <input type="text" class="form-control shadow-sm" id="editPoDate" readonly style="background:#f1f5f9;">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small fw-bold">ซัพพลายเออร์</label>
                                 <input type="text" class="form-control shadow-sm" id="editPoSupplier" readonly style="background:#f1f5f9;">
                             </div>
@@ -1778,11 +1786,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-muted small fw-bold">หมายเหตุติดตาม</label>
                                 <input type="text" class="form-control shadow-sm" id="editPoRemark" placeholder="เช่น ติดตามวันส่ง เข้ารับ 20/05...">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-muted small fw-bold">สถานะ PO</label>
                                 <select class="form-select shadow-sm" id="editPoStatus">
                                     <option value="รอจัดส่ง">รอจัดส่ง (Pending)</option>
@@ -1833,7 +1841,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 <div class="modal-body p-0" style="background:#181c24">
                     <div class="px-4 pb-3 d-flex gap-4 align-items-start" style="border-bottom:1px solid #2a2f3d">
                         <!-- รูปสินค้า -->
-                        <div id="rhItemImgWrap" style="flex-shrink:0;width:90px;height:90px;border-radius:12px;overflow:hidden;background:#232838;border:1px solid #2a2f3d;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="if(document.getElementById('rhItemImgEl').src) viewItemImage(document.getElementById('rhItemImgEl').src, document.getElementById('rhItemName').textContent)">
+                        <div id="rhItemImgWrap" style="flex-shrink:0;width:90px;height:90px;border-radius:12px;overflow:hidden;background:transparent;border:1px solid #2a2f3d;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="if(document.getElementById('rhItemImgEl').src) viewItemImage(document.getElementById('rhItemImgEl').src, document.getElementById('rhItemName').textContent)">
                             <img id="rhItemImgEl" style="width:100%;height:100%;object-fit:cover;display:none">
                             <span id="rhItemImgPlaceholder" style="font-size:32px">📦</span>
                         </div>
@@ -1841,15 +1849,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <div class="flex-grow-1 pt-1">
                             <h5 class="fw-bold mb-2" id="rhItemName" style="color:#fff">-</h5>
                             <div class="d-flex gap-2 flex-wrap">
-                                <span class="badge font-monospace" id="rhItemCode" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d">-</span>
+                                <span class="badge font-monospace" id="rhItemCode" style="background:transparent;color:#a0aec0;border:1px solid #2a2f3d">-</span>
                                 <span class="badge" id="rhItemCat" style="background:#1e3a2f;color:#22c55e">-</span>
-                                <span class="badge" id="rhItemLoc" style="background:#232838;color:#a0aec0"><i class="fas fa-map-marker-alt text-danger me-1"></i> -</span>
+                                <span class="badge" id="rhItemLoc" style="background:transparent;color:#a0aec0;border:1px solid #2a2f3d"><i class="fas fa-map-marker-alt text-danger me-1"></i> -</span>
                                 <span class="badge" id="rhItemStock" style="background:#1e3a2f;color:#22c55e">คงเหลือ: -</span>
                             </div>
                         </div>
                         <!-- Filter -->
                         <div class="d-flex flex-column gap-2 align-items-end" style="flex-shrink:0">
-                            <select id="rhTypeFilter" class="form-select form-select-sm border-0" style="background:#232838;color:#e0e0e0;border-radius:8px;min-width:140px" onchange="renderItemHistory()">
+                            <select id="rhTypeFilter" class="form-select form-select-sm" style="background:transparent;color:#e0e0e0;border:1px solid #2a2f3d;border-radius:8px;min-width:140px" onchange="renderItemHistory()">
                                 <option value="">📋 ทั้งหมด</option>
                                 <option value="in">📥 รับเข้า</option>
                                 <option value="out">📤 เบิกออก</option>
@@ -1858,22 +1866,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
                     </div>
                     <div class="px-4 py-3">
-                        <div style="overflow-y:auto;max-height:340px;border-radius:10px;border:1px solid #2a2f3d">
-                            <table class="table mb-0 align-middle" style="color:#e0e0e0">
-                                <thead style="position:sticky;top:0;background:#232838;z-index:1">
-                                    <tr>
-                                        <th class="small py-2 px-3" style="color:#6b7280;border:none;width:130px">วันที่ / เวลา</th>
-                                        <th class="small py-2 px-3 text-center" style="color:#6b7280;border:none;width:100px">ประเภท</th>
-                                        <th class="small py-2 px-3 text-center" style="color:#6b7280;border:none;width:80px">จำนวน</th>
-                                        <th class="small py-2 px-3 text-center" style="color:#6b7280;border:none;width:80px">คงเหลือ</th>
-                                        <th class="small py-2 px-3" style="color:#6b7280;border:none">ผู้ดำเนินการ</th>
-                                        <th class="small py-2 px-3" style="color:#6b7280;border:none">หมายเหตุ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="receiveHistoryTableBody">
-                                    <tr><td colspan="6" class="text-center py-5" style="color:#6b7280">กำลังโหลด...</td></tr>
-                                </tbody>
-                            </table>
+                        <div id="rhTimelineWrap" style="max-height:400px;overflow-y:auto;background:transparent;padding:14px 0">
+                            <div class="text-center py-5" style="color:#6b7280">กำลังโหลด...</div>
                         </div>
                         <div id="rhNoData" class="text-center py-5 d-none" style="color:#6b7280">
                             <i class="fas fa-inbox fs-2 d-block mb-2 opacity-25"></i>
@@ -1886,7 +1880,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4 pt-0" style="background:#181c24">
-                    <button type="button" class="btn btn-sm px-4" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px" data-bs-dismiss="modal">ปิด</button>
+                    <button type="button" class="btn btn-sm px-4" style="background:transparent;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px" data-bs-dismiss="modal">ปิด</button>
                 </div>
             </div>
         </div>
@@ -1912,15 +1906,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <select id="txItemCode" placeholder="🔍 พิมพ์ค้นหารหัส หรือ ชื่อรายการ..." autocomplete="off" required></select>
                         </div>
                         <div class="row g-4 mb-4 border-top border-secondary border-opacity-25 pt-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-white fw-bold">จำนวน <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control form-control-lg text-center fw-bold text-warning shadow-sm" id="txQty" min="1" step="1" placeholder="ระบุจำนวน" required style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-white fw-bold">วันที่ทำรายการ <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control form-control-lg shadow-sm text-center text-white" id="txDate" required style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label text-white fw-bold">ชื่อผู้ทำรายการ <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control form-control-lg shadow-sm text-white" id="txUser" placeholder="ชื่อพนักงาน" required style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
                             </div>
@@ -1953,21 +1947,21 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <select id="borrowItemCode" placeholder="🔍 พิมพ์ค้นหาชื่อหรือรหัสเครื่องมือ..." autocomplete="off" required></select>
                         </div>
                         <div class="row g-4 mb-4 border-top pt-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-white fw-bold">จำนวนที่ยืม <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control form-control-lg text-center fw-bold text-warning shadow-sm" id="borrowQty" min="1" step="1" placeholder="1" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-white fw-bold">วันที่ยืม <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control form-control-lg shadow-sm text-center" id="borrowDate" required>
                             </div>
                         </div>
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-white fw-bold">ชื่อคนยืม / ผู้รับเหมา <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control shadow-sm" id="borrowerName" placeholder="ระบุชื่อชัดเจน" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label text-white fw-bold">สถานที่นำไปใช้งาน <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control shadow-sm" id="borrowMachine" placeholder="เช่น ซ่อมปั๊มน้ำชั้น 3" required>
                             </div>
@@ -2148,7 +2142,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <!-- Statistics Cards with Sparklines -->
                     <div class="row g-2 mb-4">
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-6 col-md-3 col-sm-6">
                             <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-primary border-4">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -2161,7 +2155,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-1"></canvas></div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-6 col-md-3 col-sm-6">
                             <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-info border-4">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -2174,7 +2168,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-2"></canvas></div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-6 col-md-3 col-sm-6">
                             <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-danger border-4">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -2187,7 +2181,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-3"></canvas></div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-6 col-md-3 col-sm-6">
                             <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-success border-4">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -2203,7 +2197,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <!-- Main Content -->
                     <div class="row g-4 mt-0 mb-4">
-                        <div class="col-xl-8">
+                        <div class="col-12 col-xl-8">
                             <div class="card h-100" style="border:1px solid rgba(255,255,255,.1)">
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -2213,11 +2207,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                         <div class="fw-bold text-white font-headers" style="font-size: 20px;" id="chartTotalTx">0</div>
                                     </div>
-                                    <div style="height: 240px; width: 100%;"><canvas id="inventoryValueChart"></canvas></div>
+                                    <div style="max-height: 240px; min-height: 60px; width: 100%; overflow-y: auto;" id="stockTrendHistoryList">
+                                        <div class="text-center text-muted py-5">กำลังโหลดประวัติ...</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-4">
+                        <div class="col-12 col-xl-4">
                             <div class="card h-100" style="border:1px solid rgba(255,255,255,.1)">
                                 <div class="card-body p-4 d-flex flex-column justify-content-between" style="min-height: 300px;">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -2312,7 +2308,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <!-- Low Stock Details -->
                     <div class="row g-4 mb-4">
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="card shadow-sm">
                                 <div class="card-header bg-light border-bottom">
                                     <h6 class="fw-bold mb-0 text-danger"><i class="fas fa-bell text-danger me-2"></i>อะไหล่ต้องสั่งเติม</h6>
@@ -2327,7 +2323,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="card shadow-sm">
                                 <div class="card-header bg-light border-bottom">
                                     <h6 class="fw-bold mb-0 text-info"><i class="fas fa-toolbox text-info me-2"></i>เครื่องมือต้องซ่อม/เติม</h6>
@@ -2345,7 +2341,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <!-- Category & Borrow Summary -->
                     <div class="row g-4">
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="card shadow-sm">
                                 <div class="card-header bg-light border-bottom">
                                     <h6 class="fw-bold mb-0 text-primary"><i class="fas fa-list text-primary me-2"></i>สรุปตามหมวดหมู่</h6>
@@ -2360,7 +2356,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="card shadow-sm">
                                 <div class="card-header bg-light border-bottom">
                                     <h6 class="fw-bold mb-0 text-warning"><i class="fas fa-hand-holding text-warning me-2"></i>สินค้าที่กำลังยืม</h6>
@@ -2402,7 +2398,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <div class="card mt-4 border-0 shadow-sm" style="background: linear-gradient(145deg, rgba(30,41,59,0.8), rgba(15,23,42,0.95)); border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 16px;">
                         <div class="card-body p-4">
                             <div class="row align-items-center g-3">
-                                <div class="col-lg-5 col-md-6">
+                                <div class="col-12 col-lg-5 col-md-6">
                                     <div class="d-flex align-items-center gap-3">
                                         <div style="width:44px; height:44px; min-width:44px; border-radius:12px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; color:#fbbf24; font-size:1.25rem;">
                                             <i class="fas fa-laptop-code"></i>
@@ -2418,7 +2414,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-4 col-md-6">
+                                <div class="col-12 col-lg-4 col-md-6">
                                     <div class="d-flex align-items-center gap-3">
                                         <div style="width:44px; height:44px; min-width:44px; border-radius:12px; background:rgba(16,185,129,0.15); display:flex; align-items:center; justify-content:center; color:#34d399; font-size:1.25rem;">
                                             <i class="fab fa-google-drive"></i>
@@ -2435,7 +2431,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-3 col-md-12 text-lg-end">
+                                <div class="col-12 col-lg-3 col-md-12 text-lg-end">
                                     <div class="d-inline-flex flex-column align-items-lg-end w-100">
                                         <div class="badge bg-dark bg-opacity-60 border border-secondary px-3 py-2 rounded-pill text-muted fw-medium d-flex align-items-center justify-content-center gap-2 mb-2 w-100 w-lg-auto" style="border-color:rgba(255,255,255,0.12) !important;">
                                             <i class="far fa-clock text-warning"></i> อัปเดตล่าสุด: <span id="dashFooterLastUpdate" class="text-white fw-bold">-</span>
@@ -2659,7 +2655,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         <div class="card bg-light border mb-3 p-3">
                                             <h6 class="fw-bold mb-3"><i class="fas fa-filter text-primary me-2"></i> ตัวกรองข้อมูล</h6>
                                             <div class="row g-3">
-                                                <div class="col-md-3">
+                                                <div class="col-12 col-md-3">
                                                     <label class="form-label small fw-bold">สถานะ PO</label>
                                                     <select class="form-select form-select-sm shadow-sm" id="poHistoryStatusFilter" onchange="filterPOHistory()">
                                                         <option value="all">ทั้งหมด</option>
@@ -2670,19 +2666,19 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                                         <option value="ยกเลิกแล้ว">ยกเลิกแล้ว</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-3">
+                                                <div class="col-12 col-md-3">
                                                     <label class="form-label small fw-bold">ค้นหา Supplier</label>
                                                     <input type="text" class="form-control form-control-sm shadow-sm" id="poHistorySupplierFilter" placeholder="ชื่อบริษัท..." onkeyup="filterPOHistory()">
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-12 col-md-2">
                                                     <label class="form-label small fw-bold">วันที่ เริ่มต้น</label>
                                                     <input type="date" class="form-control form-control-sm shadow-sm" id="poHistoryDateFrom" onchange="filterPOHistory()">
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-12 col-md-2">
                                                     <label class="form-label small fw-bold">วันที่ สิ้นสุด</label>
                                                     <input type="date" class="form-control form-control-sm shadow-sm" id="poHistoryDateTo" onchange="filterPOHistory()">
                                                 </div>
-                                                <div class="col-md-2 d-flex align-items-end">
+                                                <div class="col-12 col-md-2 d-flex align-items-end">
                                                     <button class="btn btn-outline-secondary btn-sm w-100 shadow-sm" onclick="document.getElementById('poHistoryStatusFilter').value='all'; document.getElementById('poHistorySupplierFilter').value=''; document.getElementById('poHistoryDateFrom').value=''; document.getElementById('poHistoryDateTo').value=''; filterPOHistory();">
                                                         <i class="fas fa-redo me-1"></i> ล้างตัวกรอง
                                                     </button>
@@ -2815,7 +2811,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     </div>
                                 </div>
                                 <div class="row g-4">
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <div class="card shadow-sm border p-4 bg-light">
                                             <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-pager me-2"></i> ขนาดสติกเกอร์ & ระยะขอบ</h5>
                                             <div class="row g-3 mb-3">
@@ -2847,7 +2843,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <div class="card shadow-sm border p-4 bg-light">
                                             <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-info-circle me-2"></i> ข้อมูลที่ต้องการแสดงบนป้าย</h5>
                                             <div class="form-check mb-3">
@@ -2887,7 +2883,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <div class="tab-pane fade p-4" id="tabQRStats">
                                 <h3 class="fw-bold mb-4"><i class="fas fa-chart-bar text-success me-2"></i> สถิติการใช้งาน QR Code & Barcode</h3>
                                 <div class="row mb-4">
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-12 col-md-3 mb-3">
                                         <div class="stat-card">
                                             <div class="stat-icon" style="background:linear-gradient(135deg,#4f46e5,#3b82f6);color:#b0b0b0;">
                                                 <i class="fas fa-print"></i>
@@ -2897,7 +2893,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <small class="text-muted">ครั้ง</small>
                                         </div>
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-12 col-md-3 mb-3">
                                         <div class="stat-card">
                                             <div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669);color:#b0b0b0;">
                                                 <i class="fas fa-list"></i>
@@ -2907,7 +2903,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <small class="text-muted">รายการ</small>
                                         </div>
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-12 col-md-3 mb-3">
                                         <div class="stat-card">
                                             <div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#b0b0b0;">
                                                 <i class="fas fa-calendar-today"></i>
@@ -2919,7 +2915,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     </div>
                                 </div>
                                 <div class="row g-4 mb-4">
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <div class="card shadow-sm border p-3" style="background:#161616;">
                                             <h6 class="fw-bold mb-3" style="color:#b0b0b0;"><i class="fas fa-chart-pie text-success me-2"></i> สัดส่วนการพิมพ์แยกตามประเภท</h6>
                                             <div style="height: 220px; position: relative;">
@@ -2927,7 +2923,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <div class="card shadow-sm border p-3" style="background:#161616;">
                                             <h6 class="fw-bold mb-3" style="color:#b0b0b0;"><i class="fas fa-chart-line text-warning me-2"></i> ปริมาณการพิมพ์ในรอบ 7 วันที่ผ่านมา</h6>
                                             <div style="height: 220px; position: relative;">
@@ -3163,7 +3159,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <!-- 🎛️ GLASSMORPHISM PRO WORKSPACE (SPLIT 7:5) -->
                     <div class="row g-4">
                         <!-- LEFT PANEL: AI CHAT CONSOLE -->
-                        <div class="col-lg-7">
+                        <div class="col-12 col-lg-7">
                             <div class="ai-chat-glass-card h-100 d-flex flex-column" style="min-height:580px">
                                 <!-- Console Header -->
                                 <div class="p-3 px-4 d-flex align-items-center justify-content-between" style="border-bottom:1px solid rgba(139,92,246,.2);background:rgba(12,15,26,.7)">
@@ -3195,7 +3191,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
 
                         <!-- RIGHT PANEL: LIVE VISUAL EVIDENCE & ITEM CARDS -->
-                        <div class="col-lg-5">
+                        <div class="col-12 col-lg-5">
                             <div class="ai-chat-glass-card h-100 d-flex flex-column">
                                 <div class="p-3 px-4 d-flex align-items-center justify-content-between" style="border-bottom:1px solid rgba(139,92,246,.2);background:rgba(12,15,26,.7)">
                                     <div class="d-flex align-items-center gap-2">
@@ -3289,7 +3285,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                     <div id="rcpTabSettingsPane" style="display:none">
                     <div class="row g-3">
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="table-container p-4 bg-white h-100">
                                 <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-sliders me-1 text-warning"></i> ตั้งค่ารูปแบบใบเบิก</h6>
                                 <div class="mb-3">
@@ -3342,7 +3338,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-6">
+                        <div class="col-12 col-xl-6">
                             <div class="table-container p-3 bg-white h-100">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-eye me-1 text-warning"></i> ตัวอย่างก่อนพิมพ์</h6>
@@ -3373,7 +3369,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                     <!-- ปิดเดือน -->
                     <div class="row g-4 mb-4">
-                        <div class="col-lg-5">
+                        <div class="col-12 col-lg-5">
                             <div class="card border-0 shadow-sm" style="background:#1a2230;border-radius:16px">
                                 <div class="card-body p-4">
                                     <h5 class="fw-bold mb-1" style="color:#fff"><i class="fas fa-box-archive me-2" style="color:#22c55e"></i> ปิดเดือน</h5>
@@ -3412,7 +3408,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
 
                         <!-- รายการ Archive -->
-                        <div class="col-lg-7">
+                        <div class="col-12 col-lg-7">
                             <div class="card border-0 shadow-sm" style="background:#1a2230;border-radius:16px">
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -3426,27 +3422,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </div>
                         </div>
                     </div>
-
-                    <!-- กู้คืนจากไฟล์ Backup -->
-                    <div class="row g-4 mb-4">
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm" style="background:#1a2230;border-radius:16px">
-                                <div class="card-body p-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h5 class="fw-bold mb-0" style="color:#fff"><i class="fas fa-cloud-download-alt me-2" style="color:#f87171"></i> กู้คืนจากไฟล์ Backup</h5>
-                                        <button class="btn btn-sm" onclick="loadRestoreBackupList()" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px"><i class="fas fa-sync me-1"></i> รีเฟรช</button>
-                                    </div>
-                                    <div class="p-3 mb-3 rounded-3" style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25)">
-                                        <p class="small mb-0" style="color:#f87171"><i class="fas fa-exclamation-triangle me-2"></i>ใช้เฉพาะกรณีข้อมูลเสียหาย/หายทั้งชีตเท่านั้น การกู้คืนจะ<strong>เขียนทับข้อมูลปัจจุบันทุกชีต</strong>ที่มีในไฟล์ backup — ระบบจะสำรองข้อมูลปัจจุบันไว้ก่อนกู้คืนเสมอ (ย้อนกลับได้ถ้ากู้ผิดไฟล์)</p>
-                                    </div>
-                                    <div id="restoreBackupListWrap">
-                                        <div class="text-center py-4" style="color:#6b7280"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
+
+                <div id="stockTakeMgmt" class="section-view">
                     <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
                         <div class="d-flex align-items-center gap-3">
                             <div style="width:42px;height:42px;background:rgba(245,158,11,.15);border-radius:12px;display:flex;align-items:center;justify-content:center">
@@ -3471,7 +3449,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                     <div id="stTabKeyPane">
                         <div class="row g-4 mb-4">
-                        <div class="col-lg-8">
+                        <div class="col-12 col-lg-8">
                             <div class="card border-0 shadow-sm" style="background:#1a2230;border-radius:16px">
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -3485,8 +3463,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                     </div>
                                     <p class="small mb-3" style="color:rgba(255,255,255,.4)">คีย์ยอดแทนพนักงานที่นับจากกระดาษได้ที่นี่ — ถ้ายอดไม่ตรงกับระบบจะปรับสต็อกให้อัตโนมัติทันที</p>
-                                    <div style="max-height:520px;overflow-y:auto">
-                                        <table class="table table-sm align-middle mb-0" style="color:#e0e0e0">
+                                    <div style="max-height:520px;overflow-y:auto;overflow-x:auto">
+                                        <table class="table table-sm align-middle mb-0" style="color:#e0e0e0;min-width:480px">
                                             <thead style="position:sticky;top:0;background:#1a2230;z-index:1">
                                                 <tr style="color:rgba(255,255,255,.4);font-size:.72rem;text-transform:uppercase">
                                                     <th>สินค้า</th><th class="text-center">ยอดระบบ</th><th class="text-center">ยอดนับ</th><th class="text-center">ส่วนต่าง</th><th class="text-center">คีย์ยอด</th>
@@ -3505,8 +3483,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <div class="card border-0 shadow-sm mb-4" style="background:#1a2230;border-radius:16px;padding:20px">
                             <h5 class="fw-bold mb-2" style="color:#fff"><i class="fas fa-exclamation-triangle text-warning me-2"></i> รายการส่วนต่าง / ตกเบิก</h5>
                             <p class="small mb-3" style="color:rgba(255,255,255,.6)">รายการที่ยอดนับไม่ตรงกับระบบ — สต็อกถูกปรับให้ตรงแล้วอัตโนมัติ แต่ยังไม่รู้สาเหตุ กด "เบิกย้อนหลัง" เพื่อบันทึกสาเหตุพร้อมสร้างรายการเบิกจริงเพื่อการตรวจสอบย้อนหลัง</p>
-                            <div style="max-height:560px;overflow-y:auto">
-                                <table class="table table-sm align-middle mb-0" style="color:#e0e0e0">
+                            <div style="max-height:560px;overflow-y:auto;overflow-x:auto">
+                                <table class="table table-sm align-middle mb-0" style="color:#e0e0e0;min-width:560px">
                                     <thead style="position:sticky;top:0;background:#1a2230;z-index:1">
                                         <tr style="color:rgba(255,255,255,.6);font-size:.8rem;text-transform:uppercase">
                                             <th>สินค้า</th><th class="text-center">ยอดระบบ</th><th class="text-center">ยอดนับ</th><th class="text-center">ส่วนต่าง</th><th class="text-center">สถานะ</th><th class="text-center">จัดการ</th>
@@ -3919,17 +3897,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <div id="autoBackupOptions" style="display:none;padding-top:16px;border-top:1px solid rgba(74,222,128,.2)">
                                                 <div class="settings-row mb-3" style="flex-direction:row">
                                                     <div><label class="form-label">เวลา Backup</label><input type="time" class="form-control" id="setAutoBackupTime" value="23:00"></div>
-                                                    <div><label class="form-label">ความถี่</label>
-                                                        <select class="form-select" id="setAutoBackupFreqDays">
-                                                            <option value="1">ทุกวัน</option>
-                                                            <option value="2">ทุก 2 วัน</option>
-                                                            <option value="3">ทุก 3 วัน</option>
-                                                            <option value="7">ทุกสัปดาห์</option>
-                                                        </select>
-                                                    </div>
                                                     <div><label class="form-label">ส่งไปอีเมล</label><input type="email" class="form-control" id="setAutoBackupEmail" placeholder="admin@company.com"></div>
                                                 </div>
-                                                <div style="font-size:.7rem;color:rgba(255,255,255,.4)">ต้องตั้ง Time-driven Trigger ชื่อ <code>autoBackupTask</code> แบบ "ทุกชั่วโมง" (Hour timer) ใน Apps Script 1 ครั้ง (ดูคู่มือ) ระบบจะอ่านเวลา+ความถี่ที่ตั้งไว้นี้เองทุกครั้งที่ trigger ทำงาน — ห้ามเปลี่ยน trigger เป็น "ทุก 12 ชม." หรือ "ทุกวัน" เอง เพราะจะคำนวณเวลาคลาดเคลื่อนได้ ให้ปรับความถี่ backup ที่นี่แทน</div>
+                                                <div style="font-size:.7rem;color:rgba(255,255,255,.4)">ต้องตั้ง Time-driven Trigger ชื่อ <code>autoBackupTask</code> ใน Apps Script 1 ครั้ง (ดูคู่มือ) ระบบจะอ่านเวลาที่ตั้งไว้นี้เองทุกครั้งที่ trigger ทำงาน</div>
                                             </div>
                                         </div>
                                         <div class="settings-box">
@@ -4887,7 +4857,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
                     if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
                     if(sectionId === 'archiveMgmt' && typeof loadArchiveList === 'function') loadArchiveList();
-                    if(sectionId === 'archiveMgmt' && typeof loadRestoreBackupList === 'function') loadRestoreBackupList();
                     if(sectionId === 'pendingApprovals' && typeof startPendingApprovalsPolling === 'function') startPendingApprovalsPolling();
                     else if(typeof stopPendingApprovalsPolling === 'function') stopPendingApprovalsPolling();
                 } catch(errSec) {
@@ -5531,7 +5500,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
             if(document.getElementById('setAutoBackupEnabled')) { document.getElementById('setAutoBackupEnabled').checked = !!s.autoBackupEnabled; toggleAutoBackupOptions(!!s.autoBackupEnabled); }
             if(document.getElementById('setAutoBackupTime')) document.getElementById('setAutoBackupTime').value = s.autoBackupTime || '23:00';
-            if(document.getElementById('setAutoBackupFreqDays')) document.getElementById('setAutoBackupFreqDays').value = String(s.autoBackupFreqDays || 1);
             if(document.getElementById('setAutoBackupEmail')) document.getElementById('setAutoBackupEmail').value = s.autoBackupEmail || '';
 
             // --- Detailed Permissions: Items ---
@@ -5812,7 +5780,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 lowStockPercent: document.getElementById('setLowStockPercent') ? parseInt(document.getElementById('setLowStockPercent').value) : 100,
                 autoBackupEnabled: document.getElementById('setAutoBackupEnabled') ? document.getElementById('setAutoBackupEnabled').checked : false,
                 autoBackupTime: document.getElementById('setAutoBackupTime') ? document.getElementById('setAutoBackupTime').value : '23:00',
-                autoBackupFreqDays: document.getElementById('setAutoBackupFreqDays') ? Number(document.getElementById('setAutoBackupFreqDays').value) : 1,
                 autoBackupEmail: document.getElementById('setAutoBackupEmail') ? document.getElementById('setAutoBackupEmail').value.trim() : '',
                 // Items permissions
                 permAddItemUser: document.getElementById('setPermAddItemUser') ? document.getElementById('setPermAddItemUser').checked : false,
@@ -6221,14 +6188,34 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         let lastGlobalSearchValue = '';
         let lastDashboardData = null; // เก็บข้อมูลล่าสุดไว้ เพื่อให้ค้นหาได้จากข้อมูลทั้งหมด ไม่ใช่แค่ตัวอย่าง 8 แถวที่โชว์
 
+        // ═══════════════════════════════════════════════
+        // ตัวช่วยค้นหากลาง ใช้ร่วมกันทั้ง Dashboard และตารางคลังอะไหล่/เครื่องมือ
+        // เพื่อให้ผลลัพธ์การค้นหาสอดคล้องกันไม่ว่าค้นจากหน้าไหน
+        // ═══════════════════════════════════════════════
+        // ตัดช่องว่าง/ขีดกลาง/ขีดล่างออกทั้งหมดก่อนเทียบ กัน "A-01" ไม่เจอเวลาพิมพ์ "a01" หรือ "A 01"
+        function _normalizeSearchText(s) {
+            return String(s || '').toLowerCase().replace(/[\s\-_]+/g, '');
+        }
+        // แยกคำค้นหาเป็นหลายคำ (คั่นด้วยช่องว่าง) แล้วเช็คว่า "ทุกคำ" ต้องเจอในข้อความเป้าหมาย
+        // ไม่จำเป็นต้องเรียงติดกันเหมือนเดิม เช่น ค้นหา "6หุน น็อต" จะเจอแม้ชื่อในระบบเก็บเป็น "น็อต 6 หุน"
+        function _matchesSearchQuery(haystackRaw, queryRaw) {
+            const query = String(queryRaw || '').trim();
+            if (!query) return true;
+            const tokens = query.split(/\s+/).map(_normalizeSearchText).filter(Boolean);
+            if (tokens.length === 0) return true;
+            const haystack = _normalizeSearchText(haystackRaw);
+            return tokens.every(t => haystack.includes(t));
+        }
+
         function buildDashUnifiedRows(data, query) {
-            const q = (query || '').toLowerCase().trim();
+            const q = (query || '').trim();
             const itemsList = (data.items || []).map(x => ({...x, type: 'อะไหล่'}));
             const toolsList = (data.tools || []).map(x => ({...x, type: 'เครื่องมือ'}));
             let combined = [...itemsList, ...toolsList];
             if (q) {
                 // มีคำค้นหา: ค้นจากข้อมูลทั้งหมดในคลัง ไม่ใช่แค่ตัวอย่าง 4+4 รายการแรก
-                combined = combined.filter(x => `${x.code || ''} ${x.name || ''} ${x.location || ''}`.toLowerCase().includes(q));
+                // ค้นจาก รหัส + ชื่อ + ตำแหน่ง + หมวดหมู่ แบบตัดช่องว่าง/ขีด และแยกคำค้นหาได้หลายคำ
+                combined = combined.filter(x => _matchesSearchQuery(`${x.code || ''} ${x.name || ''} ${x.location || ''} ${getItemCategory(x)}`, q));
                 return { rows: combined.slice(0, 50), truncated: combined.length > 50, total: combined.length, searching: true };
             }
             // ไม่มีคำค้นหา: โชว์ตัวอย่าง 4 อะไหล่ + 4 เครื่องมือ เหมือนเดิม
@@ -6397,38 +6384,34 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const totalTxWeek = receivedByDay.reduce((a,b) => a+b, 0) + dispatchedByDay.reduce((a,b) => a+b, 0);
                 if (elTotalTx) elTotalTx.textContent = formatNumber(totalTxWeek) + ' รายการ';
 
-                // 5. Draw Main Line Chart using real transaction counts (รับเข้า + เบิก) per day, not fabricated currency values
-                const ctx = document.getElementById('inventoryValueChart');
-                if (ctx) {
-                    if (window.inventoryValueChartObj) window.inventoryValueChartObj.destroy();
-                    window.inventoryValueChartObj = new Chart(ctx.getContext('2d'), {
-                        type: 'line',
-                        data: {
-                            labels: dayBuckets,
-                            datasets: [{
-                                label: 'จำนวนรายการเคลื่อนไหว',
-                                data: dayBuckets.map((_, i) => receivedByDay[i] + dispatchedByDay[i]),
-                                borderColor: '#e8a020',
-                                backgroundColor: 'rgba(232, 160, 32, 0.05)',
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.4,
-                                pointBackgroundColor: '#e8a020',
-                                pointBorderColor: '#fff',
-                                pointBorderWidth: 2,
-                                pointRadius: 4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Sarabun' } } },
-                                y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Sarabun' }, precision: 0 } }
-                            }
-                        }
-                    });
+                // 5. แสดงประวัติการเคลื่อนไหวแบบคร่าวๆ (list) แทนกราฟเส้น — ใช้ข้อมูล 7 วันล่าสุดชุดเดียวกับด้านบน
+                const historyListEl = document.getElementById('stockTrendHistoryList');
+                if (historyListEl) {
+                    const recentTx = (data.history || [])
+                        .filter(h => h.time && dayBuckets.some(d => h.time.includes(d)))
+                        .filter(h => isAction(h, 'รับเข้า') || String(h.action).trim().toLowerCase() === 'new item' || isAction(h, 'เบิก') || String(h.action).trim().toLowerCase().startsWith('เบิก'))
+                        .slice(0, 12);
+                    if (recentTx.length === 0) {
+                        historyListEl.innerHTML = '<div class="text-center text-muted py-5">ไม่มีการเคลื่อนไหวในช่วงนี้</div>';
+                    } else {
+                        historyListEl.innerHTML = recentTx.map(h => {
+                            const actLower = String(h.action).trim().toLowerCase();
+                            const isOut = actLower.startsWith('เบิก');
+                            const icon = isOut ? 'fa-arrow-down text-danger' : 'fa-arrow-up text-success';
+                            const displayAction = actLower === 'new item' ? 'รับเข้า (ใหม่)' : h.action;
+                            const displayUser = h.user ? String(h.user).replace(/\[.*?\]/g, '').trim() : '';
+                            return `<div class="d-flex align-items-center justify-content-between py-2" style="border-bottom:1px solid rgba(255,255,255,.05)">
+                                <div class="d-flex align-items-center gap-2" style="min-width:0;">
+                                    <i class="fas ${icon}"></i>
+                                    <div style="min-width:0;">
+                                        <div class="text-white small fw-bold text-truncate" style="max-width:220px;">${displayAction} — ${h.itemName || h.item || ''}</div>
+                                        <div class="text-muted" style="font-size:11px;">${h.time || ''}${displayUser ? ' · ' + displayUser : ''}</div>
+                                    </div>
+                                </div>
+                                <div class="fw-bold ${isOut ? 'text-danger' : 'text-success'} small">${isOut ? '-' : '+'}${h.amount}</div>
+                            </div>`;
+                        }).join('');
+                    }
                 }
 
                 // 4. Populate Unified Inventory Table (ค้นหาได้จากข้อมูลทั้งหมด ไม่ใช่แค่ตัวอย่าง)
@@ -6971,12 +6954,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         function filterTable(tableId) {
             try {
                 const isItems = (tableId === 'itemsTable');
-                const searchInput = document.querySelector(`#${isItems ? 'items' : 'tools'} .search-box input`); const text = searchInput ? searchInput.value.toLowerCase().trim().replace(/\s+/g, '') : ''; 
+                const searchInput = document.querySelector(`#${isItems ? 'items' : 'tools'} .search-box input`); const text = searchInput ? searchInput.value.trim() : '';
                 const categorySelect = document.getElementById(isItems ? 'itemCategoryFilter' : 'toolCategoryFilter'); const category = categorySelect ? categorySelect.value.toLowerCase().trim() : '';
                 const baseData = isItems ? allData.items : allData.tools; const type = isItems ? 'item' : 'tool';
                 const filteredData = baseData.filter(item => {
-                    const txt = (String(item.code) + " " + String(item.name)).toLowerCase().replace(/\s+/g, ''); const catText = String(getItemCategory(item)).toLowerCase().trim();
-                    if (text !== '' && !txt.includes(text)) return false; if (category !== '' && !catText.includes(category)) return false; return true;
+                    const catText = String(getItemCategory(item)).toLowerCase().trim();
+                    if (text !== '' && !_matchesSearchQuery(`${item.code || ''} ${item.name || ''}`, text)) return false; if (category !== '' && !catText.includes(category)) return false; return true;
                 });
                 renderTable(tableId, filteredData, type);
             } catch(e) { console.error(e); }
@@ -7097,11 +7080,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             } catch (e) { console.warn('loadFullItemHistory error:', e); }
         }
 
+        const RH_PAGE_SIZE = 15;
+        const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
         function renderItemHistory() {
             const modal = document.getElementById('receiveHistoryModal');
             const itemCode = modal._itemCode;
             const typeFilter = document.getElementById('rhTypeFilter').value;
-            const tbody = document.getElementById('receiveHistoryTableBody');
+            const wrap = document.getElementById('rhTimelineWrap');
             const noData = document.getElementById('rhNoData');
             const loadingArchive = document.getElementById('rhLoadingArchive');
             const inActions  = ['รับเข้า', 'new item', 'ซ่อมแซมแล้ว', 'คืน', 'adjust'];
@@ -7121,8 +7106,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 return db - da;
             });
             document.getElementById('rhTotalCount').textContent = logs.length + ' ครั้ง';
-            tbody.innerHTML = '';
             if (!logs.length) {
+                wrap.innerHTML = '';
                 // ยังไม่รู้ผลจาก Archive แน่ชัด → โชว์ "กำลังโหลด" แทน "ไม่มีประวัติ" กันเข้าใจผิดว่าไม่มีข้อมูลทั้งที่ยังโหลดไม่เสร็จ
                 if (!modal._archiveLoaded) {
                     loadingArchive.classList.remove('d-none');
@@ -7135,7 +7120,19 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             }
             loadingArchive.classList.add('d-none');
             noData.classList.add('d-none');
-            logs.forEach(log => {
+            modal._rhAllLogs = logs; // เก็บชุดเต็มไว้ให้ "โหลดเพิ่มเติม" ใช้ต่อ
+            modal._rhVisibleCount = Math.min(RH_PAGE_SIZE, logs.length);
+            _rhRenderTimeline();
+        }
+        function _rhRenderTimeline() {
+            const modal = document.getElementById('receiveHistoryModal');
+            const wrap = document.getElementById('rhTimelineWrap');
+            const logs = modal._rhAllLogs || [];
+            const visible = logs.slice(0, modal._rhVisibleCount || RH_PAGE_SIZE);
+            const inActions  = ['รับเข้า', 'new item', 'ซ่อมแซมแล้ว', 'คืน', 'adjust'];
+            let html = '';
+            let lastMonthKey = null;
+            visible.forEach((log, idx) => {
                 const act = String(log.action || '').trim().toLowerCase();
                 const isIn = inActions.some(a => act.includes(a.toLowerCase()));
                 const timeParts = (log.time || '').split(' ');
@@ -7144,18 +7141,36 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 let actionLabel = isIn ? (act.includes('new item') ? 'รับเข้า (ใหม่)' : act.includes('คืน') ? 'คืน' : act.includes('ซ่อม') ? 'ซ่อมแล้ว' : 'รับเข้า') : (act.includes('ยืม') ? 'ยืม' : act.includes('ชำรุด') ? 'แจ้งชำรุด' : 'เบิก');
                 const actionColor = isIn ? '#22c55e' : '#ef4444';
                 const amountStr  = isIn ? '+' + formatNumber(amountNum) : '-' + formatNumber(amountNum);
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #232838';
-                tr.innerHTML = `
-                    <td class="px-3 py-2"><span class="fw-bold d-block" style="color:#e0e0e0;font-size:13px">${timeParts[0]||'-'}</span><span style="color:#6b7280;font-size:11px">${timeParts[1]||''}</span></td>
-                    <td class="px-3 py-2 text-center"><span class="badge" style="background:${isIn?'#1e3a2f':'#3a1e1e'};color:${actionColor};font-size:11px">${actionLabel}</span></td>
-                    <td class="px-3 py-2 text-center fw-bold" style="color:${actionColor};font-size:15px">${amountStr}</td>
-                    <td class="px-3 py-2 text-center fw-bold" style="color:#60a5fa">${log.balance||'-'}</td>
-                    <td class="px-3 py-2" style="color:#a0aec0;font-size:13px"><i class="fas fa-user-circle me-1" style="color:#6b7280"></i>${displayUser}</td>
-                    <td class="px-3 py-2" style="color:#6b7280;font-size:12px">${log.remark||'-'}</td>
-                `;
-                tbody.appendChild(tr);
+                // หัวข้อกลุ่มเดือน (sticky) — เปลี่ยนกลุ่มเมื่อเดือน/ปีต่างจากรายการก่อนหน้า
+                const d = parseThaiDate(log.time);
+                const monthKey = d ? `${d.getFullYear()}-${d.getMonth()}` : 'ไม่ทราบวันที่';
+                if (monthKey !== lastMonthKey) {
+                    lastMonthKey = monthKey;
+                    const monthLabel = d ? `${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}` : 'ไม่ทราบวันที่';
+                    html += `<div style="position:sticky;top:0;background:#181c24;padding:4px 0 8px;z-index:1"><span style="display:inline-flex;width:fit-content;background:#232838;color:#e0e0e0;font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;white-space:nowrap">${monthLabel}</span></div>`;
+                }
+                const isLast = idx === visible.length - 1;
+                html += `
+                    <div class="d-flex" style="gap:10px">
+                        <div class="d-flex flex-column align-items-center" style="flex-shrink:0">
+                            <div style="width:8px;height:8px;border-radius:50%;background:${actionColor};margin-top:6px"></div>
+                            ${isLast ? '' : `<div style="width:1px;flex:1;background:#2a2f3d;min-height:24px"></div>`}
+                        </div>
+                        <div style="flex:1;min-width:0;padding-bottom:14px">
+                            <p class="mb-0" style="font-size:13px"><span class="fw-bold" style="color:${actionColor}">${actionLabel} ${amountStr}</span> <span style="color:#6b7280">· เหลือ ${log.balance||'-'}</span></p>
+                            <p class="mb-0" style="color:#6b7280;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${timeParts[0]||'-'} ${timeParts[1]||''} · ${displayUser}${log.remark ? ' · ' + log.remark : ''}</p>
+                        </div>
+                    </div>`;
             });
+            if (logs.length > visible.length) {
+                html += `<button class="btn btn-sm w-100 mt-1" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px" onclick="_rhLoadMore()">โหลดเพิ่มเติม (เหลืออีก ${logs.length - visible.length} ครั้ง)</button>`;
+            }
+            wrap.innerHTML = html;
+        }
+        function _rhLoadMore() {
+            const modal = document.getElementById('receiveHistoryModal');
+            modal._rhVisibleCount = (modal._rhVisibleCount || RH_PAGE_SIZE) + RH_PAGE_SIZE;
+            _rhRenderTimeline();
         }
         function filterUsersTable() {
             try {
@@ -8082,7 +8097,12 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (type === 'tools' || type === 'tool') list = allData.tools;
                 else if (type === 'items' || type === 'item') list = allData.items;
                 else list = allData.items.concat(allData.tools);
-                let uniqueCats = getCombinedCategories(list);
+                // ใช้เฉพาะหมวดหมู่ที่มีอยู่จริงในข้อมูลของประเภทนั้นๆ เท่านั้น
+                // (ไม่ใช้ allData.settings.categories ตรงนี้ เพราะเป็น master list รวม prefix ของทั้งอะไหล่+เครื่องมือปนกัน
+                //  ถ้าใช้จะทำให้ dropdown โชว์หมวดหมู่ของอีกประเภทหนึ่งปนมาด้วย)
+                const uniqueCats = [...new Set((list || []).map(item => getItemCategory(item)))]
+                    .filter(c => c && c !== 'undefined' && String(c).trim() !== '')
+                    .sort();
                 uniqueCats.forEach(cat => { let opt = document.createElement('option'); opt.value = cat; datalist.appendChild(opt); });
             } catch(e) { console.error(e); }
         }
@@ -11210,7 +11230,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 // ต้องแปลงผ่าน getProxyImgUrl() ให้เป็นลิงก์ thumbnail ก่อน เหมือนจุดอื่นๆ ในไฟล์นี้ที่แสดงรูปสินค้าได้ปกติ
                 const proxiedImg = typeof getProxyImgUrl === 'function' ? getProxyImgUrl(r.imageUrl) : r.imageUrl;
                 return `
-                <div class="col-md-6 col-lg-4" data-reqid="${r.reqId}">
+                <div class="col-12 col-md-6 col-lg-4" data-reqid="${r.reqId}">
                     <div class="p-3 rounded-3 h-100 pending-card">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div class="form-check">
@@ -11291,7 +11311,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const uid  = String(r.userId || '').replace(/'/g, "\\'");
                 const name = String(r.name   || '').replace(/'/g, "\\'");
                 return `
-                <div class="col-md-6 col-lg-4">
+                <div class="col-12 col-md-6 col-lg-4">
                     <div class="p-3 rounded-3 h-100 pending-card">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <span class="badge" style="background:#e8a020;color:#000;font-size:.7rem">👤 สมัครใหม่</span>
@@ -11620,7 +11640,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         + (lines > 1 ? '<span style="font-size:.65rem;color:rgba(255,255,255,.2)">'+lines+' บรรทัด</span>' : '')
                     + '</div>'
                 + '</div>';
-                return '<div class="col-sm-6 col-lg-4 col-xl-3">' + cardInner + '</div>';
+                return '<div class="col-6 col-sm-6 col-lg-4 col-xl-3">' + cardInner + '</div>';
             }).join('');
         }
 
@@ -12205,116 +12225,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         }
 
         // loadArchiveList จะถูกเรียกเมื่อ goTo('archive') แทน (ลบ DOMContentLoaded auto-load เพราะตอนเปิดหน้ายังไม่ login)
-
-        function loadRestoreBackupList() {
-            const wrap = document.getElementById('restoreBackupListWrap');
-            if (!wrap) return;
-            wrap.innerHTML = '<div class="text-center py-3" style="color:#6b7280"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</div>';
-
-            const handleSuccess = function(res) {
-                if (!res || !res.success) {
-                    wrap.innerHTML = '<div class="text-center py-3 text-danger small">โหลดไม่สำเร็จ: ' + ((res && res.error) || 'ไม่ทราบสาเหตุ') + '</div>';
-                    return;
-                }
-                if (!res.files || !res.files.length) {
-                    wrap.innerHTML = '<div class="text-center py-4" style="color:#6b7280"><i class="fas fa-inbox fs-3 d-block mb-2 opacity-25"></i><p class="mb-0 small">ยังไม่มีไฟล์ Backup</p></div>';
-                    return;
-                }
-                wrap.innerHTML = res.files.map(function(f) {
-                    const d = new Date(f.date);
-                    const dateLabel = d.toLocaleString('th-TH', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-                    return '<div class="d-flex align-items-center justify-content-between px-3 py-2 mb-2 rounded-3" style="background:#232838;border:1px solid #2a2f3d">'
-                        + '<div><span class="fw-bold me-2" style="color:#e0e0e0"><i class="fas fa-file-code me-2" style="color:#f87171"></i>' + f.name + '</span>'
-                        + '<span class="badge me-1" style="background:#232838;color:#a0aec0;font-size:10px;border:1px solid #2a2f3d">' + dateLabel + '</span>'
-                        + '<span class="badge" style="background:#232838;color:#a0aec0;font-size:10px;border:1px solid #2a2f3d">' + f.sizeKB + ' KB</span></div>'
-                        + '<button onclick="doRestoreFromBackup(\'' + f.id + '\',\'' + f.name.replace(/'/g,"\\'") + '\')" class="btn btn-sm" style="background:#3a1e1e;color:#f87171;border:1px solid #5f2a2a;border-radius:8px;font-size:12px"><i class="fas fa-cloud-download-alt me-1"></i>กู้คืน</button>'
-                        + '</div>';
-                }).join('');
-            };
-            const handleFailure = function(err) {
-                wrap.innerHTML = '<div class="text-center py-3 text-danger small">โหลดไม่สำเร็จ: ' + ((err && (err.message || err.toString())) || 'ไม่ทราบสาเหตุ') + '</div>';
-            };
-
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(handleSuccess).withFailureHandler(handleFailure)
-                    .webListBackupFiles(currentUserProfile.uid, '');
-            } else if (typeof webPost === 'function') {
-                webPost('webListBackupFiles', [currentUserProfile.uid, '']).then(handleSuccess).catch(handleFailure);
-            } else {
-                wrap.innerHTML = '<div class="text-center py-3" style="color:#6b7280"><small>ใช้งานได้บน GAS จริงเท่านั้น</small></div>';
-            }
-        }
-
-        function doRestoreFromBackup(fileId, fileName) {
-            if (!currentUserProfile || currentUserProfile.role !== 'admin') {
-                Swal.fire({ icon: 'error', title: 'ไม่มีสิทธิ์', text: 'ฟีเจอร์นี้สำหรับ Admin เท่านั้น', background: '#1a2230', color: '#e0e0e0' });
-                return;
-            }
-            Swal.fire({
-                title: 'กู้คืนข้อมูลจาก Backup?',
-                html: '<div style="color:#e0e0e0;text-align:left">'
-                    + 'ไฟล์: <b style="color:#f87171">' + fileName + '</b><br><br>'
-                    + '⚠️ การกู้คืนจะ<b>เขียนทับข้อมูลปัจจุบันทุกชีต</b>ที่มีในไฟล์นี้<br>'
-                    + 'ระบบจะสำรองข้อมูลปัจจุบันไว้ก่อนเสมอ (ย้อนกลับได้ถ้ากู้ผิดไฟล์)<br><br>'
-                    + 'กรอกรหัส PIN และพิมพ์ <b>"ยืนยันกู้คืน"</b> เพื่อดำเนินการต่อ</div>',
-                icon: 'warning',
-                input: 'password',
-                inputPlaceholder: 'กรอกรหัส PIN',
-                showCancelButton: true,
-                confirmButtonText: 'ถัดไป',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#f87171',
-                background: '#1a2230',
-                color: '#e0e0e0'
-            }).then(function(pinResult) {
-                if (!pinResult.isConfirmed || !pinResult.value) return;
-                const pin = pinResult.value;
-                Swal.fire({
-                    title: 'ยืนยันครั้งสุดท้าย',
-                    html: '<div style="color:#e0e0e0">พิมพ์คำว่า <b style="color:#f87171">ยืนยันกู้คืน</b> ให้ตรงตัว</div>',
-                    input: 'text',
-                    inputPlaceholder: 'พิมพ์ ยืนยันกู้คืน',
-                    showCancelButton: true,
-                    confirmButtonText: 'กู้คืนข้อมูล',
-                    cancelButtonText: 'ยกเลิก',
-                    confirmButtonColor: '#f87171',
-                    background: '#1a2230',
-                    color: '#e0e0e0'
-                }).then(function(confirmResult) {
-                    if (!confirmResult.isConfirmed || !confirmResult.value) return;
-                    const confirmText = confirmResult.value;
-                    Swal.fire({ title: 'กำลังกู้คืน...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
-
-                    const handleSuccess = function(res) {
-                        if (!res || !res.success) {
-                            Swal.fire({ icon: 'error', title: 'กู้คืนไม่สำเร็จ', text: (res && res.error) || 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' });
-                            return;
-                        }
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'กู้คืนสำเร็จ',
-                            html: '<div style="color:#e0e0e0;text-align:left">กู้คืน ' + res.restoredSheets.length + ' ชีต<br>'
-                                + 'สำรองข้อมูลก่อนกู้คืนไว้ที่: <b>' + res.safetyBackupFile + '</b></div>',
-                            background: '#1a2230',
-                            color: '#e0e0e0'
-                        });
-                        loadRestoreBackupList();
-                    };
-                    const handleFailure = function(err) {
-                        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err && err.message || err), background: '#1a2230', color: '#e0e0e0' });
-                    };
-
-                    if (typeof google !== 'undefined' && google.script && google.script.run) {
-                        google.script.run.withSuccessHandler(handleSuccess).withFailureHandler(handleFailure)
-                            .webRestoreFromBackup(currentUserProfile.uid, pin, fileId, confirmText);
-                    } else if (typeof webPost === 'function') {
-                        webPost('webRestoreFromBackup', [currentUserProfile.uid, pin, fileId, confirmText]).then(handleSuccess).catch(handleFailure);
-                    } else {
-                        Swal.close();
-                    }
-                });
-            });
-        }
 
         function doRestoreArchive(archiveName) {
             if (!currentUserProfile || currentUserProfile.role !== 'admin') {
