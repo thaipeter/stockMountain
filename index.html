@@ -2126,6 +2126,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end mt-1" style="min-width:180px">
                                 <li><a class="dropdown-item" href="#" onclick="openChangePinModal()"><i class="fas fa-key me-2" style="color:#888"></i> เปลี่ยน PIN</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="openChangeDashboardPasswordModal()"><i class="fas fa-shield-alt me-2" style="color:#f87171"></i> รหัสผ่าน Dashboard</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="#" onclick="logout()" style="color:#f44336"><i class="fas fa-power-off me-2"></i> ออกจากระบบ</a></li>
                             </ul>
@@ -3422,6 +3423,26 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </div>
                         </div>
                     </div>
+
+                    <!-- กู้คืนจากไฟล์ Backup -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm" style="background:#1a2230;border-radius:16px">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="fw-bold mb-0" style="color:#fff"><i class="fas fa-cloud-download-alt me-2" style="color:#f87171"></i> กู้คืนจากไฟล์ Backup</h5>
+                                        <button class="btn btn-sm" onclick="loadRestoreBackupList()" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px"><i class="fas fa-sync me-1"></i> รีเฟรช</button>
+                                    </div>
+                                    <div class="p-3 mb-3 rounded-3" style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25)">
+                                        <p class="small mb-0" style="color:#f87171"><i class="fas fa-exclamation-triangle me-2"></i>ใช้เฉพาะกรณีข้อมูลเสียหาย/หายทั้งชีตเท่านั้น การกู้คืนจะ<strong>เขียนทับข้อมูลปัจจุบันทุกชีต</strong>ที่มีในไฟล์ backup — ระบบจะสำรองข้อมูลปัจจุบันไว้ก่อนกู้คืนเสมอ (ย้อนกลับได้ถ้ากู้ผิดไฟล์)</p>
+                                    </div>
+                                    <div id="restoreBackupListWrap">
+                                        <div class="text-center py-4" style="color:#6b7280"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="stockTakeMgmt" class="section-view">
@@ -3897,9 +3918,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <div id="autoBackupOptions" style="display:none;padding-top:16px;border-top:1px solid rgba(74,222,128,.2)">
                                                 <div class="settings-row mb-3" style="flex-direction:row">
                                                     <div><label class="form-label">เวลา Backup</label><input type="time" class="form-control" id="setAutoBackupTime" value="23:00"></div>
+                                                    <div><label class="form-label">ความถี่</label>
+                                                        <select class="form-select" id="setAutoBackupFreqDays">
+                                                            <option value="1">ทุกวัน</option>
+                                                            <option value="2">ทุก 2 วัน</option>
+                                                            <option value="3">ทุก 3 วัน</option>
+                                                            <option value="7">ทุกสัปดาห์</option>
+                                                        </select>
+                                                    </div>
                                                     <div><label class="form-label">ส่งไปอีเมล</label><input type="email" class="form-control" id="setAutoBackupEmail" placeholder="admin@company.com"></div>
                                                 </div>
-                                                <div style="font-size:.7rem;color:rgba(255,255,255,.4)">ต้องตั้ง Time-driven Trigger ชื่อ <code>autoBackupTask</code> ใน Apps Script 1 ครั้ง (ดูคู่มือ) ระบบจะอ่านเวลาที่ตั้งไว้นี้เองทุกครั้งที่ trigger ทำงาน</div>
+                                                <div style="font-size:.7rem;color:rgba(255,255,255,.4)">ต้องตั้ง Time-driven Trigger ชื่อ <code>autoBackupTask</code> แบบ "ทุกชั่วโมง" (Hour timer) ใน Apps Script 1 ครั้ง (ดูคู่มือ) ระบบจะอ่านเวลา+ความถี่ที่ตั้งไว้นี้เองทุกครั้งที่ trigger ทำงาน — ห้ามเปลี่ยน trigger เป็น "ทุก 12 ชม." หรือ "ทุกวัน" เอง เพราะจะคำนวณเวลาคลาดเคลื่อนได้ ให้ปรับความถี่ backup ที่นี่แทน</div>
                                             </div>
                                         </div>
                                         <div class="settings-box">
@@ -4402,6 +4431,41 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             </div>
         </div>
     </div>
+
+    <!-- Modal: ตั้ง/เปลี่ยนรหัสผ่าน Dashboard (แยกจาก PIN — ใช้เข้าถึงฟังก์ชันความเสี่ยงสูง เช่น กู้คืนข้อมูล/ล้างระบบ) -->
+    <div class="modal fade" id="changeDashboardPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header" style="background:linear-gradient(135deg,#7c2d12,#991b1b);">
+                    <h5 class="modal-title text-white fw-bold"><i class="fas fa-shield-alt text-warning me-2"></i> รหัสผ่าน Dashboard</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning small mb-3">
+                        <i class="fas fa-info-circle me-1"></i> รหัสผ่านนี้แยกจาก PIN ที่ใช้เบิก/คืนของผ่าน QR ใช้เฉพาะยืนยันตัวตนก่อนทำรายการสำคัญใน Dashboard (ล้าง Log, กู้คืนข้อมูล, Factory Reset) — ต้องมีอย่างน้อย <b>6 ตัวอักษร</b>
+                    </div>
+                    <div class="mb-3" id="dashPwOldWrap">
+                        <label class="form-label text-muted small fw-bold">รหัสผ่านเดิม</label>
+                        <input type="password" class="form-control" id="changeDashPwOld" placeholder="กรอกรหัสผ่านเดิม (ถ้าเคยตั้งไว้)">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร) <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="changeDashPwNew" placeholder="รหัสผ่านใหม่" minlength="6">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-muted small fw-bold">ยืนยันรหัสผ่านใหม่ <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="changeDashPwConfirm" placeholder="ยืนยันรหัสผ่านใหม่" minlength="6" onkeypress="if(event.key==='Enter') submitChangeDashboardPassword()">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light border w-100 mb-2" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn fw-bold w-100 shadow-sm text-white" style="background:#991b1b" onclick="submitChangeDashboardPassword()">
+                        <i class="fas fa-save me-1"></i> บันทึกรหัสผ่าน Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
@@ -4599,7 +4663,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         let allData = { items: [], tools: [], history: [], activeBorrows: [], pendingPOs: [], users: [], settings: {} };
         let lastDataSnapshot = null; // ใช้เทียบว่าข้อมูลรอบใหม่ต่างจากรอบก่อนจริงหรือไม่ ก่อนจะวาดหน้าใหม่ตอน auto-refresh
         let charts = {};
-        let adjustModal, addPOModal, editPOModal, txModal, addBorrowModal, damageModal, repairModal, newItemModal, editItemModal, qrActionModal, changePinModal;
+        let adjustModal, addPOModal, editPOModal, txModal, addBorrowModal, damageModal, repairModal, newItemModal, editItemModal, qrActionModal, changePinModal, changeDashboardPasswordModal;
         let sessionTimer;
         let currentUserProfile = { name: 'Web Admin', uid: null, role: 'admin' };
         let webFailedAttempts = {};
@@ -4626,6 +4690,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             editItemModal = new bootstrap.Modal(document.getElementById('editItemModal'));
             qrActionModal = new bootstrap.Modal(document.getElementById('qrActionModal'));
             changePinModal = new bootstrap.Modal(document.getElementById('changePinModal'));
+            changeDashboardPasswordModal = new bootstrap.Modal(document.getElementById('changeDashboardPasswordModal'));
             
             // qrScannerModal replaced by scannerPanel - no modal listener needed
 
@@ -4857,6 +4922,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
                     if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
                     if(sectionId === 'archiveMgmt' && typeof loadArchiveList === 'function') loadArchiveList();
+                    if(sectionId === 'archiveMgmt' && typeof loadRestoreBackupList === 'function') loadRestoreBackupList();
                     if(sectionId === 'pendingApprovals' && typeof startPendingApprovalsPolling === 'function') startPendingApprovalsPolling();
                     else if(typeof stopPendingApprovalsPolling === 'function') stopPendingApprovalsPolling();
                 } catch(errSec) {
@@ -5500,6 +5566,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
             if(document.getElementById('setAutoBackupEnabled')) { document.getElementById('setAutoBackupEnabled').checked = !!s.autoBackupEnabled; toggleAutoBackupOptions(!!s.autoBackupEnabled); }
             if(document.getElementById('setAutoBackupTime')) document.getElementById('setAutoBackupTime').value = s.autoBackupTime || '23:00';
+            if(document.getElementById('setAutoBackupFreqDays')) document.getElementById('setAutoBackupFreqDays').value = String(s.autoBackupFreqDays || 1);
             if(document.getElementById('setAutoBackupEmail')) document.getElementById('setAutoBackupEmail').value = s.autoBackupEmail || '';
 
             // --- Detailed Permissions: Items ---
@@ -5780,6 +5847,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 lowStockPercent: document.getElementById('setLowStockPercent') ? parseInt(document.getElementById('setLowStockPercent').value) : 100,
                 autoBackupEnabled: document.getElementById('setAutoBackupEnabled') ? document.getElementById('setAutoBackupEnabled').checked : false,
                 autoBackupTime: document.getElementById('setAutoBackupTime') ? document.getElementById('setAutoBackupTime').value : '23:00',
+                autoBackupFreqDays: document.getElementById('setAutoBackupFreqDays') ? Number(document.getElementById('setAutoBackupFreqDays').value) : 1,
                 autoBackupEmail: document.getElementById('setAutoBackupEmail') ? document.getElementById('setAutoBackupEmail').value.trim() : '',
                 // Items permissions
                 permAddItemUser: document.getElementById('setPermAddItemUser') ? document.getElementById('setPermAddItemUser').checked : false,
@@ -9034,13 +9102,13 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         function downloadBackup() {
             if (currentUserProfile.role !== 'admin') return Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
             Swal.fire({
-                title: 'ยืนยันตัวตน', text: "กรอกรหัส PIN เพื่อดาวน์โหลด Backup ข้อมูลทั้งหมด",
-                input: 'password', inputPlaceholder: 'กรอกรหัส PIN',
+                title: 'ยืนยันตัวตน', text: "กรอกรหัสผ่าน Dashboard เพื่อดาวน์โหลด Backup ข้อมูลทั้งหมด",
+                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
                 showCancelButton: true, confirmButtonText: 'ดาวน์โหลด', cancelButtonText: 'ยกเลิก'
             }).then((result) => {
                 if (!result.isConfirmed) return;
                 const pin = result.value;
-                if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัส PIN', 'error');
+                if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัสผ่าน Dashboard', 'error');
                 _runBackupDownload(pin);
             });
         }
@@ -9140,13 +9208,13 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (currentUserProfile.role !== 'admin') return Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
             Swal.fire({
                 title: 'ตรวจ & เติมข้อมูลใบเบิกย้อนหลัง?',
-                html: 'ระบบจะไล่เช็ครายการเบิกเก่าที่ "พิมพ์ใบเบิกไม่ได้" แล้วเติมข้อมูลให้อัตโนมัติเฉพาะรายการที่ยืนยันได้ว่าเป็น "เบิก" จริงเท่านั้น (ปลอดภัย ไม่ทำให้ข้อมูลซ้ำถ้ากดซ้ำ)<br><br>กรอกรหัส PIN เพื่อยืนยัน',
-                input: 'password', inputPlaceholder: 'กรอกรหัส PIN',
+                html: 'ระบบจะไล่เช็ครายการเบิกเก่าที่ "พิมพ์ใบเบิกไม่ได้" แล้วเติมข้อมูลให้อัตโนมัติเฉพาะรายการที่ยืนยันได้ว่าเป็น "เบิก" จริงเท่านั้น (ปลอดภัย ไม่ทำให้ข้อมูลซ้ำถ้ากดซ้ำ)<br><br>กรอกรหัสผ่าน Dashboard เพื่อยืนยัน',
+                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
                 showCancelButton: true, confirmButtonText: 'เริ่มตรวจ & เติมข้อมูล', cancelButtonText: 'ยกเลิก'
             }).then((result) => {
                 if (!result.isConfirmed) return;
                 const pin = result.value;
-                if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัส PIN', 'error');
+                if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัสผ่าน Dashboard', 'error');
                 document.getElementById('loading').style.display = 'flex';
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
                     google.script.run
@@ -9250,9 +9318,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         function confirmFactoryReset() {
             if (currentUserProfile.role !== 'admin') return Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
             Swal.fire({
-                title: 'Factory Reset', text: "พิมพ์คำว่า 'RESET' และกรอกรหัส PIN เพื่อยืนยันการล้างฐานข้อมูลทั้งหมดทิ้ง (ไม่สามารถย้อนกลับได้)", 
+                title: 'Factory Reset', text: "พิมพ์คำว่า 'RESET' และกรอกรหัสผ่าน Dashboard เพื่อยืนยันการล้างฐานข้อมูลทั้งหมดทิ้ง (ไม่สามารถย้อนกลับได้)", 
                 html: '<input id="swal-input1" class="swal2-input" placeholder="พิมพ์ RESET">' +
-                      '<input id="swal-input2" class="swal2-input" type="password" placeholder="กรอกรหัส PIN">',
+                      '<input id="swal-input2" class="swal2-input" type="password" placeholder="กรอกรหัสผ่าน Dashboard">',
                 focusConfirm: false,
                 preConfirm: () => {
                    return [
@@ -9265,7 +9333,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (result.isConfirmed) {
                     const vals = result.value;
                     if(vals[0] !== 'RESET') return Swal.fire('ผิดพลาด', 'กรุณาพิมพ์ RESET ให้ถูกต้อง', 'error');
-                    if(!vals[1]) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัส PIN', 'error');
+                    if(!vals[1]) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัสผ่าน Dashboard', 'error');
                     const pin = vals[1];
                     document.getElementById('loading').style.display = 'flex';
                     if (typeof google !== 'undefined' && google.script && google.script.run && google.script.run.webFactoryReset) {
@@ -10770,6 +10838,61 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }
         }
 
+        function openChangeDashboardPasswordModal() {
+            document.getElementById('changeDashPwOld').value = '';
+            document.getElementById('changeDashPwNew').value = '';
+            document.getElementById('changeDashPwConfirm').value = '';
+            changeDashboardPasswordModal.show();
+            const handleHasPw = function(res) {
+                const oldWrap = document.getElementById('dashPwOldWrap');
+                if (res && res.success && !res.hasPassword) {
+                    oldWrap.style.display = 'none'; // ยังไม่เคยตั้ง — ครั้งแรกไม่ต้องกรอกรหัสเดิม
+                } else {
+                    oldWrap.style.display = '';
+                }
+            };
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run.withSuccessHandler(handleHasPw).withFailureHandler(function(){}).webHasDashboardPassword(currentUserProfile.uid);
+            } else {
+                callGAS('webHasDashboardPassword', [currentUserProfile.uid], handleHasPw, function(){});
+            }
+            setTimeout(() => document.getElementById('changeDashPwNew').focus(), 400);
+        }
+
+        function submitChangeDashboardPassword() {
+            const oldPw = document.getElementById('changeDashPwOld').value.trim();
+            const newPw = document.getElementById('changeDashPwNew').value.trim();
+            const confirmPw = document.getElementById('changeDashPwConfirm').value.trim();
+            if (!newPw || !confirmPw) return Swal.fire({icon:'warning', title:'แจ้งเตือน', text:'กรุณากรอกรหัสผ่านใหม่ให้ครบทั้งสองช่อง'});
+            if (newPw.length < 6) return Swal.fire({icon:'warning', title:'แจ้งเตือน', text:'รหัสผ่าน Dashboard ต้องมีอย่างน้อย 6 ตัวอักษร'});
+            if (newPw !== confirmPw) return Swal.fire({icon:'warning', title:'แจ้งเตือน', text:'รหัสผ่านใหม่ไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง'});
+            if (!currentUserProfile.uid) return Swal.fire({icon:'error', title:'ข้อผิดพลาด', text:'ไม่พบรหัสประจำตัว กรุณาออกจากระบบแล้วเข้าใหม่'});
+
+            document.getElementById('loading').style.display = 'flex';
+            changeDashboardPasswordModal.hide();
+
+            const handleSuccess = function(res) {
+                document.getElementById('loading').style.display = 'none';
+                if (res && res.success) {
+                    writeAudit('SETTINGS', `ตั้ง/เปลี่ยนรหัสผ่าน Dashboard สำเร็จ — ${currentUserProfile.name}`);
+                    Swal.fire({icon:'success', title:'สำเร็จ!', text:'ตั้ง/เปลี่ยนรหัสผ่าน Dashboard เรียบร้อยแล้ว', timer:2500, showConfirmButton:false});
+                } else {
+                    Swal.fire({icon:'error', title:'ข้อผิดพลาด', text: res ? res.error : 'ไม่สามารถเปลี่ยนรหัสผ่านได้'});
+                }
+            };
+            const handleFailure = function(err) {
+                document.getElementById('loading').style.display = 'none';
+                Swal.fire({icon:'error', title:'ข้อผิดพลาด', text: String(err)});
+            };
+
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run.withSuccessHandler(handleSuccess).withFailureHandler(handleFailure)
+                    .webChangeDashboardPassword(currentUserProfile.uid, oldPw, newPw);
+            } else {
+                callGAS('webChangeDashboardPassword', [currentUserProfile.uid, oldPw, newPw], handleSuccess, handleFailure);
+            }
+        }
+
         /* ============================================================
            SYSTEM AUDIT LOG ENGINE (Centralized — Google Sheet)
         ============================================================ */
@@ -10981,10 +11104,10 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (currentUserProfile.role !== 'admin') return Swal.fire({icon:'error', title:'ปฏิเสธ', text:'เฉพาะ Admin เท่านั้น'});
             Swal.fire({
                 title: 'ล้าง Audit Log?',
-                text: 'บันทึกกิจกรรมทั้งหมดจะถูกลบออกจาก Google Sheet ไม่สามารถย้อนกลับได้ กรุณากรอกรหัส PIN เพื่อยืนยัน',
+                text: 'บันทึกกิจกรรมทั้งหมดจะถูกลบออกจาก Google Sheet ไม่สามารถย้อนกลับได้ กรุณากรอกรหัสผ่าน Dashboard เพื่อยืนยัน',
                 icon: 'warning',
                 input: 'password',
-                inputPlaceholder: 'กรอกรหัส PIN',
+                inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#64748b',
@@ -10993,7 +11116,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }).then(r => {
                 if (r.isConfirmed) {
                     const pin = r.value;
-                    if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัส PIN', 'error');
+                    if (!pin) return Swal.fire('ผิดพลาด', 'กรุณากรอกรหัสผ่าน Dashboard', 'error');
                     document.getElementById('loading').style.display = 'flex';
                     const handleClearSuccess = function(res) {
                         document.getElementById('loading').style.display = 'none';
@@ -12253,6 +12376,96 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     }
                 }, function(err) {
                     Swal.fire({ icon: 'error', title: 'Error', text: String(err), background: '#1a2230', color: '#e0e0e0' });
+                });
+            });
+        }
+
+        function loadRestoreBackupList() {
+            const wrap = document.getElementById('restoreBackupListWrap');
+            if (!wrap) return;
+            wrap.innerHTML = '<div class="text-center py-3" style="color:#6b7280"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</div>';
+
+            callGAS('webListBackupFiles', [currentUserProfile ? currentUserProfile.uid : '-', ''], function(res) {
+                if (!res || !res.success) {
+                    wrap.innerHTML = '<div class="text-center py-3 text-danger small">โหลดไม่สำเร็จ: ' + ((res && res.error) || 'ไม่ทราบสาเหตุ') + '</div>';
+                    return;
+                }
+                if (!res.files || !res.files.length) {
+                    wrap.innerHTML = '<div class="text-center py-4" style="color:#6b7280"><i class="fas fa-inbox fs-3 d-block mb-2 opacity-25"></i><p class="mb-0 small">ยังไม่มีไฟล์ Backup</p></div>';
+                    return;
+                }
+                wrap.innerHTML = res.files.map(function(f) {
+                    const d = new Date(f.date);
+                    const dateLabel = d.toLocaleString('th-TH', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+                    return '<div class="d-flex align-items-center justify-content-between px-3 py-2 mb-2 rounded-3" style="background:#232838;border:1px solid #2a2f3d">'
+                        + '<div><span class="fw-bold me-2" style="color:#e0e0e0"><i class="fas fa-file-code me-2" style="color:#f87171"></i>' + f.name + '</span>'
+                        + '<span class="badge me-1" style="background:#232838;color:#a0aec0;font-size:10px;border:1px solid #2a2f3d">' + dateLabel + '</span>'
+                        + '<span class="badge" style="background:#232838;color:#a0aec0;font-size:10px;border:1px solid #2a2f3d">' + f.sizeKB + ' KB</span></div>'
+                        + '<button onclick="doRestoreFromBackup(\'' + f.id + '\',\'' + f.name.replace(/'/g,"\\'") + '\')" class="btn btn-sm" style="background:#3a1e1e;color:#f87171;border:1px solid #5f2a2a;border-radius:8px;font-size:12px"><i class="fas fa-cloud-download-alt me-1"></i>กู้คืน</button>'
+                        + '</div>';
+                }).join('');
+            }, function(err) {
+                wrap.innerHTML = '<div class="text-center py-3 text-danger small">โหลดไม่สำเร็จ: ' + String(err) + '</div>';
+            });
+        }
+
+        function doRestoreFromBackup(fileId, fileName) {
+            if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+                Swal.fire({ icon: 'error', title: 'ไม่มีสิทธิ์', text: 'ฟีเจอร์นี้สำหรับ Admin เท่านั้น', background: '#1a2230', color: '#e0e0e0' });
+                return;
+            }
+            Swal.fire({
+                title: 'กู้คืนข้อมูลจาก Backup?',
+                html: '<div style="color:#e0e0e0;text-align:left">'
+                    + 'ไฟล์: <b style="color:#f87171">' + fileName + '</b><br><br>'
+                    + '⚠️ การกู้คืนจะ<b>เขียนทับข้อมูลปัจจุบันทุกชีต</b>ที่มีในไฟล์นี้<br>'
+                    + 'ระบบจะสำรองข้อมูลปัจจุบันไว้ก่อนเสมอ (ย้อนกลับได้ถ้ากู้ผิดไฟล์)<br><br>'
+                    + 'กรอกรหัสผ่าน Dashboard และพิมพ์ <b>"ยืนยันกู้คืน"</b> เพื่อดำเนินการต่อ</div>',
+                icon: 'warning',
+                input: 'password',
+                inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
+                showCancelButton: true,
+                confirmButtonText: 'ถัดไป',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#f87171',
+                background: '#1a2230',
+                color: '#e0e0e0'
+            }).then(function(pinResult) {
+                if (!pinResult.isConfirmed || !pinResult.value) return;
+                const pin = pinResult.value;
+                Swal.fire({
+                    title: 'ยืนยันครั้งสุดท้าย',
+                    html: '<div style="color:#e0e0e0">พิมพ์คำว่า <b style="color:#f87171">ยืนยันกู้คืน</b> ให้ตรงตัว</div>',
+                    input: 'text',
+                    inputPlaceholder: 'พิมพ์ ยืนยันกู้คืน',
+                    showCancelButton: true,
+                    confirmButtonText: 'กู้คืนข้อมูล',
+                    cancelButtonText: 'ยกเลิก',
+                    confirmButtonColor: '#f87171',
+                    background: '#1a2230',
+                    color: '#e0e0e0'
+                }).then(function(confirmResult) {
+                    if (!confirmResult.isConfirmed || !confirmResult.value) return;
+                    const confirmText = confirmResult.value;
+                    Swal.fire({ title: 'กำลังกู้คืน...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
+
+                    callGAS('webRestoreFromBackup', [currentUserProfile.uid, pin, fileId, confirmText], function(res) {
+                        if (!res || !res.success) {
+                            Swal.fire({ icon: 'error', title: 'กู้คืนไม่สำเร็จ', text: (res && res.error) || 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' });
+                            return;
+                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'กู้คืนสำเร็จ',
+                            html: '<div style="color:#e0e0e0;text-align:left">กู้คืน ' + res.restoredSheets.length + ' ชีต<br>'
+                                + 'สำรองข้อมูลก่อนกู้คืนไว้ที่: <b>' + res.safetyBackupFile + '</b></div>',
+                            background: '#1a2230',
+                            color: '#e0e0e0'
+                        });
+                        loadRestoreBackupList();
+                    }, function(err) {
+                        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err), background: '#1a2230', color: '#e0e0e0' });
+                    });
                 });
             });
         }
