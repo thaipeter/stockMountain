@@ -1190,7 +1190,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <option value="u_staff123">Test Staff (Staff)</option>
                         <option value="u_user123">Test User (User)</option>
                     </select>
-                    <input type="password" class="form-control form-control-lg text-center fw-bold tracking-widest" id="loginPin" placeholder="กรอกรหัส PIN" value="" autocomplete="off">
+                    <input type="password" class="form-control form-control-lg text-center fw-bold tracking-widest" id="loginPin" placeholder="กรอกรหัสผ่าน Dashboard" value="" autocomplete="off">
                 </div>
                 <button type="submit" class="btn btn-theme btn-lg w-100 fw-bold py-3 rounded-3 shadow-sm">เข้าสู่ระบบ</button>
             </form>
@@ -5297,7 +5297,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
             btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังตรวจสอบ...';
 
-            const isGASLogin = (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webVerifyUserPin === 'function' && window.location.protocol !== 'file:');
+            const isGASLogin = ((window.GAS_URL) || (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webVerifyDashboardPassword === 'function')) && window.location.protocol !== 'file:';
             if (isGASLogin) {
                 // preload inventory พร้อมกับ verify PIN เลย — ไม่ต้องรอ 2 รอบ
                 let _pinValid = null;
@@ -5354,33 +5354,39 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if(currentUserProfile.role === 'admin') setTimeout(startQRPendingPolling, 600);
                 }
 
-                // request 1: verify PIN
-                google.script.run
-                    .withSuccessHandler(function(isValid) {
-                        _pinValid = isValid;
-                        _pinDone = true;
-                        tryFinishLogin();
-                    })
-                    .withFailureHandler(function(err) {
-                        _pinDone = true; _dataDone = true;
-                        btn.disabled = false; btn.innerHTML = 'เข้าสู่ระบบ';
-                        Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', confirmButtonColor: 'var(--primary-color)'});
-                    })
-                    .webVerifyUserPin(uid, pin);
+                // request 1: verify Dashboard Password
+                function _onPinResult(isValid) {
+                    _pinValid = isValid;
+                    _pinDone = true;
+                    tryFinishLogin();
+                }
+                function _onPinFail(err) {
+                    _pinDone = true; _dataDone = true;
+                    btn.disabled = false; btn.innerHTML = 'เข้าสู่ระบบ';
+                    Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', confirmButtonColor: 'var(--primary-color)'});
+                }
+                if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webVerifyDashboardPassword === 'function') {
+                    google.script.run.withSuccessHandler(_onPinResult).withFailureHandler(_onPinFail).webVerifyDashboardPassword(uid, pin);
+                } else {
+                    callGAS('webVerifyDashboardPassword', [uid, pin], _onPinResult, _onPinFail);
+                }
 
                 // request 2: preload inventory ระหว่างรอ verify
-                google.script.run
-                    .withSuccessHandler(function(data) {
-                        _inventoryData = data || {};
-                        _dataDone = true;
-                        tryFinishLogin();
-                    })
-                    .withFailureHandler(function() {
-                        _inventoryData = allData; // fallback ข้อมูลเดิม
-                        _dataDone = true;
-                        tryFinishLogin();
-                    })
-                    .getInventoryData();
+                function _onDataResult(data) {
+                    _inventoryData = data || {};
+                    _dataDone = true;
+                    tryFinishLogin();
+                }
+                function _onDataFail() {
+                    _inventoryData = allData; // fallback ข้อมูลเดิม
+                    _dataDone = true;
+                    tryFinishLogin();
+                }
+                if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.getInventoryData === 'function') {
+                    google.script.run.withSuccessHandler(_onDataResult).withFailureHandler(_onDataFail).getInventoryData();
+                } else {
+                    callGAS('getInventoryData', [], _onDataResult, _onDataFail);
+                }
             } else {
                 // Demo Mode: ตรวจสอบ PIN (ถ้าใส่ 1234 หรือรหัสใดๆ จะสว่างไฟเขียวทันที)
                 const cleanPin = String(pin || '').trim();
