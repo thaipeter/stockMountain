@@ -1111,6 +1111,11 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
     #aiChatMessages { max-height: 45vh !important; padding: 16px !important; }
     .ai-insight-card-v2 { padding: 10px !important; }
 
+    /* ตารางคลังอะไหล่/เครื่องมือหลัก: จอมือถือแคบเกินกว่าจะสแกนตารางกว้างๆ ได้สะดวก
+       สลับไปแสดงเป็นการ์ดแทนบนจอแคบ ส่วนจอปกติ/เดสก์ท็อปยังเป็นตารางเดิมเพื่อสแกนเทียบข้อมูลเยอะๆ ได้เร็ว */
+    .desktop-table-view { display: none !important; }
+    .mobile-card-list { display: flex !important; }
+
     /* List ประวัติคร่าวๆ ในการ์ดแนวโน้มสต็อก: ตัดคำสั้นลงกันล้นจอแคบ */
     #stockTrendHistoryList .text-truncate { max-width: 150px !important; }
 }
@@ -2289,7 +2294,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     <button class="btn btn-secondary btn-sm" onclick="exportMonthlySummary()"><i class="fas fa-file-export"></i> ส่งออกข้อมูล</button>
                                 </div>
                             </div>
-                            <div class="table-responsive">
+                            <div id="dashUnifiedCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px"></div>
+                            <div class="table-responsive desktop-table-view">
                                 <table class="table align-middle mb-0" id="dashUnifiedInventoryTable">
                                     <thead>
                                         <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
@@ -2737,7 +2743,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <div class="search-box mx-2"><i class="fas fa-search text-primary"></i><input type="text" class="form-control form-control-lg shadow-sm" placeholder="พิมพ์ชื่อ, รหัส..." onkeyup="filterTable('itemsTable')"></div>
                     </div>
                     <div class="table-container p-0">
-                        <div class="table-responsive"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
+                        <div id="itemsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
+                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
 
@@ -2755,7 +2762,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <div class="search-box mx-2"><i class="fas fa-search text-info"></i><input type="text" class="form-control form-control-lg shadow-sm" placeholder="พิมพ์ชื่อ, รหัส..." onkeyup="filterTable('toolsTable')"></div>
                     </div>
                     <div class="table-container p-0">
-                        <div class="table-responsive"><table class="table table-hover align-middle" id="toolsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อเครื่องมือ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">พร้อมใช้</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
+                        <div id="toolsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
+                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="toolsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อเครื่องมือ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">พร้อมใช้</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
 
@@ -6300,11 +6308,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
         function renderDashUnifiedRows(data, query) {
             const tbody = document.querySelector('#dashUnifiedInventoryTable tbody');
+            const cardList = document.getElementById('dashUnifiedCardListMobile');
             if (!tbody) return;
             const { rows, truncated, searching } = buildDashUnifiedRows(data, query);
             tbody.innerHTML = '';
+            if (cardList) cardList.innerHTML = '';
             if (rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">${searching ? 'ไม่พบรายการที่ค้นหา' : 'ไม่มีข้อมูลสินค้าในคลัง'}</td></tr>`;
+                const emptyMsg = searching ? 'ไม่พบรายการที่ค้นหา' : 'ไม่มีข้อมูลสินค้าในคลัง';
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">${emptyMsg}</td></tr>`;
+                if (cardList) cardList.innerHTML = `<div class="text-center py-4 text-muted">${emptyMsg}</div>`;
                 return;
             }
             rows.forEach(x => {
@@ -6313,9 +6325,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                 const isLow = parseFloat(x.stock) <= parseFloat(x.min);
                 const isZero = parseFloat(x.stock) <= 0;
-                let statusBadge = '<span class="badge bg-success bg-opacity-20 text-success border border-success">มีในสต็อก</span>';
-                if (isZero) statusBadge = '<span class="badge bg-danger bg-opacity-20 text-danger border border-danger">สินค้าหมด</span>';
-                else if (isLow) statusBadge = '<span class="badge bg-warning bg-opacity-20 text-warning border border-warning">สต็อกต่ำกว่าเกณฑ์</span>';
+                let statusColor = '#22c55e', statusBg = 'rgba(34,197,94,.15)', statusLabel = 'มีในสต็อก';
+                if (isZero) { statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,.15)'; statusLabel = 'สินค้าหมด'; }
+                else if (isLow) { statusColor = '#f59e0b'; statusBg = 'rgba(245,158,11,.15)'; statusLabel = 'สต็อกต่ำกว่าเกณฑ์'; }
+                const statusBadge = `<span class="badge" style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor}">${statusLabel}</span>`;
 
                 tr.innerHTML = `
                     <td style="padding:14px; font-weight:700; color:var(--primary-color); font-family:'TH Sarabun New','Sarabun',monospace;">#${x.code || ''}</td>
@@ -6327,11 +6340,29 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <td style="padding:14px; color:var(--text-muted); font-family:'TH Sarabun New','Sarabun',sans-serif;">${x.lastUpdate || 'ล่าสุด'}</td>
                 `;
                 tbody.appendChild(tr);
+
+                if (cardList) {
+                    const card = document.createElement('div');
+                    card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
+                    card.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="font-monospace" style="background:#232838;color:#e0e0e0;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">#${escapeHtml(x.code || '')}</span>
+                            ${statusBadge}
+                        </div>
+                        <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 8px">${escapeHtml(x.name || '')} <span style="color:#6b7280;font-size:11px">· ${escapeHtml(x.type || '')}</span></p>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size:12px;color:#6b7280">
+                            <span>สต็อก <b style="color:${isLow ? '#ef4444' : '#60a5fa'};font-size:14px">${x.stock || 0}</b> / ${x.min || 0} · <i class="fas fa-map-marker-alt text-danger"></i> ${escapeHtml(x.location || 'A-1')}</span>
+                            <span>${escapeHtml(x.lastUpdate || 'ล่าสุด')}</span>
+                        </div>`;
+                    cardList.appendChild(card);
+                }
             });
             if (truncated) {
+                const note = 'แสดง 50 รายการแรกที่ตรงกับคำค้นหา — พิมพ์ให้เจาะจงขึ้นเพื่อผลลัพธ์ที่แคบลง';
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="7" class="text-center py-2 text-muted small">แสดง 50 รายการแรกที่ตรงกับคำค้นหา — พิมพ์ให้เจาะจงขึ้นเพื่อผลลัพธ์ที่แคบลง</td>`;
+                tr.innerHTML = `<td colspan="7" class="text-center py-2 text-muted small">${note}</td>`;
                 tbody.appendChild(tr);
+                if (cardList) cardList.innerHTML += `<div class="text-center py-2 text-muted" style="font-size:12px">${note}</div>`;
             }
         }
 
@@ -7188,8 +7219,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         function renderTable(tableId, data, type) {
             try {
                 const tbody = document.querySelector(`#${tableId} tbody`); if(!tbody) return; tbody.innerHTML = '';
+                const cardListId = tableId === 'itemsTable' ? 'itemsCardListMobile' : 'toolsCardListMobile';
+                const cardList = document.getElementById(cardListId); if (cardList) cardList.innerHTML = '';
                 const limit = parseInt(allData.settings?.rowsPerPage) || 100; const limitedData = data.slice(0, limit);
-                if (limitedData.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบข้อมูลที่ค้นหา</td></tr>'; return; }
+                if (limitedData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบข้อมูลที่ค้นหา</td></tr>';
+                    if (cardList) cardList.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบข้อมูลที่ค้นหา</div>';
+                    return;
+                }
                 
                 limitedData.forEach(item => {
                     let tr = document.createElement('tr'); const isLow = item.stock <= item.min;
@@ -7244,6 +7281,41 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         showReceiveHistory(item.code);
                     });
                     tbody.appendChild(tr);
+
+                    // ── การ์ดสำหรับจอมือถือ (สลับกับตารางด้วย CSS media query, ไม่ใช่ทั้งสองพร้อมกัน) ──
+                    if (cardList) {
+                        const stockLabel = type === 'tool' ? 'พร้อมใช้' : 'คงเหลือ';
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d;cursor:pointer';
+                        card.innerHTML = `
+                            <div class="d-flex gap-3">
+                                <div style="flex-shrink:0" class="ml-card-img"></div>
+                                <div style="flex:1;min-width:0">
+                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                        <span class="font-monospace" style="background:#232838;color:#e0e0e0;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap">${escapeHtml(item.code)}</span>
+                                        <div class="ml-card-status" style="font-size:11px"></div>
+                                    </div>
+                                    <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 6px;overflow-wrap:break-word">${escapeHtml(item.name)}</p>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center" style="font-size:12px;color:#6b7280">
+                                        <span>${escapeHtml(displayCat)}</span>
+                                        ${item.location ? `<span>· <i class="fas fa-map-marker-alt text-danger"></i> ${escapeHtml(item.location)}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2" style="border-top:1px solid #2a2f3d">
+                                <span style="font-size:12px;color:#6b7280">${stockLabel} <b style="color:${isLow?'#ef4444':'#60a5fa'};font-size:15px">${formatNumber(item.stock)}</b> ${escapeHtml(item.unit)}</span>
+                                <div class="ml-card-actions"></div>
+                            </div>`;
+                        // ใส่รูป/สถานะ/ปุ่ม action ผ่าน DOM แทนการต่อ string ตรงๆ กัน HTML ของปุ่มที่มี onclick ซับซ้อนพัง
+                        card.querySelector('.ml-card-img').innerHTML = imageCell;
+                        card.querySelector('.ml-card-status').innerHTML = statusBadge;
+                        card.querySelector('.ml-card-actions').innerHTML = actionButtons;
+                        card.addEventListener('click', function(e) {
+                            if (e.target.closest('button') || e.target.closest('a')) return;
+                            showReceiveHistory(item.code);
+                        });
+                        cardList.appendChild(card);
+                    }
                 });
             } catch(e) { console.error(e); }
         }
