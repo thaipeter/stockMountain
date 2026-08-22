@@ -2479,13 +2479,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
     <button class="btn btn-sm btn-light border shadow-sm text-secondary" onclick="document.getElementById('txStartDate').value=''; document.getElementById('txEndDate').value=''; document.getElementById('txSearch').value=''; document.getElementById('txTypeFilter').value=''; filterTxTable();" title="ล้างตัวกรองทั้งหมด"><i class="fas fa-undo"></i> ล้าง</button>
     <button class="btn btn-outline-success btn-sm ms-auto shadow-sm fw-bold bg-white" onclick="exportExcel('txTable', 'Transactions_InOut')"><i class="fas fa-file-excel"></i> Export</button>
 </div>
-                    <div class="table-container p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle" id="txTable">
-                                <thead><tr><th width="15%" style="white-space:nowrap">วันเวลา</th><th width="9%" class="text-center">ประเภท</th><th width="21%">รายละเอียดรายการ</th><th width="9%" class="text-end">จำนวน</th><th width="13%" class="text-center">ผู้ทำรายการ</th><th width="21%">หมายเหตุ</th><th width="12%" class="text-center">ใบเบิก</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
+                    <div id="txCardList" style="display:flex;flex-direction:column;gap:8px"></div>
+                    <div style="display:none">
+                        <table class="table table-hover align-middle" id="txTable">
+                            <thead><tr><th width="15%" style="white-space:nowrap">วันเวลา</th><th width="9%" class="text-center">ประเภท</th><th width="21%">รายละเอียดรายการ</th><th width="9%" class="text-end">จำนวน</th><th width="13%" class="text-center">ผู้ทำรายการ</th><th width="21%">หมายเหตุ</th><th width="12%" class="text-center">ใบเบิก</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -2580,11 +2579,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <div class="tab-content border-top">
                             <div class="tab-pane fade show active p-4" id="tabToolsOrders">
                                 <div class="d-flex justify-content-end mb-3"><button class="btn btn-outline-success btn-sm shadow-sm fw-bold bg-white" onclick="exportExcel('orderToolsTable', 'Damaged_Tools')"><i class="fas fa-file-excel"></i> Export</button></div>
-                                <div class="table-responsive rounded border"><table class="table table-hover align-middle mb-0" id="orderToolsTable"><thead><tr><th width="15%">รหัส</th><th width="35%">ชื่อเครื่องมือ</th><th width="20%" class="text-center">ค้างซ่อม</th><th width="10%">หน่วย</th><th width="20%" class="text-center">Action</th></tr></thead><tbody></tbody></table></div>
+                                <div id="orderToolsCardList" style="display:flex;flex-direction:column;gap:10px"></div>
+                                <div style="display:none"><table class="table table-hover align-middle mb-0" id="orderToolsTable"><thead><tr><th width="15%">รหัส</th><th width="35%">ชื่อเครื่องมือ</th><th width="20%" class="text-center">ค้างซ่อม</th><th width="10%">หน่วย</th><th width="20%" class="text-center">Action</th></tr></thead><tbody></tbody></table></div>
                             </div>
                             <div class="tab-pane fade p-4" id="tabItemsOrders">
                                 <div class="d-flex justify-content-end mb-3"><button class="btn btn-outline-success btn-sm shadow-sm fw-bold bg-white" onclick="exportExcel('orderItemsTable', 'Order_Consumables')"><i class="fas fa-file-excel"></i> Export</button></div>
-                                <div class="table-responsive rounded border"><table class="table table-hover align-middle mb-0" id="orderItemsTable"><thead><tr><th>รหัส</th><th>ชื่ออะไหล่</th><th>หมวดหมู่</th><th class="text-center">คงเหลือ (Stock)</th><th class="text-center text-primary">จุดสั่งซื้อ (Min)</th><th>หน่วย</th></tr></thead><tbody></tbody></table></div>
+                                <div id="orderItemsCardList" style="display:flex;flex-direction:column;gap:10px"></div>
+                                <div style="display:none"><table class="table table-hover align-middle mb-0" id="orderItemsTable"><thead><tr><th>รหัส</th><th>ชื่ออะไหล่</th><th>หมวดหมู่</th><th class="text-center">คงเหลือ (Stock)</th><th class="text-center text-primary">จุดสั่งซื้อ (Min)</th><th>หน่วย</th></tr></thead><tbody></tbody></table></div>
                             </div>
                             <div class="tab-pane fade p-4" id="tabPO">
                                 <!-- Sub-tabs สำหรับ PO -->
@@ -2601,24 +2602,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <div><h5 class="fw-bold mb-1">📋 PO ตกค้าง (รอดำเนินการ)</h5><small class="text-muted">แสดงรายการสินค้าแยกตามแต่ละรายการ</small></div>
                                             <button class="btn btn-warning fw-bold shadow-sm admin-only-element" onclick="openAddPOModal()"><i class="fas fa-plus"></i> เพิ่ม PO ใหม่</button>
                                         </div>
-                                        <div class="table-responsive rounded border">
-                                            <table class="table table-hover align-middle mb-0" id="orderPOTable">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th width="10%">PO No.</th>
-                                                        <th width="9%">วันที่เปิด</th>
-                                                        <th width="13%">Supplier</th>
-                                                        <th width="18%">รายการ</th>
-                                                        <th width="8%" class="text-end">ยอดค้าง</th>
-                                                        <th width="10%" class="text-center">สถานะ</th>
-                                                        <th width="13%">หมายเหตุ</th>
-                                                        <th width="7%" class="text-center">ไฟล์แนบ</th>
-                                                        <th width="12%" class="text-center">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody></tbody>
-                                            </table>
-                                        </div>
+                                        <div id="orderPOCardList" style="display:flex;flex-direction:column;gap:10px"></div>
                                     </div>
 
                                     <!-- Tab 2: สรุป PO ตกค้าง (สรุปตามแต่ละ PO) -->
@@ -2627,7 +2611,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <div><h5 class="fw-bold mb-1">📊 สรุป PO ตกค้าง</h5><small class="text-muted">รวมรายการสินค้าตามแต่ละ PO</small></div>
                                             <button class="btn btn-outline-success btn-sm shadow-sm fw-bold bg-white" onclick="exportExcel('summaryPOTable', 'PO_Summary')"><i class="fas fa-file-excel"></i> Export</button>
                                         </div>
-                                        <div class="table-responsive rounded border">
+                                        <div id="summaryPOCardList" style="display:flex;flex-direction:column;gap:10px"></div>
+                                        <div style="display:none">
                                             <table class="table table-hover align-middle mb-0" id="summaryPOTable">
                                                 <thead class="table-light">
                                                     <tr>
@@ -2687,7 +2672,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             </div>
                                         </div>
 
-                                        <div class="table-responsive rounded border">
+                                        <div id="historyPOCardList" style="display:flex;flex-direction:column;gap:10px"></div>
+                                        <div style="display:none">
                                             <table class="table table-hover align-middle mb-0" id="historyPOTable">
                                                 <thead class="table-light">
                                                     <tr>
@@ -2963,7 +2949,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     <div class="search-box flex-grow-1"><i class="fas fa-search text-primary"></i><input type="text" class="form-control border-0 shadow-sm" id="historySearch" placeholder="ค้นหารหัส, ชื่อ, หรือผู้ทำรายการ..." onkeyup="filterHistoryTable()"></div>
                                     <div class="d-flex align-items-center gap-2 border-start ps-3 ms-auto"><input type="date" class="form-control border-0 shadow-sm w-auto text-muted" id="histStartDate" onchange="filterHistoryTable()"><span class="text-muted">-</span><input type="date" class="form-control border-0 shadow-sm w-auto text-muted" id="histEndDate" onchange="filterHistoryTable()"><button class="btn btn-outline-success bg-white shadow-sm fw-bold px-3" onclick="exportExcel('historyTable', 'All_Logs')"><i class="fas fa-file-excel"></i> Export</button></div>
                                 </div>
-                                <div class="table-responsive border rounded"><table class="table table-hover align-middle mb-0" id="historyTable"><thead><tr><th width="14%">เวลาบันทึก</th><th width="10%" class="text-center">ประเภท</th><th width="20%">รายละเอียดรายการ</th><th width="10%" class="text-end">จำนวน</th><th width="10%" class="text-center">ยอดคงเหลือ</th><th width="14%">ผู้ดำเนินการ</th><th width="14%">หมายเหตุ</th><th width="8%" class="text-center">ใบเบิก</th></tr></thead><tbody></tbody></table></div>
+                                <div id="historyCardList" style="display:flex;flex-direction:column;gap:8px"></div>
+                                <div style="display:none"><table class="table table-hover align-middle mb-0" id="historyTable"><thead><tr><th width="14%">เวลาบันทึก</th><th width="10%" class="text-center">ประเภท</th><th width="20%">รายละเอียดรายการ</th><th width="10%" class="text-end">จำนวน</th><th width="10%" class="text-center">ยอดคงเหลือ</th><th width="14%">ผู้ดำเนินการ</th><th width="14%">หมายเหตุ</th><th width="8%" class="text-center">ใบเบิก</th></tr></thead><tbody></tbody></table></div>
                             </div>
 
                             <div class="tab-pane fade p-4" id="tabAuditLog">
@@ -3006,19 +2993,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         <button class="btn btn-sm btn-light border shadow-sm" onclick="resetAuditFilter()" title="ล้างตัวกรอง"><i class="fas fa-undo"></i></button>
                                     </div>
                                 </div>
-                                <div class="table-responsive border rounded">
-                                    <table class="table table-hover align-middle mb-0" id="auditLogTable">
-                                        <thead class="bg-light"><tr>
-                                            <th width="16%">วันเวลา</th>
-                                            <th width="13%" class="text-center">ประเภท</th>
-                                            <th width="17%">ผู้ดำเนินการ</th>
-                                            <th width="36%">รายละเอียดกิจกรรม</th>
-                                            <th width="9%" class="text-center">Device</th>
-                                            <th width="9%" class="text-center">สถานะ</th>
-                                        </tr></thead>
-                                        <tbody id="auditLogTableBody"></tbody>
-                                    </table>
-                                </div>
+                                <div id="auditLogCardList" style="display:flex;flex-direction:column;gap:8px;max-height:600px;overflow-y:auto"></div>
                                 <div class="text-muted small mt-3 text-center">
                                     <i class="fas fa-info-circle me-1"></i> แสดง <span id="auditShownCount">0</span> รายการ จากทั้งหมด <span id="auditTotalShown">0</span> รายการ (เก็บสูงสุด 500 รายการล่าสุดต่ออุปกรณ์)
                                 </div>
@@ -5352,11 +5327,38 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if (_inventoryData) { onDataLoaded(_inventoryData); restoreLastSection(); }
                     resetSessionTimer(); setupAutoRefresh(allData.settings);
                     if(currentUserProfile.role === 'admin') setTimeout(startQRPendingPolling, 600);
+
+                    // ★ ครั้งแรกที่ยังไม่เคยตั้งรหัสผ่าน Dashboard (ล็อกอินผ่าน PIN ชั่วคราว) — บังคับตั้งทันที ก่อนใช้งานต่อ
+                    if (_needsSetup) {
+                        setTimeout(() => {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'ตั้งรหัสผ่าน Dashboard',
+                                html: '<div style="text-align:left">เพื่อความปลอดภัย กรุณาตั้งรหัสผ่าน Dashboard ของคุณเอง (แยกจาก PIN) ก่อนใช้งานต่อ — อย่างน้อย 6 ตัวอักษร<br><br>หลังตั้งแล้ว PIN จะใช้ Login เข้า Dashboard ไม่ได้อีก</div>',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                showCancelButton: false,
+                                confirmButtonText: 'ตั้งรหัสผ่านตอนนี้'
+                            }).then(() => {
+                                openChangeDashboardPasswordModal();
+                                document.getElementById('changeDashboardPasswordModal').setAttribute('data-bs-backdrop', 'static');
+                                document.getElementById('changeDashboardPasswordModal').setAttribute('data-bs-keyboard', 'false');
+                                const cancelBtn = document.querySelector('#changeDashboardPasswordModal [data-bs-dismiss="modal"]');
+                                if (cancelBtn) cancelBtn.style.display = 'none';
+                            });
+                        }, 700);
+                    }
                 }
 
-                // request 1: verify Dashboard Password
-                function _onPinResult(isValid) {
-                    _pinValid = isValid;
+                // request 1: verify Dashboard Password (หรือ PIN ถ้ายังไม่เคยตั้งรหัสผ่าน Dashboard)
+                let _needsSetup = false;
+                function _onPinResult(res) {
+                    if (res && typeof res === 'object') {
+                        _pinValid = !!res.valid;
+                        _needsSetup = !!res.needsSetup;
+                    } else {
+                        _pinValid = !!res;
+                    }
                     _pinDone = true;
                     tryFinishLogin();
                 }
@@ -5365,10 +5367,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     btn.disabled = false; btn.innerHTML = 'เข้าสู่ระบบ';
                     Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', confirmButtonColor: 'var(--primary-color)'});
                 }
-                if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webVerifyDashboardPassword === 'function') {
-                    google.script.run.withSuccessHandler(_onPinResult).withFailureHandler(_onPinFail).webVerifyDashboardPassword(uid, pin);
+                if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webLoginCheck === 'function') {
+                    google.script.run.withSuccessHandler(_onPinResult).withFailureHandler(_onPinFail).webLoginCheck(uid, pin);
                 } else {
-                    callGAS('webVerifyDashboardPassword', [uid, pin], _onPinResult, _onPinFail);
+                    callGAS('webLoginCheck', [uid, pin], _onPinResult, _onPinFail);
                 }
 
                 // request 2: preload inventory ระหว่างรอ verify
@@ -5378,7 +5380,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     tryFinishLogin();
                 }
                 function _onDataFail() {
-                    _inventoryData = allData; // fallback ข้อมูลเดิม
+                    _inventoryData = allData;
                     _dataDone = true;
                     tryFinishLogin();
                 }
@@ -6650,14 +6652,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
          try {
          const tbody = document.querySelector('#txTable tbody'); 
           if(!tbody) return;
+         const cardList = document.getElementById('txCardList');
         
          // แก้จุดนี้: สั่งล้างตารางใหญ่ในหน้า "รับเข้า / เบิกออก (In/Out)" ให้หมดจดก่อนเขียนใหม่
          tbody.innerHTML = ''; 
+         if (cardList) cardList.innerHTML = '';
         
          const limit = parseInt(allData.settings?.rowsPerPage) || 100; 
          const limitedFiltered = history.slice(0, limit);
          if (limitedFiltered.length === 0) { 
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted"><i class="fas fa-inbox fs-3 mb-2 d-block"></i>ไม่มีประวัติในช่วงเวลานี้</td></tr>'; 
+            if (cardList) cardList.innerHTML = '<div class="text-center py-5" style="color:#6b7280"><i class="fas fa-inbox fs-3 mb-2 d-block"></i>ไม่มีประวัติในช่วงเวลานี้</div>';
             return; 
         }
         limitedFiltered.forEach(log => {
@@ -6666,10 +6671,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             let tr = document.createElement('tr'); 
             let displayAction = actLower === 'new item' ? 'รับเข้า (ใหม่)' : log.action;
             let displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : 'ไม่ระบุ';
-            let badgeClass = isOut ? 'bg-danger bg-opacity-10 text-danger' : 'bg-success bg-opacity-10 text-success'; 
-            let iconClass = isOut ? 'fa-arrow-down' : 'fa-arrow-up'; 
-            let textClass = isOut ? 'text-danger' : 'text-success';
             let remarkText = log.remark ? String(log.remark) : '-';
+            let slipOnclick = '';
             let slipBtn = '<span class="text-muted small">-</span>';
             if (actLower.includes('เบิก') || actLower.includes('ยืม')) {
                 let safeCode = String(log.code || '').replace(/'/g, "\\'");
@@ -6677,10 +6680,37 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 let safeUser = String(displayUser || '').replace(/'/g, "\\'");
                 let safeAmount = String(log.amount || '').replace(/'/g, "\\'");
                 let safeAction = String(log.action || '').replace(/'/g, "\\'");
-                slipBtn = `<button class="btn btn-xs btn-outline-primary py-1 px-2 fw-bold" style="font-size:0.72rem; border-radius: 6px;" onclick="viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>`;
+                slipOnclick = `viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')`;
+                slipBtn = `<button class="btn btn-xs btn-outline-primary py-1 px-2 fw-bold" style="font-size:0.72rem; border-radius: 6px;" onclick="${slipOnclick}"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>`;
             }
-            tr.innerHTML = `<td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${escapeHtml(log.time)}</span></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${iconClass} me-1"></i> ${escapeHtml(displayAction)}</span></td><td class="fw-bold">${escapeHtml(log.itemName)} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${escapeHtml(log.code)}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount} <span class="text-muted fw-normal small ms-1">${escapeHtml(log.unit||'')}</span></td><td class="text-center text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${escapeHtml(displayUser)}</td><td><small class="text-muted">${escapeHtml(remarkText)}</small></td><td class="text-center">${slipBtn}</td>`;
+            tr.innerHTML = `<td style="white-space:nowrap">${escapeHtml(log.time)}</td><td class="text-center">${escapeHtml(displayAction)}</td><td>${escapeHtml(log.itemName)} ${escapeHtml(log.code)}</td><td class="text-end">${log.amount} ${escapeHtml(log.unit||'')}</td><td class="text-center">${escapeHtml(displayUser)}</td><td>${escapeHtml(remarkText)}</td><td class="text-center">-</td>`;
             tbody.appendChild(tr);
+
+            if (cardList) {
+                const dotColor = isOut ? '#ef4444' : '#22c55e';
+                const badgeBg = isOut ? '#3a1e1e' : '#1e3a2f';
+                const amountStr = (isOut ? '-' : '+') + log.amount;
+                const card = document.createElement('div');
+                card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
+                card.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0"></span>
+                            <span style="color:#6b7280;font-size:11px">${escapeHtml(log.time)}</span>
+                        </div>
+                        <span style="background:${badgeBg};color:${dotColor};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px"><i class="fas ${isOut?'fa-arrow-down':'fa-arrow-up'} me-1"></i>${escapeHtml(displayAction)}</span>
+                    </div>
+                    <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 8px">${escapeHtml(log.itemName)} <span class="font-monospace" style="color:#6b7280;font-size:11px">${escapeHtml(log.code)}</span></p>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div style="font-size:12px;color:#6b7280">
+                            <span class="fw-bold" style="color:${dotColor};font-size:14px">${amountStr} ${escapeHtml(log.unit||'')}</span>
+                            · <i class="fas fa-user-circle"></i> ${escapeHtml(displayUser)}
+                            ${remarkText !== '-' ? ' · ' + escapeHtml(remarkText) : ''}
+                        </div>
+                        <div>${slipOnclick ? `<button class="btn btn-sm" style="background:transparent;color:#60a5fa;border:1px solid #2a2f3d;border-radius:6px;font-size:11px;padding:4px 10px" onclick="${slipOnclick}"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>` : ''}</div>
+                    </div>`;
+                cardList.appendChild(card);
+            }
         });
     } catch(e) { console.error(e); }
 }
@@ -6688,12 +6718,32 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         function renderDamagedTools(damagedItems) {
             try {
                 const tbody = document.querySelector('#orderToolsTable tbody'); if(!tbody) return; tbody.innerHTML = '';
-                if (damagedItems.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-success fw-bold"><i class="fas fa-check-circle fs-3 d-block mb-2"></i> เยี่ยมยอด! ไม่มีอุปกรณ์ใดรอซ่อม</td></tr>'; return; }
+                const cardList = document.getElementById('orderToolsCardList'); if (cardList) cardList.innerHTML = '';
+                if (damagedItems.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-success fw-bold"><i class="fas fa-check-circle fs-3 d-block mb-2"></i> เยี่ยมยอด! ไม่มีอุปกรณ์ใดรอซ่อม</td></tr>';
+                    if (cardList) cardList.innerHTML = '<div class="text-center py-5" style="color:#22c55e"><i class="fas fa-check-circle fs-3 d-block mb-2"></i> เยี่ยมยอด! ไม่มีอุปกรณ์ใดรอซ่อม</div>';
+                    return;
+                }
                 damagedItems.forEach(item => {
                     let tr = document.createElement('tr'); let safeName = String(item.name || '').replace(/'/g, "\\'"); let safeCode = String(item.code || '').replace(/'/g, "\\'"); let safeUnit = String(item.unit || '').replace(/'/g, "\\'");
                     let actionBtn = currentUserProfile.role === 'admin' ? `<button class="btn btn-sm btn-success shadow-sm fw-bold w-100" onclick="openRepairModal('${safeCode}', '${safeName}', '${safeUnit}', ${item.qty})"><i class="fas fa-tools"></i> ซ่อมแล้ว</button>` : `<span class="badge bg-light text-muted border w-100 py-2">เฉพาะ Admin</span>`;
-                    tr.innerHTML = `<td><span class="badge badge-code">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark">${escapeHtml(item.name)}</td><td class="text-center"><span class="badge bg-danger rounded-pill px-3 py-2 fs-6 shadow-sm">${formatNumber(item.qty)}</span></td><td class="text-muted">${escapeHtml(item.unit)}</td><td class="text-center">${actionBtn}</td>`;
+                    tr.innerHTML = `<td>${escapeHtml(item.code)}</td><td>${escapeHtml(item.name)}</td><td class="text-center">${formatNumber(item.qty)}</td><td>${escapeHtml(item.unit)}</td><td class="text-center">-</td>`;
                     tbody.appendChild(tr);
+
+                    if (cardList) {
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
+                        card.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="font-monospace" style="background:#232838;color:#e0e0e0;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">${escapeHtml(item.code)}</span>
+                                <span style="background:#3a1e1e;color:#ef4444;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">ค้างซ่อม ${formatNumber(item.qty)} ${escapeHtml(item.unit)}</span>
+                            </div>
+                            <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 10px">${escapeHtml(item.name)}</p>
+                            <div id="dt-actionwrap-${escapeHtml(item.code)}"></div>`;
+                        cardList.appendChild(card);
+                        const actionWrap = card.querySelector(`#dt-actionwrap-${CSS.escape(item.code)}`);
+                        if (actionWrap) actionWrap.innerHTML = actionBtn;
+                    }
                 });
             } catch(e) { console.error(e); }
         }
@@ -6755,48 +6805,77 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const bPO = document.getElementById('badge-pending-po'); if(bPO) { bPO.innerText = activePOs.length; bPO.style.display = activePOs.length > 0 ? 'inline-block' : 'none'; }
 
                 const tItems = document.querySelector('#orderItemsTable tbody');
+                const itemsCardList = document.getElementById('orderItemsCardList');
                 if(tItems) {
                     tItems.innerHTML = '';
-                    if(lowItems.length === 0) tItems.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-success fw-bold"><i class="fas fa-box fs-3 d-block mb-2"></i> สต็อกเพียงพอทุกรายการ</td></tr>';
-                    else {
-                        lowItems.forEach(i => { 
-                            let tr = document.createElement('tr'); 
-                            tr.innerHTML = `<td><span class="badge badge-code">${escapeHtml(i.code)}</span></td><td class="fw-bold text-dark">${escapeHtml(i.name)}</td><td><span class="badge bg-info bg-opacity-10 text-info px-2 py-1">${escapeHtml(getItemCategory(i))}</span></td><td class="text-center text-danger fw-bold fs-5">${formatNumber(i.stock)}</td><td class="text-center text-primary fw-bold">${formatNumber(i.min)}</td><td class="text-muted">${escapeHtml(i.unit)}</td>`; tItems.appendChild(tr); 
+                    if (itemsCardList) itemsCardList.innerHTML = '';
+                    if(lowItems.length === 0) {
+                        tItems.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-success fw-bold"><i class="fas fa-box fs-3 d-block mb-2"></i> สต็อกเพียงพอทุกรายการ</td></tr>';
+                        if (itemsCardList) itemsCardList.innerHTML = '<div class="text-center py-5" style="color:#22c55e"><i class="fas fa-box fs-3 d-block mb-2"></i> สต็อกเพียงพอทุกรายการ</div>';
+                    } else {
+                        lowItems.forEach(i => {
+                            let tr = document.createElement('tr');
+                            tr.innerHTML = `<td>${escapeHtml(i.code)}</td><td>${escapeHtml(i.name)}</td><td>${escapeHtml(getItemCategory(i))}</td><td class="text-center">${formatNumber(i.stock)}</td><td class="text-center">${formatNumber(i.min)}</td><td>${escapeHtml(i.unit)}</td>`;
+                            tItems.appendChild(tr);
+
+                            if (itemsCardList) {
+                                const card = document.createElement('div');
+                                card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
+                                card.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="font-monospace" style="background:#232838;color:#e0e0e0;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">${escapeHtml(i.code)}</span>
+                                        <span style="background:#1e3a5f;color:#60a5fa;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">${escapeHtml(getItemCategory(i))}</span>
+                                    </div>
+                                    <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 8px">${escapeHtml(i.name)}</p>
+                                    <div style="font-size:12px;color:#6b7280">คงเหลือ <b style="color:#ef4444;font-size:14px">${formatNumber(i.stock)}</b> / จุดสั่งซื้อ ${formatNumber(i.min)} ${escapeHtml(i.unit)}</div>`;
+                                itemsCardList.appendChild(card);
+                            }
                         });
                     }
                 }
 
-                const tPO = document.querySelector('#orderPOTable tbody');
+                const tPO = document.getElementById('orderPOCardList');
                 if(tPO) {
                     tPO.innerHTML = '';
-                    if(activePOs.length === 0) tPO.innerHTML = '<tr><td colspan="9" class="text-center py-5 text-muted"><i class="fas fa-file-invoice fs-3 d-block mb-2"></i> ไม่มีใบสั่งซื้อค้างรับ</td></tr>';
+                    if(activePOs.length === 0) tPO.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-file-invoice fs-3 d-block mb-2"></i> ไม่มีใบสั่งซื้อค้างรับ</div>';
                     else {
-                        activePOs.forEach(p => { 
-                            let tr = document.createElement('tr'); 
-                            let fileBtn = p.fileUrl ? `<a href="${p.fileUrl}" target="_blank" class="btn btn-sm btn-outline-danger"><i class="fas fa-file-pdf"></i> PDF</a>` : '<span class="text-muted">-</span>'; 
+                        activePOs.forEach(p => {
+                            let fileBtn = p.fileUrl ? `<a href="${p.fileUrl}" target="_blank" class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation()"><i class="fas fa-file-pdf"></i> PDF</a>` : '';
                             let safePoCode = String(p.poCode || '').replace(/'/g, "\\'");
-                            let safePOData = JSON.stringify(p).replace(/'/g, "\\'");
                             const isCancelled = String(p.status || '').includes('ยกเลิก');
                             let actionBtns = '';
                             if (currentUserProfile.role === 'admin') {
                                 if (isCancelled) {
-                                    actionBtns = `
-                                        <div class="d-flex gap-1 flex-wrap">
-                                            <button class="btn btn-sm fw-bold shadow-sm" style="background:#dc2626;color:#fff" onclick="deletePO('${safePoCode}')" title="ลบรายการออกจากระบบ"><i class="fas fa-trash-alt me-1"></i> ลบรายการ</button>
-                                        </div>`;
+                                    actionBtns = `<button class="btn btn-sm fw-bold shadow-sm" style="background:#dc2626;color:#fff" onclick="event.stopPropagation();deletePO('${safePoCode}')" title="ลบรายการออกจากระบบ"><i class="fas fa-trash-alt me-1"></i> ลบรายการ</button>`;
                                 } else {
                                     actionBtns = `
-                                        <div class="d-flex gap-1 flex-wrap">
-                                            <button class="btn btn-sm btn-primary fw-bold shadow-sm" onclick="openEditPOModal('${safePoCode}')" title="แก้ไข/ติดตาม"><i class="fas fa-edit"></i> แก้ไข</button>
-                                            <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="receivePO('${safePoCode}')"><i class="fas fa-check"></i> รับเข้า</button>
-                                            <button class="btn btn-sm btn-danger fw-bold shadow-sm" onclick="cancelPO('${safePoCode}')" title="ยกเลิก PO"><i class="fas fa-times"></i> ยกเลิก</button>
-                                        </div>`;
+                                        <button class="btn btn-sm btn-primary fw-bold shadow-sm" onclick="event.stopPropagation();openEditPOModal('${safePoCode}')" title="แก้ไข/ติดตาม"><i class="fas fa-edit"></i> แก้ไข</button>
+                                        <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="event.stopPropagation();receivePO('${safePoCode}')"><i class="fas fa-check"></i> รับเข้า</button>
+                                        <button class="btn btn-sm btn-danger fw-bold shadow-sm" onclick="event.stopPropagation();cancelPO('${safePoCode}')" title="ยกเลิก PO"><i class="fas fa-times"></i> ยกเลิก</button>`;
                                 }
                             } else {
                                 actionBtns = isCancelled ? `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1">ยกเลิกแล้ว</span>` : `<span class="badge bg-light text-muted border">รอของ</span>`;
                             }
-                            tr.innerHTML = `<td><span class="badge bg-dark px-2 py-1">${escapeHtml(p.poCode)}</span></td><td class="text-muted small">${escapeHtml(p.date)}</td><td class="fw-bold text-dark">${escapeHtml(p.supplier)}</td><td class="fw-medium">${escapeHtml(p.itemName)}</td><td class="text-end fw-bold text-danger fs-6">${formatNumber(p.qty)}</td><td class="text-center"><span class="badge bg-warning text-dark px-2 py-1">${escapeHtml(p.status)}</span></td><td><small class="text-muted">${escapeHtml(p.remark)}</small></td><td class="text-center">${fileBtn}</td><td class="text-center" style="min-width:150px;">${actionBtns}</td>`; 
-                            tPO.appendChild(tr); 
+                            const card = document.createElement('div');
+                            card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d;cursor:pointer;position:relative;transition:border-color .15s';
+                            card.onmouseenter = () => card.style.borderColor = '#3b4254';
+                            card.onmouseleave = () => card.style.borderColor = '#2a2f3d';
+                            card.onclick = () => openEditPOModal(p.poCode);
+                            card.innerHTML = `
+                                <i class="fas fa-chevron-right" style="position:absolute;top:14px;right:14px;color:#6b7280;font-size:11px"></i>
+                                <div class="d-flex justify-content-between align-items-start mb-2" style="padding-right:20px">
+                                    <div>
+                                        <span class="font-monospace" style="background:#232838;color:#e0e0e0;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">${escapeHtml(p.poCode)}</span>
+                                        <span style="color:#6b7280;font-size:11px;margin-left:6px">${escapeHtml(p.date)} · ${escapeHtml(p.supplier)}</span>
+                                    </div>
+                                    <span style="background:${isCancelled?'#3a1e1e':'#3a2f1e'};color:${isCancelled?'#ef4444':'#f59e0b'};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap">${escapeHtml(p.status)}</span>
+                                </div>
+                                <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 8px">${escapeHtml(p.itemName)}</p>
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <span style="color:#6b7280;font-size:12px">ยอดค้าง <b style="color:#ef4444">${formatNumber(p.qty)}</b>${p.remark ? ' · ' + escapeHtml(p.remark) : ''}</span>
+                                    <div class="d-flex gap-1 flex-wrap align-items-center">${fileBtn}${actionBtns}</div>
+                                </div>`;
+                            tPO.appendChild(card);
                         });
                     }
                 }
@@ -6836,28 +6915,68 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         function renderHistoryTable(logs) {
             try {
                 const tbody = document.querySelector('#historyTable tbody'); if(!tbody) return; tbody.innerHTML = '';
+                const cardList = document.getElementById('historyCardList'); if (cardList) cardList.innerHTML = '';
                 const limit = parseInt(allData.settings?.rowsPerPage) || 100; const limitedLogs = logs.slice(0, limit);
-                if (limitedLogs.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบประวัติที่ตรงกับเงื่อนไขการค้นหา</td></tr>'; return; }
-                
+                if (limitedLogs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบประวัติที่ตรงกับเงื่อนไขการค้นหา</td></tr>';
+                    if (cardList) cardList.innerHTML = '<div class="text-center py-5" style="color:#6b7280"><i class="fas fa-search fs-3 d-block mb-2 opacity-50"></i> ไม่พบประวัติที่ตรงกับเงื่อนไขการค้นหา</div>';
+                    return;
+                }
+
                 limitedLogs.forEach(log => {
-                    let tr = document.createElement('tr'); let badgeClass = 'bg-secondary'; let icon = 'fa-circle'; 
+                    // ── สร้างแถวตาราง (ซ่อนไว้) เพื่อให้ปุ่ม Export Excel อ่านข้อมูลจาก DOM ตารางได้เหมือนเดิม ──
+                    let tr = document.createElement('tr'); let badgeClass = 'bg-secondary'; let icon = 'fa-circle';
                     const actLower = String(log.action).trim().toLowerCase(); let displayAction = log.action;
-                    if(actLower.includes('เบิก') || actLower.includes('ยืม') || actLower.includes('ชำรุด')) { badgeClass = 'bg-danger bg-opacity-10 text-danger'; icon = 'fa-arrow-down'; } else if(actLower.includes('รับเข้า') || actLower.includes('คืน') || actLower.includes('new item') || actLower.includes('ซ่อม')) { badgeClass = 'bg-success bg-opacity-10 text-success'; icon = 'fa-arrow-up'; if (actLower.includes('new item')) displayAction = 'รับเข้า (ใหม่)'; } else if(actLower.includes('ปรับยอด')) { badgeClass = 'bg-warning bg-opacity-10 text-warning'; icon = 'fa-sliders-h'; }
-                    let displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : 'ไม่ระบุ'; let textClass = (actLower.includes('เบิก') || actLower.includes('ยืม') || actLower.includes('ชำรุด')) ? 'text-danger' : 'text-success';
+                    const isOut = actLower.includes('เบิก') || actLower.includes('ยืม') || actLower.includes('ชำรุด');
+                    const isIn  = actLower.includes('รับเข้า') || actLower.includes('คืน') || actLower.includes('new item') || actLower.includes('ซ่อม');
+                    if (isOut) { badgeClass = 'bg-danger bg-opacity-10 text-danger'; icon = 'fa-arrow-down'; }
+                    else if (isIn) { badgeClass = 'bg-success bg-opacity-10 text-success'; icon = 'fa-arrow-up'; if (actLower.includes('new item')) displayAction = 'รับเข้า (ใหม่)'; }
+                    else if (actLower.includes('ปรับยอด')) { badgeClass = 'bg-warning bg-opacity-10 text-warning'; icon = 'fa-sliders-h'; }
+                    let displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : 'ไม่ระบุ'; let textClass = isOut ? 'text-danger' : 'text-success';
                     let remarkText = log.remark ? String(log.remark) : '-';
-                    
-                    let slipBtn = '<span class="text-muted small">-</span>';
+
+                    let slipBtnHtml = '<span class="text-muted small">-</span>';
+                    let slipOnclick = '';
                     if (actLower.includes('เบิก') || actLower.includes('ยืม')) {
                         let safeCode = String(log.code || '').replace(/'/g, "\\'");
                         let safeTime = String(log.time || '').replace(/'/g, "\\'");
                         let safeUser = String(displayUser || '').replace(/'/g, "\\'");
                         let safeAmount = String(log.amount || '').replace(/'/g, "\\'");
                         let safeAction = String(log.action || '').replace(/'/g, "\\'");
-                        slipBtn = `<button class="btn btn-xs btn-outline-primary py-1 px-2 fw-bold" style="font-size:0.72rem; border-radius: 6px;" onclick="viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>`;
+                        slipOnclick = `viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')`;
+                        slipBtnHtml = `<button class="btn btn-xs btn-outline-primary py-1 px-2 fw-bold" style="font-size:0.72rem; border-radius: 6px;" onclick="${slipOnclick}"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>`;
                     }
 
-                    tr.innerHTML = `<td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${escapeHtml(log.time)}</span></td><td class="text-center"><span class="badge ${badgeClass} w-100 py-2"><i class="fas ${icon} me-1"></i> ${escapeHtml(displayAction)}</span></td><td class="fw-bold text-dark">${escapeHtml(log.itemName)} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${escapeHtml(log.code)}</span></td><td class="text-end fw-bold ${textClass} fs-6">${log.amount}</td><td class="text-center text-muted fw-bold">${escapeHtml(String(log.balance || '-'))}</td><td class="text-secondary fw-medium"><i class="fas fa-user-circle me-1"></i> ${escapeHtml(displayUser)}</td><td><small class="text-muted">${escapeHtml(remarkText)}</small></td><td class="text-center">${slipBtn}</td>`;
+                    tr.innerHTML = `<td style="white-space:nowrap">${escapeHtml(log.time)}</td><td class="text-center">${escapeHtml(displayAction)}</td><td>${escapeHtml(log.itemName)} ${escapeHtml(log.code)}</td><td class="text-end">${log.amount}</td><td class="text-center">${escapeHtml(String(log.balance || '-'))}</td><td>${escapeHtml(displayUser)}</td><td>${escapeHtml(remarkText)}</td><td class="text-center">-</td>`;
                     tbody.appendChild(tr);
+
+                    // ── การ์ดที่ผู้ใช้เห็นจริง — สีเขียว/แดงตาม รับเข้า/เบิกออก เหมือนดีไซน์ที่ใช้ในหน้าอื่น ──
+                    if (cardList) {
+                        const dotColor = isOut ? '#ef4444' : (isIn ? '#22c55e' : '#f59e0b');
+                        const badgeBg = isOut ? '#3a1e1e' : (isIn ? '#1e3a2f' : '#3a2f1e');
+                        const amountStr = isOut ? '-' + log.amount : (isIn ? '+' + log.amount : log.amount);
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
+                        card.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0"></span>
+                                    <span style="color:#6b7280;font-size:11px">${escapeHtml(log.time)}</span>
+                                </div>
+                                <span style="background:${badgeBg};color:${textClass === 'text-danger' ? '#ef4444' : (isIn ? '#22c55e' : '#f59e0b')};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px"><i class="fas ${icon} me-1"></i>${escapeHtml(displayAction)}</span>
+                            </div>
+                            <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 8px">${escapeHtml(log.itemName)} <span class="font-monospace" style="color:#6b7280;font-size:11px">${escapeHtml(log.code)}</span></p>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div style="font-size:12px;color:#6b7280">
+                                    <span class="fw-bold" style="color:${isOut?'#ef4444':(isIn?'#22c55e':'#f59e0b')};font-size:14px">${amountStr}</span>
+                                    · เหลือ ${escapeHtml(String(log.balance || '-'))}
+                                    · <i class="fas fa-user-circle"></i> ${escapeHtml(displayUser)}
+                                    ${remarkText !== '-' ? ' · ' + escapeHtml(remarkText) : ''}
+                                </div>
+                                <div>${slipOnclick ? `<button class="btn btn-sm" style="background:transparent;color:#60a5fa;border:1px solid #2a2f3d;border-radius:6px;font-size:11px;padding:4px 10px" onclick="${slipOnclick}"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>` : ''}</div>
+                            </div>`;
+                        cardList.appendChild(card);
+                    }
                 });
             } catch(e) { console.error(e); }
         }
@@ -6866,11 +6985,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         function renderSummaryPOTable(pos) {
             try {
                 const tbody = document.querySelector('#summaryPOTable tbody');
+                const cardList = document.getElementById('summaryPOCardList');
                 if (!tbody) return;
                 tbody.innerHTML = '';
-                
+                if (cardList) cardList.innerHTML = '';
+
                 if (!pos || pos.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">ไม่พบ PO ตกค้าง</td></tr>';
+                    if (cardList) cardList.innerHTML = '<div class="text-center py-4 text-muted">ไม่พบ PO ตกค้าง</div>';
                     return;
                 }
 
@@ -6902,49 +7024,58 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                 if (Object.keys(poMap).length === 0) {
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">🎉 ไม่มี PO ตกค้าง ทั้งหมดได้รับแล้ว!</td></tr>';
+                    if (cardList) cardList.innerHTML = '<div class="text-center py-4" style="color:#22c55e">🎉 ไม่มี PO ตกค้าง ทั้งหมดได้รับแล้ว!</div>';
                     return;
                 }
 
-                // แสดงในตาราง
+                // แสดงในตาราง (ซ่อนไว้ ใช้สำหรับ Export) + การ์ด (ที่ผู้ใช้เห็นจริง)
                 Object.values(poMap).forEach(po => {
                     let tr = document.createElement('tr');
-                    let badgeClass = 'bg-warning text-dark';
-                    if (po.status === 'ได้รับแล้ว') badgeClass = 'bg-success text-white';
-                    else if (String(po.status || '').includes('ยกเลิก')) badgeClass = 'bg-danger text-white';
-                    else if (po.status === 'ของขาดชั่วคราว') badgeClass = 'bg-danger text-white';
-                    else if (po.status === 'กำลังผลิต') badgeClass = 'bg-info text-white';
+                    const isCancelled2 = String(po.status || '').includes('ยกเลิก');
+                    let statusColor = '#f59e0b', statusBg = '#3a2f1e';
+                    if (isCancelled2 || po.status === 'ของขาดชั่วคราว') { statusColor = '#ef4444'; statusBg = '#3a1e1e'; }
+                    else if (po.status === 'กำลังผลิต') { statusColor = '#60a5fa'; statusBg = '#1e3a5f'; }
 
                     let safePoCode = String(po.poCode).replace(/'/g, "\\'");
-                    const isCancelled2 = String(po.status || '').includes('ยกเลิก');
                     let actionBtns = '';
                     if (currentUserProfile.role === 'admin') {
                         if (isCancelled2) {
-                            actionBtns = `
-                                <div class="d-flex gap-1 flex-wrap justify-content-center">
-                                    <button class="btn btn-sm fw-bold shadow-sm" style="background:#dc2626;color:#fff" onclick="deletePO('${safePoCode}')" title="ลบรายการออกจากระบบ"><i class="fas fa-trash-alt me-1"></i> ลบรายการ</button>
-                                </div>`;
+                            actionBtns = `<button class="btn btn-sm fw-bold shadow-sm" style="background:#dc2626;color:#fff" onclick="event.stopPropagation();deletePO('${safePoCode}')" title="ลบรายการออกจากระบบ"><i class="fas fa-trash-alt me-1"></i> ลบรายการ</button>`;
                         } else {
                             actionBtns = `
-                                <div class="d-flex gap-1 flex-wrap justify-content-center">
-                                    <button class="btn btn-sm btn-primary fw-bold shadow-sm" onclick="openEditPOModal('${safePoCode}')" title="แก้ไข/ติดตาม"><i class="fas fa-edit"></i> แก้ไข</button>
-                                    <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="receivePO('${safePoCode}')" title="รับเข้าสินค้า"><i class="fas fa-check"></i> รับเข้า</button>
-                                    <button class="btn btn-sm btn-danger fw-bold shadow-sm" onclick="cancelPO('${safePoCode}')" title="ยกเลิก PO"><i class="fas fa-times"></i> ยกเลิก</button>
-                                </div>`;
+                                <button class="btn btn-sm btn-primary fw-bold shadow-sm" onclick="event.stopPropagation();openEditPOModal('${safePoCode}')" title="แก้ไข/ติดตาม"><i class="fas fa-edit"></i> แก้ไข</button>
+                                <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="event.stopPropagation();receivePO('${safePoCode}')" title="รับเข้าสินค้า"><i class="fas fa-check"></i> รับเข้า</button>
+                                <button class="btn btn-sm btn-danger fw-bold shadow-sm" onclick="event.stopPropagation();cancelPO('${safePoCode}')" title="ยกเลิก PO"><i class="fas fa-times"></i> ยกเลิก</button>`;
                         }
                     } else {
                         actionBtns = isCancelled2 ? `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1">ยกเลิกแล้ว</span>` : `<span class="badge bg-light text-muted border">รอของ</span>`;
                     }
 
-                    tr.innerHTML = `
-                        <td><span class="badge bg-dark px-2 py-1 font-monospace">${po.poCode}</span></td>
-                        <td class="text-muted small">${po.date}</td>
-                        <td class="fw-bold text-dark">${po.supplier}</td>
-                        <td class="text-center"><span class="badge bg-light text-dark">${po.items.length}</span></td>
-                        <td class="text-end fw-bold text-danger">${formatNumber(po.totalQty)}</td>
-                        <td class="text-center"><span class="badge ${badgeClass}">${po.status}</span></td>
-                        <td class="text-center" style="min-width:170px;">${actionBtns}</td>
-                    `;
+                    tr.innerHTML = `<td>${po.poCode}</td><td>${po.date}</td><td>${po.supplier}</td><td class="text-center">${po.items.length}</td><td class="text-end">${formatNumber(po.totalQty)}</td><td class="text-center">${po.status}</td><td class="text-center">-</td>`;
                     tbody.appendChild(tr);
+
+                    if (cardList) {
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d;cursor:pointer;position:relative;transition:border-color .15s';
+                        card.onmouseenter = () => card.style.borderColor = '#3b4254';
+                        card.onmouseleave = () => card.style.borderColor = '#2a2f3d';
+                        card.onclick = () => openEditPOModal(po.poCode);
+                        card.innerHTML = `
+                            <i class="fas fa-chevron-right" style="position:absolute;top:14px;right:14px;color:#6b7280;font-size:11px"></i>
+                            <div class="d-flex justify-content-between align-items-start mb-2" style="padding-right:20px">
+                                <div>
+                                    <span class="font-monospace" style="background:#232838;color:#e0e0e0;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">${escapeHtml(po.poCode)}</span>
+                                    <span style="color:#6b7280;font-size:11px;margin-left:6px">${escapeHtml(po.date)} · ${escapeHtml(po.supplier)}</span>
+                                </div>
+                                <span style="background:${statusBg};color:${statusColor};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap">${escapeHtml(po.status)}</span>
+                            </div>
+                            <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 8px">${po.items.length} รายการ</p>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <span style="color:#6b7280;font-size:12px">รวมยอดค้าง <b style="color:#ef4444">${formatNumber(po.totalQty)}</b></span>
+                                <div class="d-flex gap-1 flex-wrap align-items-center">${actionBtns}</div>
+                            </div>`;
+                        cardList.appendChild(card);
+                    }
                 });
             } catch(e) { 
                 console.error(e); 
@@ -6955,11 +7086,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         function renderHistoryPOTableWithFilter(pos) {
             try {
                 const tbody = document.querySelector('#historyPOTable tbody');
+                const cardList = document.getElementById('historyPOCardList');
                 if (!tbody) return;
                 tbody.innerHTML = '';
-                
+                if (cardList) cardList.innerHTML = '';
+
                 if (!pos || pos.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบประวัติ PO</td></tr>';
+                    if (cardList) cardList.innerHTML = '<div class="text-center py-4 text-muted">ไม่พบประวัติ PO</div>';
                     return;
                 }
 
@@ -6990,6 +7124,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
                 if (filteredPos.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</td></tr>';
+                    if (cardList) cardList.innerHTML = '<div class="text-center py-4 text-muted">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div>';
                     return;
                 }
 
@@ -6999,22 +7134,33 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     const fileBtn = p.fileUrl && p.fileUrl !== '#'
                         ? `<a href="${p.fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-pdf"></i> PDF</a>`
                         : '-';
-                    let badgeClass = 'bg-warning text-dark'; 
-                    if (p.status === 'ได้รับแล้ว')         badgeClass = 'bg-success text-white'; 
-                    else if (p.status === 'ของขาดชั่วคราว') badgeClass = 'bg-danger text-white';
-                    else if (p.status === 'กำลังผลิต')      badgeClass = 'bg-info text-white';
-                    else if (p.status === 'ยกเลิกแล้ว')     badgeClass = 'bg-secondary text-white';
-                    tr.innerHTML = `
-                        <td><span class="badge badge-code">${p.poCode}</span></td>
-                        <td class="text-muted small">${p.date}</td>
-                        <td class="fw-medium">${p.supplier}</td>
-                        <td class="fw-bold">${p.itemName}</td>
-                        <td class="text-end fw-bold text-primary">${formatNumber(p.qty)}</td>
-                        <td class="text-center"><span class="badge ${badgeClass}">${p.status}</span></td>
-                        <td><small class="text-muted">${p.remark || '-'}</small></td>
-                        <td class="text-center">${fileBtn}</td>
-                    `;
+                    let statusColor = '#f59e0b', statusBg = '#3a2f1e';
+                    if (p.status === 'ได้รับแล้ว') { statusColor = '#22c55e'; statusBg = '#1e3a2f'; }
+                    else if (p.status === 'ของขาดชั่วคราว') { statusColor = '#ef4444'; statusBg = '#3a1e1e'; }
+                    else if (p.status === 'กำลังผลิต') { statusColor = '#60a5fa'; statusBg = '#1e3a5f'; }
+                    else if (p.status === 'ยกเลิกแล้ว') { statusColor = '#9ca3af'; statusBg = '#232838'; }
+
+                    tr.innerHTML = `<td>${p.poCode}</td><td>${p.date}</td><td>${p.supplier}</td><td>${p.itemName}</td><td class="text-end">${formatNumber(p.qty)}</td><td class="text-center">${p.status}</td><td>${p.remark || '-'}</td><td class="text-center">-</td>`;
                     tbody.appendChild(tr);
+
+                    if (cardList) {
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
+                        card.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="font-monospace" style="background:#232838;color:#e0e0e0;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">${escapeHtml(p.poCode)}</span>
+                                    <span style="color:#6b7280;font-size:11px;margin-left:6px">${escapeHtml(p.date)} · ${escapeHtml(p.supplier)}</span>
+                                </div>
+                                <span style="background:${statusBg};color:${statusColor};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap">${escapeHtml(p.status)}</span>
+                            </div>
+                            <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 8px">${escapeHtml(p.itemName)}</p>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <span style="color:#6b7280;font-size:12px">จำนวน <b style="color:#e0e0e0">${formatNumber(p.qty)}</b>${p.remark ? ' · ' + escapeHtml(p.remark) : ''}</span>
+                                ${fileBtn !== '-' ? fileBtn : ''}
+                            </div>`;
+                        cardList.appendChild(card);
+                    }
                 });
             } catch(e) { 
                 console.error(e); 
@@ -10848,11 +10994,16 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             document.getElementById('changeDashPwOld').value = '';
             document.getElementById('changeDashPwNew').value = '';
             document.getElementById('changeDashPwConfirm').value = '';
+            const modalEl = document.getElementById('changeDashboardPasswordModal');
+            modalEl.setAttribute('data-bs-backdrop', 'true');
+            modalEl.setAttribute('data-bs-keyboard', 'true');
+            const cancelBtn = document.querySelector('#changeDashboardPasswordModal [data-bs-dismiss="modal"]');
+            if (cancelBtn) cancelBtn.style.display = '';
             changeDashboardPasswordModal.show();
             const handleHasPw = function(res) {
                 const oldWrap = document.getElementById('dashPwOldWrap');
                 if (res && res.success && !res.hasPassword) {
-                    oldWrap.style.display = 'none'; // ยังไม่เคยตั้ง — ครั้งแรกไม่ต้องกรอกรหัสเดิม
+                    oldWrap.style.display = 'none';
                 } else {
                     oldWrap.style.display = '';
                 }
@@ -10961,10 +11112,10 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 // render จาก cache ที่มีอยู่ก่อนเลย (ไม่กระพริบ)
                 filterAuditLog();
             } else {
-                // ครั้งแรกหรือ force → แสดง spinner เฉพาะ tbody ไม่กระทบส่วนอื่น
-                const tbody = document.getElementById('auditLogTableBody');
-                if (tbody && !hasCached) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>กำลังโหลด Audit Log...</td></tr>`;
+                // ครั้งแรกหรือ force → แสดง spinner เฉพาะ card list ไม่กระทบส่วนอื่น
+                const cardListLoading = document.getElementById('auditLogCardList');
+                if (cardListLoading && !hasCached) {
+                    cardListLoading.innerHTML = `<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>กำลังโหลด Audit Log...</div>`;
                 }
             }
 
@@ -11002,52 +11153,50 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         }
 
         function renderAuditLog(logs) {
-            const tbody = document.getElementById('auditLogTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
+            const cardList = document.getElementById('auditLogCardList');
+            if (!cardList) return;
+            cardList.innerHTML = '';
             if (!logs || logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">
+                cardList.innerHTML = `<div class="text-center py-5 text-muted">
                     <i class="fas fa-shield-alt fs-3 d-block mb-2 opacity-25"></i>
                     ยังไม่มีข้อมูล Audit Log<br>
                     <small>Log จะเริ่มบันทึกเมื่อมีการทำรายการครั้งแรก</small>
-                </td></tr>`;
+                </div>`;
                 return;
             }
             logs.forEach(log => {
                 const meta = AUDIT_TYPE_META[log.type] || { label: log.type, badge: 'bg-secondary bg-opacity-10 text-secondary', icon: 'fa-circle' };
-                const statusBadge = log.status === 'SUCCESS'
-                    ? '<span class="badge bg-success bg-opacity-10 text-success px-2 py-1"><i class="fas fa-check me-1"></i>สำเร็จ</span>'
-                    : '<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1"><i class="fas fa-times me-1"></i>ล้มเหลว</span>';
+                const isSuccess = log.status === 'SUCCESS';
+                const statusColor = isSuccess ? '#22c55e' : '#ef4444';
+                const statusBg = isSuccess ? '#1e3a2f' : '#3a1e1e';
+                const statusLabel = isSuccess ? 'สำเร็จ' : 'ล้มเหลว';
                 // ★ แก้บั๊ก: เดิมเช็คแบบ binary (role==='admin' ? Admin : User) ทำให้ role อื่นๆ ที่ไม่ใช่ "admin"
                 // เป๊ะๆ (เช่น "system" ของบอท LINE, "qr", "pending", "rejected", "staff", "-") ถูกจัดเป็น User
                 // ผิดหมด ทั้งที่บางรายการไม่ใช่การกระทำของ user เลย (เช่นบอทส่งข้อความไม่สำเร็จ)
-                const ROLE_BADGE_META = {
-                    admin:    { label: 'Admin',    cls: '' },
-                    staff:    { label: 'Staff',    cls: 'bg-info bg-opacity-25 text-info border-0' },
-                    user:     { label: 'User',     cls: 'bg-light text-muted border' },
-                    system:   { label: 'System',   cls: 'bg-secondary bg-opacity-25 text-secondary border-0' },
-                    qr:       { label: 'QR',       cls: 'bg-warning bg-opacity-25 text-warning border-0' },
-                    pending:  { label: 'Pending',  cls: 'bg-warning bg-opacity-25 text-warning border-0' },
-                    rejected: { label: 'Rejected', cls: 'bg-danger bg-opacity-25 text-danger border-0' },
+                const ROLE_LABEL_META = {
+                    admin:    'Admin', staff: 'Staff', user: 'User', system: 'System',
+                    qr: 'QR', pending: 'Pending', rejected: 'Rejected',
                 };
                 const roleKey = String(log.role || '').trim().toLowerCase();
-                const roleMeta = ROLE_BADGE_META[roleKey] || { label: '-', cls: 'bg-light text-muted border' };
-                const roleBadge = `<span class="badge ${roleMeta.cls} ms-1" style="font-size:0.68em;">${roleMeta.label}</span>`;
+                const roleLabel = ROLE_LABEL_META[roleKey] || '-';
                 const deviceIcon = (log.device || log.ua || '') === 'Mobile' ? 'fa-mobile-alt' : 'fa-desktop';
                 const deviceText = log.device || log.ua || 'Web';
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="white-space:nowrap"><span class="font-monospace text-muted small px-2 py-1 rounded d-inline-block" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap">${log.time}</span></td>
-                    <td class="text-center"><span class="badge ${meta.badge} px-2 py-2 w-100"><i class="fas ${meta.icon} me-1"></i>${meta.label}</span></td>
-                    <td>
-                        <div class="fw-bold text-dark small">${log.user}${roleBadge}</div>
-                        <div class="text-muted" style="font-size:0.7em;font-family:monospace;">${String(log.userId||'').substring(0,14)}…</div>
-                    </td>
-                    <td class="small text-dark">${log.detail}</td>
-                    <td class="text-center"><i class="fas ${deviceIcon} text-muted"></i><br><small class="text-muted" style="font-size:0.7em;">${deviceText}</small></td>
-                    <td class="text-center">${statusBadge}</td>
-                `;
-                tbody.appendChild(tr);
+                const card = document.createElement('div');
+                card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
+                card.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span style="color:#6b7280;font-size:11px">${escapeHtml(log.time)}</span>
+                            <span class="badge ${meta.badge}" style="font-size:11px"><i class="fas ${meta.icon} me-1"></i>${escapeHtml(meta.label)}</span>
+                        </div>
+                        <span style="background:${statusBg};color:${statusColor};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">${statusLabel}</span>
+                    </div>
+                    <p style="color:#e0e0e0;font-size:13px;margin:0 0 8px">${escapeHtml(log.detail)}</p>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size:11px;color:#6b7280">
+                        <span><i class="fas fa-user-circle me-1"></i>${escapeHtml(log.user)} <span class="badge bg-secondary bg-opacity-25 text-secondary border-0" style="font-size:0.68em">${roleLabel}</span></span>
+                        <span><i class="fas ${deviceIcon} me-1"></i>${escapeHtml(deviceText)}</span>
+                    </div>`;
+                cardList.appendChild(card);
             });
         }
 
