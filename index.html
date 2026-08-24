@@ -2484,8 +2484,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
     <input type="date" class="form-control form-control-sm w-auto shadow-sm border-0" id="txEndDate" onchange="filterTxTable()">
     <button class="btn btn-sm btn-light border shadow-sm text-secondary" onclick="document.getElementById('txStartDate').value=''; document.getElementById('txEndDate').value=''; document.getElementById('txSearch').value=''; document.getElementById('txTypeFilter').value=''; filterTxTable();" title="ล้างตัวกรองทั้งหมด"><i class="fas fa-undo"></i> ล้าง</button>
     <button class="btn btn-outline-success btn-sm ms-auto shadow-sm fw-bold bg-white" onclick="exportExcel('txTable', 'Transactions_InOut')"><i class="fas fa-file-excel"></i> Export</button>
+    <div class="btn-group btn-group-sm shadow-sm" role="group">
+        <button type="button" class="btn btn-light border" id="txViewBtnGrid" onclick="setTxViewMode('grid')" title="มุมมองการ์ด"><i class="fas fa-th-large"></i></button>
+        <button type="button" class="btn btn-light border" id="txViewBtnDay" onclick="setTxViewMode('day')" title="มุมมองจัดกลุ่มตามวัน"><i class="fas fa-calendar-day"></i></button>
+    </div>
 </div>
-                    <div id="txCardList" style="display:flex;flex-direction:column;gap:8px"></div>
+                    <div id="txCardList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px"></div>
+                    <div id="txDayList" style="display:none;flex-direction:column;gap:12px"></div>
                     <div style="display:none">
                         <table class="table table-hover align-middle" id="txTable">
                             <thead><tr><th width="15%" style="white-space:nowrap">วันเวลา</th><th width="9%" class="text-center">ประเภท</th><th width="21%">รายละเอียดรายการ</th><th width="9%" class="text-end">จำนวน</th><th width="13%" class="text-center">ผู้ทำรายการ</th><th width="21%">หมายเหตุ</th><th width="12%" class="text-center">ใบเบิก</th></tr></thead>
@@ -6679,23 +6684,48 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
     } catch(e) { console.error(e); }
 }
 
+        const THAI_WEEKDAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+        let txViewMode = localStorage.getItem('txViewMode') || 'grid';
+
+        function setTxViewMode(mode) {
+            txViewMode = mode;
+            try { localStorage.setItem('txViewMode', mode); } catch(e) {}
+            const gridBtn = document.getElementById('txViewBtnGrid'); const dayBtn = document.getElementById('txViewBtnDay');
+            const gridEl = document.getElementById('txCardList'); const dayEl = document.getElementById('txDayList');
+            if (mode === 'day') {
+                if (gridEl) gridEl.style.display = 'none'; if (dayEl) dayEl.style.display = 'flex';
+                if (gridBtn) gridBtn.classList.remove('active', 'btn-primary'); if (gridBtn) gridBtn.classList.add('btn-light');
+                if (dayBtn) { dayBtn.classList.add('active', 'btn-primary'); dayBtn.classList.remove('btn-light'); }
+            } else {
+                if (gridEl) gridEl.style.display = 'grid'; if (dayEl) dayEl.style.display = 'none';
+                if (dayBtn) dayBtn.classList.remove('active', 'btn-primary'); if (dayBtn) dayBtn.classList.add('btn-light');
+                if (gridBtn) { gridBtn.classList.add('active', 'btn-primary'); gridBtn.classList.remove('btn-light'); }
+            }
+        }
+
         function renderTransactionsInOut(history) {
          try {
          const tbody = document.querySelector('#txTable tbody'); 
           if(!tbody) return;
          const cardList = document.getElementById('txCardList');
+         const dayList = document.getElementById('txDayList');
         
          // แก้จุดนี้: สั่งล้างตารางใหญ่ในหน้า "รับเข้า / เบิกออก (In/Out)" ให้หมดจดก่อนเขียนใหม่
          tbody.innerHTML = ''; 
          if (cardList) cardList.innerHTML = '';
+         if (dayList) dayList.innerHTML = '';
         
          const limit = parseInt(allData.settings?.rowsPerPage) || 100; 
          const limitedFiltered = history.slice(0, limit);
          if (limitedFiltered.length === 0) { 
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted"><i class="fas fa-inbox fs-3 mb-2 d-block"></i>ไม่มีประวัติในช่วงเวลานี้</td></tr>'; 
-            if (cardList) cardList.innerHTML = '<div class="text-center py-5" style="color:#6b7280"><i class="fas fa-inbox fs-3 mb-2 d-block"></i>ไม่มีประวัติในช่วงเวลานี้</div>';
+            const emptyHtml = '<div class="text-center py-5" style="color:#6b7280"><i class="fas fa-inbox fs-3 mb-2 d-block"></i>ไม่มีประวัติในช่วงเวลานี้</div>';
+            if (cardList) cardList.innerHTML = emptyHtml;
+            if (dayList) dayList.innerHTML = emptyHtml;
+            setTxViewMode(txViewMode);
             return; 
         }
+        let lastDayKey = null; let dayGroupEl = null;
         limitedFiltered.forEach(log => {
             const actLower = String(log.action).trim().toLowerCase(); 
             let isOut = (actLower === 'เบิก' || actLower === 'แจ้งชำรุด'); 
@@ -6717,10 +6747,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             tr.innerHTML = `<td style="white-space:nowrap">${escapeHtml(log.time)}</td><td class="text-center">${escapeHtml(displayAction)}</td><td>${escapeHtml(log.itemName)} ${escapeHtml(log.code)}</td><td class="text-end">${log.amount} ${escapeHtml(log.unit||'')}</td><td class="text-center">${escapeHtml(displayUser)}</td><td>${escapeHtml(remarkText)}</td><td class="text-center">-</td>`;
             tbody.appendChild(tr);
 
+            const dotColor = isOut ? '#ef4444' : '#22c55e';
+            const badgeBg = isOut ? '#3a1e1e' : '#1e3a2f';
+            const amountStr = (isOut ? '-' : '+') + log.amount;
+
+            // ── มุมมองที่ 1: Grid การ์ด ──
             if (cardList) {
-                const dotColor = isOut ? '#ef4444' : '#22c55e';
-                const badgeBg = isOut ? '#3a1e1e' : '#1e3a2f';
-                const amountStr = (isOut ? '-' : '+') + log.amount;
                 const card = document.createElement('div');
                 card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
                 card.innerHTML = `
@@ -6742,7 +6774,52 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>`;
                 cardList.appendChild(card);
             }
+
+            // ── มุมมองที่ 2: จัดกลุ่มตามวัน ──
+            if (dayList) {
+                const rawDateStr = String(log.time || '').split(' ')[0] || '';
+                const dayKey = rawDateStr || 'ไม่ทราบวันที่';
+                if (dayKey !== lastDayKey) {
+                    lastDayKey = dayKey;
+                    const group = document.createElement('div');
+                    group.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
+                    // ใส่ชื่อวัน (จันทร์/อังคาร/...) นำหน้าวันที่ กันหัวข้อดูโล่งเกินไป — คำนวณจาก parseThaiDate ที่มีอยู่แล้ว
+                    let dayHeaderLabel = dayKey;
+                    const dParsed = parseThaiDate(rawDateStr);
+                    if (dParsed) {
+                        const todayD = new Date(); todayD.setHours(0,0,0,0);
+                        const cmpD = new Date(dParsed); cmpD.setHours(0,0,0,0);
+                        const diffDays = Math.round((todayD - cmpD) / 86400000);
+                        const weekdayName = THAI_WEEKDAYS[dParsed.getDay()];
+                        if (diffDays === 0) dayHeaderLabel = `วันนี้ · ${weekdayName} ${dayKey}`;
+                        else if (diffDays === 1) dayHeaderLabel = `เมื่อวาน · ${weekdayName} ${dayKey}`;
+                        else dayHeaderLabel = `${weekdayName} ${dayKey}`;
+                    }
+                    group.innerHTML = `<p style="font-size:12px;font-weight:500;color:#a0aec0;margin:0 0 8px">${escapeHtml(dayHeaderLabel)}</p><div class="day-group-rows"></div>`;
+                    dayList.appendChild(group);
+                    dayGroupEl = group.querySelector('.day-group-rows');
+                }
+                const timePart = String(log.time || '').split(' ')[1] || '';
+                const row = document.createElement('div');
+                row.style.cssText = `display:flex;justify-content:space-between;align-items:start;gap:10px;padding:8px 0 8px 10px;border-bottom:1px solid #2a2f3d;border-left:3px solid ${dotColor};border-radius:2px`;
+                row.innerHTML = `
+                    <div style="min-width:0">
+                        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                            <span style="background:${badgeBg};color:${dotColor};font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap"><i class="fas ${isOut?'fa-arrow-down':'fa-arrow-up'} me-1"></i>${escapeHtml(displayAction)}</span>
+                        </div>
+                        <p style="font-size:13px;margin:0;color:#e0e0e0">${escapeHtml(log.itemName)} <span class="font-monospace" style="color:#6b7280;font-size:11px">${escapeHtml(log.code)}</span></p>
+                        <p style="font-size:11px;color:#6b7280;margin:2px 0 0">${escapeHtml(timePart)} · ${escapeHtml(displayUser)}${remarkText !== '-' ? ' · ' + escapeHtml(remarkText) : ''}</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <span style="color:${dotColor};font-size:13px;font-weight:500;white-space:nowrap">${amountStr} ${escapeHtml(log.unit||'')}</span>
+                        ${slipOnclick ? `<button class="btn btn-sm" style="background:transparent;color:#60a5fa;border:1px solid #2a2f3d;border-radius:6px;font-size:11px;padding:3px 8px" onclick="${slipOnclick}"><i class="fas fa-file-invoice"></i></button>` : ''}
+                    </div>`;
+                if (dayGroupEl) dayGroupEl.appendChild(row);
+            }
         });
+        // ทำให้แถวสุดท้ายของแต่ละกลุ่มวันไม่มีเส้นคั่นด้านล่างเกินความจำเป็น
+        if (dayList) dayList.querySelectorAll('.day-group-rows > div:last-child').forEach(r => r.style.borderBottom = 'none');
+        setTxViewMode(txViewMode);
     } catch(e) { console.error(e); }
 }
 
