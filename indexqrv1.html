@@ -1016,7 +1016,7 @@ body{display:flex;flex-direction:column}
   </div>
 
   <!-- Bottom submit bar -->
-  <div class="receive-cart-bar" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)">
+  <div class="receive-cart-bar active" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)">
     <div class="receive-total" style="color:#fff"><i class="fas fa-plus-circle me-1"></i> ขึ้นทะเบียนใหม่</div>
     <button class="cart-btn" id="niSubmitBtn" onclick="submitNewItem()" style="background:#fff;color:#7c3aed;font-weight:700">
       <i class="fas fa-save"></i> บันทึก
@@ -3247,17 +3247,45 @@ function executeSubmitCart(mode, signatureBase64) {
     // ของจริงไม่ได้ถูกกันสต็อกให้เลย ตอนนี้ error อะไรก็ตามจะโชว์ตรงไปตรงมาเสมอ ไม่มีการหลอกว่าสำเร็จอีก
     btn.disabled = false;
     btn.innerHTML = mode === 'withdraw' ? '<i class="fas fa-check"></i> ยืนยันเบิก' : '<i class="fas fa-clipboard-check"></i> ยืนยันการยืม';
-    Swal.fire({
-      icon: 'error',
-      title: 'เกิดข้อผิดพลาดในการบันทึก!',
-      html: `<div class="text-start small">
-               <div class="text-danger fw-bold mb-2">❌ ไม่สามารถบันทึกรายการได้ในขั้นตอนส่งข้อมูล:</div>
-               <div>• สาเหตุ: <b>${esc(err)}</b></div>
-               <div>• กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต หรือติดต่อผู้ดูแลระบบ</div>
-             </div>`,
-      confirmButtonColor: '#ef4444',
-      background: '#1a1f2e', color: '#e2e8f0'
-    });
+
+    // ★ แก้บั๊ก: เดิมโชว์ป๊อปอัพ "เกิดข้อผิดพลาดในการบันทึก!" (icon error สีแดง) เหมือนกันหมด
+    // ไม่ว่าจะเป็นความล้มเหลวที่ backend ปฏิเสธจริงๆ (เช่นสต็อกไม่พอ ไม่พบรหัส) หรือแค่ "เบราว์เซอร์รอนานเกิน
+    // จนเลิกรอ (timeout)" ซึ่งฝั่งเซิร์ฟเวอร์ (Apps Script) อาจทำงานจนจบและบันทึกคำขอสำเร็จไปแล้วจริงๆ ก็ได้
+    // ผู้ใช้เห็นคำว่า "ไม่สำเร็จ" เลยกดส่งซ้ำ/เข้าใจผิดว่าเบิกไม่ได้ ทั้งที่จริงคำขอเข้าไปแล้วและแอดมินเห็นแจ้งเตือนด้วยซ้ำ
+    // ตอนนี้แยก 2 เคสชัดเจน: timeout (ไม่รู้ผลแน่ชัด) ให้ตรวจสอบก่อน ไม่ใช้คำว่า "ไม่สำเร็จ" ส่วน error ที่ backend
+    // ปฏิเสธจริงๆ (เช่น validation) ยังคงบอกว่า "ไม่สำเร็จ" ชัดเจนเหมือนเดิม
+    const isAmbiguousTimeout = String(err || '').includes('ตอบกลับช้ากว่าปกติ');
+
+    if (isAmbiguousTimeout) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'ยังไม่แน่ใจว่าสำเร็จหรือไม่',
+        html: `<div class="text-start small">
+                 <div class="text-warning fw-bold mb-2">⏳ เซิร์ฟเวอร์ตอบกลับช้ากว่าปกติ ระบบเลิกรอไปก่อน</div>
+                 <div>• คำขอนี้ <b>อาจถูกบันทึกสำเร็จไปแล้วจริงๆ</b> ที่ฝั่งเซิร์ฟเวอร์ เพียงแต่แจ้งผลกลับมาที่หน้าจอไม่ทัน</div>
+                 <div class="mt-2">• กรุณากด <b>"ตรวจสอบตอนนี้"</b> ด้านล่าง เพื่อดูว่ารายการนี้เข้าไปในระบบแล้วหรือยัง ก่อนกดส่งซ้ำ</div>
+               </div>`,
+        confirmButtonText: 'ตรวจสอบตอนนี้',
+        confirmButtonColor: '#f59e0b',
+        background: '#1a1f2e', color: '#e2e8f0'
+      }).then(() => {
+        // รีโหลดข้อมูลให้ทันที กันผู้ใช้ต้องไปกดรีเฟรชเบราว์เซอร์เอง — ถ้าคำขอเข้าไปแล้วจริงจะเห็นในรายการ "ของฉัน/รออนุมัติ" ทันที
+        callGAS('getInventoryData', [], d => { allData = d; renderList(mode, ''); renderReturnList(); }, null);
+        loadMineApproval();
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'ไม่สำเร็จ — ยังไม่ได้บันทึกรายการ',
+        html: `<div class="text-start small">
+                 <div class="text-danger fw-bold mb-2">❌ ระบบปฏิเสธคำขอนี้ ยังไม่ถูกบันทึกเข้าระบบ:</div>
+                 <div>• สาเหตุ: <b>${esc(err)}</b></div>
+                 <div>• แก้ไขตามสาเหตุด้านบนแล้วลองกดส่งใหม่ได้เลย</div>
+               </div>`,
+        confirmButtonColor: '#ef4444',
+        background: '#1a1f2e', color: '#e2e8f0'
+      });
+    }
   });
 }
 
@@ -3721,13 +3749,35 @@ function loadMineRetro() {
 
 /* ══ รายการที่ยื่นไปแล้ว แต่ยังรอแอดมินกดอนุมัติ (ของฉัน) ══ */
 function loadMineApproval() {
-  const prevIds = (mineData.pendingApproval || []).map(it => it.reqId);
+  // ★ แก้บั๊ก: เดิมตรวจจับ "อนุมัติ/ปฏิเสธ" ด้วยการเช็คว่า reqId หายไปจาก list หรือไม่ — ใช้ได้ตอนที่ระบบยังลบ
+  // รายการที่ถูกปฏิเสธออกจาก list ทันที แต่ตอนนี้มีฟีเจอร์ให้รายการที่ถูกปฏิเสธ "ยังค้างอยู่ใน list" นาน 7 วัน
+  // (ไม่ให้หายไปเงียบๆ) ทำให้ reqId ไม่เคยหายไปจาก list เวลาโดนปฏิเสธอีกต่อไป กลไกเดิมเลยตรวจจับผิดที่ผิดเวลา
+  // จนป๊อปอัพขึ้นข้อความไม่ตรงกับสถานะจริง — เปลี่ยนมาเก็บ "สถานะเดิมของแต่ละ reqId" แล้วเทียบสถานะใหม่ตรงๆ แทน
+  const prevStatusMap = {};
+  (mineData.pendingApproval || []).forEach(it => { prevStatusMap[it.reqId] = it.status || 'pending'; });
+
   callGAS('webGetMyPendingRequests', [{ userId: me.uid }], res => {
-    mineData.pendingApproval = (res && res.success) ? (res.items || []) : [];
+    const newItems = (res && res.success) ? (res.items || []) : [];
+    mineData.pendingApproval = newItems;
     renderMineApproval();
     _updateApprovalBellBadge();
-    const newIds = (mineData.pendingApproval || []).map(it => it.reqId);
-    const disappeared = prevIds.filter(id => !newIds.includes(id));
+
+    const newStatusMap = {};
+    newItems.forEach(it => { newStatusMap[it.reqId] = it.status || 'pending'; });
+
+    // เคส 1: รายการยังอยู่ใน list แต่สถานะเปลี่ยนจาก pending → rejected (กรณีนี้เกิดบ่อยสุดตอนนี้ เพราะรายการที่ถูก
+    // ปฏิเสธไม่หายไปจาก list แล้ว) — เทียบ reqId เดียวกันตรงๆ ไม่ต้องเดาจากการหายไปอีกต่อไป
+    Object.keys(newStatusMap).forEach(reqId => {
+      if (prevStatusMap[reqId] === 'pending' && newStatusMap[reqId] === 'rejected') {
+        const it = newItems.find(x => x.reqId === reqId);
+        if (it) Swal.fire({icon:'error', title:'❌ ถูกปฏิเสธ', text:`"${it.itemName}" x${it.qty} ถูกปฏิเสธครับ`, timer:3500, showConfirmButton:false, background:'#1a1f2e', color:'#c0c0c0'});
+      }
+    });
+
+    // เคส 2: รายการหายไปจาก list ทั้งหมด — เกิดได้แค่ตอน "อนุมัติ" เท่านั้นตอนนี้ (เพราะอนุมัติแล้วถูกลบออกจาก
+    // pending list ไปเลย ต่างจาก rejected ที่ยังค้างอยู่ 7 วัน) แต่ยังคง "ยืนยันสถานะจริงจาก backend" ก่อนโชว์
+    // ป๊อปอัพเสมอ (ผ่าน webGetMyRecentDecisions) ไม่เดาเองว่า "หายไป = อนุมัติเสมอ" กันพลาดถ้ามีเคสอื่นในอนาคต
+    const disappeared = Object.keys(prevStatusMap).filter(id => prevStatusMap[id] === 'pending' && !(id in newStatusMap));
     if (disappeared.length && me && me.uid) {
       callGAS('webGetMyRecentDecisions', [{ userId: me.uid }], dres => {
         if (!dres || !dres.success || !dres.items) return;
