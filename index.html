@@ -3705,10 +3705,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                      <div class="settings-box">
                                          <div class="d-flex justify-content-between align-items-center mb-3">
                                              <div style="font-size:.8rem;color:rgba(255,255,255,.5)">ตั้งค่า Token ของแต่ละ LINE OA — เว้นช่อง Token ว่างไว้ถ้าไม่ต้องการเปลี่ยนค่าเดิม</div>
-                                             <button class="btn btn-sm" onclick="loadLineQuotaStatus()" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px"><i class="fas fa-sync me-1"></i> เช็คโควตา</button>
-                                         </div>
-                                         <div id="lineQuotaStatusWrap" class="mb-3">
-                                             <div class="text-center py-2" style="color:#6b7280;font-size:.8rem"><i class="fas fa-spinner fa-spin me-2"></i>กำลังเช็คโควตา...</div>
+                                             <button class="btn btn-sm" onclick="loadLineQuotaStatus()" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px"><i class="fas fa-sync me-1"></i> รีเฟรชโควตา</button>
                                          </div>
                                          <div id="lineChannelFormsWrap">
                                              <div class="text-center py-3" style="color:#6b7280"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</div>
@@ -6065,34 +6062,88 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
         /* ============================================================
            ช่องทาง LINE OA — ตั้งค่า Token/Bot User ID + เช็คโควตาแต่ละบอท
+           (รวม 2 อย่างเข้าด้วยกัน: สถานะเชื่อมต่อ+โควตา แสดงในการ์ดเดียวกันต่อบอท)
         ============================================================ */
+        window._lineQuotaCache = null;
+
         function loadLineQuotaStatus() {
-            const wrap = document.getElementById('lineQuotaStatusWrap');
-            if (!wrap) return;
-            wrap.innerHTML = '<div class="text-center py-2" style="color:#6b7280;font-size:.8rem"><i class="fas fa-spinner fa-spin me-2"></i>กำลังเช็คโควตา...</div>';
             const handleOk = (res) => {
-                if (!res || !res.success) { wrap.innerHTML = `<div class="text-danger small">เช็คโควตาไม่สำเร็จ: ${(res && res.error) || 'ไม่ทราบสาเหตุ'}</div>`; return; }
-                wrap.innerHTML = res.bots.map(b => {
-                    if (!b.configured) return `<div class="d-flex align-items-center gap-2 mb-1" style="font-size:.8rem;color:#6b7280"><span style="width:8px;height:8px;border-radius:50%;background:#4b5563"></span>ไลน์ ${b.label}: ยังไม่ได้ตั้งค่า</div>`;
-                    if (b.error) return `<div class="d-flex align-items-center gap-2 mb-1" style="font-size:.8rem;color:#f87171"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444"></span>ไลน์ ${b.label}: ${b.error}</div>`;
-                    if (b.unlimited) return `<div class="d-flex align-items-center gap-2 mb-1" style="font-size:.8rem;color:#22c55e"><span style="width:8px;height:8px;border-radius:50%;background:#22c55e"></span>ไลน์ ${b.label}: ไม่จำกัดโควตา</div>`;
-                    const pct = b.percent == null ? '-' : b.percent;
-                    const color = pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
-                    const statusTxt = pct >= 100 ? ' (เต็มแล้ว!)' : '';
-                    return `<div class="d-flex align-items-center gap-2 mb-1" style="font-size:.8rem;color:${color}"><span style="width:8px;height:8px;border-radius:50%;background:${color}"></span>ไลน์ ${b.label}: ${b.used}/${b.total} (${pct}%)${statusTxt}</div>`;
-                }).join('');
+                window._lineQuotaCache = (res && res.success) ? res.bots : null;
+                if (!window._lineChannelDataCache) { loadLineChannelForms(); return; } // ยังไม่เคยโหลดฟอร์ม (ยังไม่ได้กรอกรหัสผ่าน) — เปิด prompt ให้กรอกก่อน
+                renderLineChannelCards(); // อัปเดตโควตาในการ์ดที่แสดงอยู่
             };
-            const handleFail = (err) => { wrap.innerHTML = `<div class="text-danger small">เช็คโควตาไม่สำเร็จ: ${String(err)}</div>`; };
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webGetLineQuotaStatus(currentUserProfile.uid);
+                google.script.run.withSuccessHandler(handleOk).withFailureHandler(() => {}).webGetLineQuotaStatus(currentUserProfile.uid);
             } else {
-                callGAS('webGetLineQuotaStatus', [currentUserProfile.uid], handleOk, handleFail);
+                callGAS('webGetLineQuotaStatus', [currentUserProfile.uid], handleOk, () => {});
             }
         }
 
-        function loadLineChannelForms() {
+        function _quotaLineHtml(q) {
+            if (!q) return '<span style="color:#6b7280">กำลังเช็คโควตา...</span>';
+            if (!q.configured) return '<span style="color:#6b7280">ยังไม่ได้เชื่อมต่อ</span>';
+            if (q.error) return `<span style="color:#f87171">เชื่อมต่อแล้ว แต่เช็คโควตาไม่สำเร็จ: ${escapeHtml(q.error)}</span>`;
+            if (q.unlimited) return '<span style="color:#22c55e"><i class="fas fa-check-circle me-1"></i>เชื่อมต่อแล้ว · ไม่จำกัดโควตา</span>';
+            const pct = q.percent == null ? '-' : q.percent;
+            const color = pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
+            const statusTxt = pct >= 100 ? ' (เต็มแล้ว!)' : '';
+            return `<span style="color:${color}"><i class="fas fa-check-circle me-1"></i>เชื่อมต่อแล้ว · ${q.used}/${q.total} (${pct}%)${statusTxt}</span>`;
+        }
+
+        function renderLineChannelCards() {
+            const wrap = document.getElementById('lineChannelFormsWrap');
+            if (!wrap || !window._lineChannelDataCache) return;
+            const bots = window._lineChannelDataCache;
+            const quotaMap = {};
+            (window._lineQuotaCache || []).forEach(q => quotaMap[q.id] = q);
+
+            wrap.innerHTML = bots.map(b => {
+                const q = quotaMap[b.id];
+                const isConfigured = b.id === 1 ? true : !!(b.botUserId || (q && q.configured));
+                const cardId = `lineBotCard_${b.id}`;
+                return `
+                <div class="mb-3 p-3 rounded-3" style="background:#232838;border:1px solid #2a2f3d">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <div class="fw-bold mb-1" style="font-size:.85rem;color:#e0e0e0"><span style="width:8px;height:8px;border-radius:50%;background:${isConfigured ? '#22c55e' : '#4b5563'};display:inline-block;margin-right:6px"></span>ไลน์ ${escapeHtml(b.label)}</div>
+                            <div style="font-size:.78rem">${_quotaLineHtml(q)}</div>
+                        </div>
+                        <button type="button" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px" onclick="document.getElementById('${cardId}_fields').style.display = document.getElementById('${cardId}_fields').style.display === 'none' ? 'block' : 'none'">
+                            <i class="fas fa-pen me-1"></i>${isConfigured ? 'เปลี่ยน Token' : 'เชื่อมต่อ'}
+                        </button>
+                    </div>
+                    <div id="${cardId}_fields" style="display:${isConfigured ? 'none' : 'block'};margin-top:12px;padding-top:12px;border-top:1px solid #2a2f3d">
+                        <div class="mb-2"><label class="form-label small mb-1">Token${b.tokenMasked ? ' (ปัจจุบัน: ' + escapeHtml(b.tokenMasked) + ')' : ''}</label>
+                            <input type="password" class="form-control form-control-sm" id="lineBotToken_${b.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน"></div>
+                        ${b.id !== 1 ? `<div><label class="form-label small mb-1">Bot User ID</label>
+                            <input type="text" class="form-control form-control-sm" id="lineBotUid_${b.id}" placeholder="Uxxxxxxxx..." value="${escapeHtml(b.botUserId || '')}"></div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function loadLineChannelForms(silent) {
             const wrap = document.getElementById('lineChannelFormsWrap');
             if (!wrap) return;
+
+            const fetchAndRender = (pw) => {
+                const handleOk = (res) => {
+                    if (!res || !res.success) { wrap.innerHTML = `<div class="text-danger small py-2">${escapeHtml((res && res.error) || 'โหลดไม่สำเร็จ')}</div>`; return; }
+                    window._lineChannelDataCache = res.bots;
+                    renderLineChannelCards();
+                    loadLineQuotaStatus(); // ดึงโควตามาเติมในการ์ดต่อ
+                };
+                const handleFail = (err) => { wrap.innerHTML = `<div class="text-danger small py-2">${escapeHtml(String(err))}</div>`; };
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webGetLineChannelSettings(currentUserProfile.uid, pw);
+                } else {
+                    callGAS('webGetLineChannelSettings', [currentUserProfile.uid, pw], handleOk, handleFail);
+                }
+            };
+
+            if (window._lineDashPw) { fetchAndRender(window._lineDashPw); return; } // มีรหัสผ่านที่ยืนยันไว้แล้วในหน้านี้ ไม่ต้องถามซ้ำ
+            if (silent) return; // โหมดเงียบ (เรียกหลังบันทึก) แต่ไม่มีรหัสผ่านแคชไว้ — ข้าม ไม่เด้งถามซ้ำโดยไม่จำเป็น
+
             Swal.fire({
                 title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อดูการตั้งค่าช่องทาง LINE',
                 input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
@@ -6100,25 +6151,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 background: '#1a2230', color: '#e0e0e0'
             }).then(result => {
                 if (!result.isConfirmed || !result.value) { wrap.innerHTML = '<div class="text-center py-3 text-muted small">ยกเลิกแล้ว — กดรีเฟรชหน้าเพื่อลองใหม่</div>'; return; }
-                const pw = result.value;
-                window._lineDashPw = pw; // เก็บไว้ใช้ตอนกดบันทึก จะได้ไม่ต้องกรอกซ้ำในหน้าเดียวกัน
-                const handleOk = (res) => {
-                    if (!res || !res.success) { wrap.innerHTML = `<div class="text-danger small py-2">${(res && res.error) || 'โหลดไม่สำเร็จ'}</div>`; return; }
-                    wrap.innerHTML = res.bots.map(b => `
-                        <div class="mb-3 p-2 rounded-3" style="background:#232838;border:1px solid #2a2f3d">
-                            <div class="fw-bold mb-2" style="font-size:.85rem;color:#e0e0e0">ไลน์ ${b.label}</div>
-                            <div class="mb-2"><label class="form-label small mb-1">Token${b.tokenMasked ? ' (ปัจจุบัน: ' + b.tokenMasked + ')' : ''}</label>
-                                <input type="password" class="form-control form-control-sm" id="lineBotToken_${b.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน"></div>
-                            ${b.id !== 1 ? `<div><label class="form-label small mb-1">Bot User ID</label>
-                                <input type="text" class="form-control form-control-sm" id="lineBotUid_${b.id}" placeholder="Uxxxxxxxx..." value="${b.botUserId || ''}"></div>` : ''}
-                        </div>`).join('');
-                };
-                const handleFail = (err) => { wrap.innerHTML = `<div class="text-danger small py-2">${String(err)}</div>`; };
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webGetLineChannelSettings(currentUserProfile.uid, pw);
-                } else {
-                    callGAS('webGetLineChannelSettings', [currentUserProfile.uid, pw], handleOk, handleFail);
-                }
+                window._lineDashPw = result.value;
+                fetchAndRender(result.value);
             });
         }
 
@@ -6132,9 +6166,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
                 const handleOk = (res) => {
                     if (!res || !res.success) { Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: (res && res.error) || 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' }); return; }
-                    Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: res.message || '', background: '#1a2230', color: '#e0e0e0' });
-                    loadLineChannelForms();
-                    loadLineQuotaStatus();
+                    window._lineDashPw = pw; // เก็บรหัสผ่านไว้ใช้รีโหลดฟอร์มแบบเงียบๆ ไม่ต้องถามซ้ำ
+                    Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: res.message || 'บันทึกการตั้งค่าช่องทาง LINE เรียบร้อยแล้ว', timer: 2500, showConfirmButton: false, background: '#1a2230', color: '#e0e0e0' });
+                    loadLineChannelForms(true); // โหมดเงียบ ใช้รหัสผ่านที่แคชไว้ ไม่เด้ง popup ทับ
                 };
                 const handleFail = (err) => Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err), background: '#1a2230', color: '#e0e0e0' });
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
