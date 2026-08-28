@@ -1156,11 +1156,11 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 .line-card .badge-warn { background:rgba(245,158,11,.15); color:#f59e0b; border:1px solid rgba(245,158,11,.4); }
 .line-card .badge-none { background:#2a2f3d; color:#6b7280; border:1px solid #383e50; }
 .line-card .quota-text { font-size:11px; color:#9ca3af; }
-.line-card .progress-container { background:#1a1e28; border-radius:20px; height:6px; overflow:hidden; margin-bottom:12px; }
-.line-card .progress-bar { height:100%; border-radius:20px; transition:width .3s; }
-.line-card .progress-bar.bg-red { background:#ef4444; }
-.line-card .progress-bar.bg-yellow { background:#f59e0b; }
-.line-card .progress-bar.bg-green { background:#22c55e; }
+.line-card .progress-container { background:#161a24; border-radius:20px; height:9px; overflow:hidden; margin-bottom:12px; box-shadow:inset 0 1px 2px rgba(0,0,0,.4); }
+.line-card .progress-bar { height:100%; border-radius:20px; transition:width .4s ease; position:relative; }
+.line-card .progress-bar.bg-red { background:linear-gradient(90deg,#dc2626,#ef4444); box-shadow:0 0 8px rgba(239,68,68,.5); }
+.line-card .progress-bar.bg-yellow { background:linear-gradient(90deg,#d97706,#f59e0b); box-shadow:0 0 8px rgba(245,158,11,.45); }
+.line-card .progress-bar.bg-green { background:linear-gradient(90deg,#16a34a,#22c55e); box-shadow:0 0 6px rgba(34,197,94,.4); }
 .line-card .form-group { margin-bottom:10px; }
 .line-card .form-group label { display:block; font-size:11px; color:#9ca3af; margin-bottom:4px; font-weight:600; }
 .line-card .input-field { width:100%; background:#161922; border:1px solid #2a2f3d; color:#e0e0e0; border-radius:8px; padding:8px 10px; font-size:13px; }
@@ -4320,45 +4320,49 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     <div style="width:4px;height:20px;background:linear-gradient(180deg,#fbbf24,#f59e0b);border-radius:2px"></div>
                                     <h5 class="fw-bold mb-0" style="color:rgba(255,255,255,.85)">ตั้งค่า AI Assistant (Gemini)</h5>
                                 </div>
-                                <div class="settings-grid">
-                                    <div class="settings-col">
-                                        <div class="settings-box">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <div class="settings-toggle-title">เปิดใช้งาน AI Assistant</div>
-                                                    <div class="settings-toggle-sub">เปิด/ปิดฟีเจอร์ AI วิเคราะห์คลังทั้งระบบ</div>
-                                                </div>
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" role="switch" id="setAiEnabled" style="width:2.5em;height:1.4em;cursor:pointer">
-                                                </div>
-                                            </div>
+
+                                <div class="line-card border-gray" id="aiSettingsCard">
+                                    <!-- Header & Status -->
+                                    <div class="card-header">
+                                        <div class="account-title">
+                                            <span id="aiStatusDot" style="width:9px;height:9px;border-radius:50%;background:#4b5563;display:inline-block"></span>
+                                            <h3>Gemini AI Assistant</h3>
+                                            <span class="badge badge-none" id="aiStatusBadge">ยังไม่ได้ตั้งค่า</span>
                                         </div>
-                                        <div class="settings-box">
-                                            <div>
-                                                <label class="form-label">Gemini API Key</label>
-                                                <input type="password" class="form-control fw-bold" id="setGeminiApiKey" placeholder="วาง API Key จาก Google AI Studio" autocomplete="off">
-                                                <div class="form-text mt-1" style="color:rgba(255,255,255,.4);font-size:.75rem">ขอ API Key ฟรีได้ที่ aistudio.google.com — ค่านี้จะถูกเก็บไว้ฝั่ง backend เท่านั้น</div>
-                                            </div>
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="setAiEnabled" style="width:2.5em;height:1.4em;cursor:pointer" onchange="_updateAiStatusCard()">
+                                            <label class="form-check-label small ms-1" style="color:#9ca3af">เปิดใช้งาน</label>
                                         </div>
                                     </div>
-                                    <div class="settings-col">
-                                        <div class="settings-box">
-                                            <div>
-                                                <label class="form-label">โมเดล Gemini</label>
-                                                <select class="form-select" id="setGeminiModel">
+                                    <div class="quota-text mb-3" id="aiQuotaText">ใช้วิเคราะห์คลังทั้งระบบผ่าน AI Command Console — ต้องมี API Key ก่อนถึงจะใช้งานได้</div>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-7">
+                                            <div class="form-group mb-0">
+                                                <label>Gemini API Key</label>
+                                                <input type="password" class="input-field" id="setGeminiApiKey" placeholder="วาง API Key จาก Google AI Studio" autocomplete="off" oninput="_updateAiStatusCard()">
+                                                <div class="form-text mt-1" style="color:rgba(255,255,255,.4);font-size:.72rem">ขอ API Key ฟรีได้ที่ aistudio.google.com — ค่านี้จะถูกเก็บไว้ฝั่ง backend เท่านั้น</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="form-group mb-0">
+                                                <label>โมเดล Gemini</label>
+                                                <select class="input-field" id="setGeminiModel" style="cursor:pointer">
                                                     <option value="gemini-2.5-flash">gemini-2.5-flash (เร็ว, แนะนำ)</option>
                                                     <option value="gemini-2.5-pro">gemini-2.5-pro (แม่นยำกว่า, ช้ากว่า)</option>
                                                     <option value="gemini-2.0-flash">gemini-2.0-flash</option>
                                                 </select>
-                                                <div class="form-text mt-1" style="color:rgba(255,255,255,.4);font-size:.75rem">เลือกรุ่นโมเดลที่ต้องการใช้เรียก Gemini API</div>
                                             </div>
                                         </div>
-                                        <div class="settings-box">
-                                            <button type="button" class="btn fw-bold w-100" onclick="testGeminiConnection()" style="background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.4);color:#a78bfa;border-radius:10px"><i class="fas fa-plug me-2"></i> ทดสอบการเชื่อมต่อ</button>
-                                            <div class="settings-toggle-sub">ทดสอบว่า API Key และโมเดลที่ตั้งไว้เรียกใช้งานได้จริงหรือไม่ (ต้องบันทึกการตั้งค่าก่อน)</div>
-                                        </div>
+                                    </div>
+
+                                    <!-- Action & Test Zone -->
+                                    <div class="card-footer">
+                                        <span class="quota-hint">*ต้องบันทึกการตั้งค่าก่อนถึงจะทดสอบได้</span>
+                                        <button type="button" class="btn-test" onclick="testGeminiConnection()"><i class="fas fa-plug me-1"></i>ทดสอบการเชื่อมต่อ</button>
                                     </div>
                                 </div>
+
                                 <div class="text-end mt-4 pt-3" style="border-top:1px solid rgba(245,158,11,.15)"><button class="btn fw-bold px-5 py-2" onclick="saveAllSettings()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:10px"><i class="fas fa-save me-2"></i>บันทึกหน้าจอนี้</button></div>
                             </div>
 
@@ -5424,23 +5428,24 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     resetSessionTimer(); setupAutoRefresh(allData.settings);
                     if(currentUserProfile.role === 'admin') setTimeout(startQRPendingPolling, 600);
 
-                    // ★ ครั้งแรกที่ยังไม่เคยตั้งรหัสผ่าน Dashboard (ล็อกอินผ่าน PIN ชั่วคราว) — บังคับตั้งทันที ก่อนใช้งานต่อ
+                    // ★ ครั้งแรกที่ยังไม่เคยตั้งรหัสผ่าน Dashboard (ล็อกอินผ่าน PIN ชั่วคราว) — เดิมบังคับเด้ง Popup
+                    // แบบปิดไม่ได้ (allowOutsideClick:false, ไม่มีปุ่มยกเลิก) ก่อนเข้าใช้งาน Dashboard ได้เลย ทำให้
+                    // ผู้ใช้ต้องตั้งรหัสผ่านทันทีทุกครั้งที่ยังไม่เคยตั้ง แม้แค่อยากรีบเข้าไปดูข้อมูล — เปลี่ยนเป็นแบบ
+                    // ไม่บังคับ: เตือนเฉยๆ ปิด/ข้ามได้ กดปิดแล้วเข้า Dashboard ได้ตามปกติทันที ยังตั้งได้ทีหลังผ่านหน้า
+                    // ตั้งค่า (openChangeDashboardPasswordModal) เมื่อไหร่ก็ได้
                     if (_needsSetup) {
                         setTimeout(() => {
                             Swal.fire({
                                 icon: 'info',
                                 title: 'ตั้งรหัสผ่าน Dashboard',
-                                html: '<div style="text-align:left">เพื่อความปลอดภัย กรุณาตั้งรหัสผ่าน Dashboard ของคุณเอง (แยกจาก PIN) ก่อนใช้งานต่อ — อย่างน้อย 6 ตัวอักษร<br><br>หลังตั้งแล้ว PIN จะใช้ Login เข้า Dashboard ไม่ได้อีก</div>',
-                                allowOutsideClick: false,
-                                allowEscapeKey: false,
-                                showCancelButton: false,
-                                confirmButtonText: 'ตั้งรหัสผ่านตอนนี้'
-                            }).then(() => {
-                                openChangeDashboardPasswordModal();
-                                document.getElementById('changeDashboardPasswordModal').setAttribute('data-bs-backdrop', 'static');
-                                document.getElementById('changeDashboardPasswordModal').setAttribute('data-bs-keyboard', 'false');
-                                const cancelBtn = document.querySelector('#changeDashboardPasswordModal [data-bs-dismiss="modal"]');
-                                if (cancelBtn) cancelBtn.style.display = 'none';
+                                html: '<div style="text-align:left">เพื่อความปลอดภัย แนะนำให้ตั้งรหัสผ่าน Dashboard ของคุณเอง (แยกจาก PIN) — อย่างน้อย 6 ตัวอักษร<br><br>หลังตั้งแล้ว PIN จะใช้ Login เข้า Dashboard ไม่ได้อีก<br><br><span style="color:#94a3b8;font-size:.85em">ข้ามได้ก่อน แล้วมาตั้งทีหลังในหน้า "ตั้งค่า" เมื่อไหร่ก็ได้</span></div>',
+                                allowOutsideClick: true,
+                                allowEscapeKey: true,
+                                showCancelButton: true,
+                                confirmButtonText: 'ตั้งรหัสผ่านตอนนี้',
+                                cancelButtonText: 'ข้ามไปก่อน'
+                            }).then((r) => {
+                                if (r.isConfirmed) openChangeDashboardPasswordModal();
                             });
                         }, 700);
                     }
@@ -5653,6 +5658,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             if(document.getElementById('setAiEnabled')) document.getElementById('setAiEnabled').checked = !!s.aiEnabled;
             if(document.getElementById('setGeminiApiKey')) document.getElementById('setGeminiApiKey').value = s.geminiApiKey || '';
             if(document.getElementById('setGeminiModel')) document.getElementById('setGeminiModel').value = s.geminiModel || 'gemini-2.5-flash';
+            if (typeof _updateAiStatusCard === 'function') _updateAiStatusCard();
             if(document.getElementById('setPrefixTool')) document.getElementById('setPrefixTool').value = s.prefixTool || 'TL';
             if(document.getElementById('setWelcomeMsg')) document.getElementById('setWelcomeMsg').value = s.welcomeMsg || '';
             if(document.getElementById('setManualUrl')) document.getElementById('setManualUrl').value = s.manualUrl || '';
@@ -6898,7 +6904,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div class="d-flex align-items-center gap-2" style="min-width:0;">
                                     <i class="fas ${icon}"></i>
                                     <div style="min-width:0;">
-                                        <div class="text-white small fw-bold text-truncate" style="max-width:220px;">${displayAction} — ${h.itemName || h.item || ''}</div>
+                                        <div class="d-flex align-items-center gap-2" style="min-width:0;">
+                                            <span class="text-white small fw-bold text-truncate" style="max-width:170px;">${displayAction} — ${h.itemName || h.item || ''}</span>
+                                            ${h.code ? `<span class="font-monospace flex-shrink-0" style="background:#232838;color:#a0aec0;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;">${h.code}</span>` : ''}
+                                        </div>
                                         <div class="text-muted" style="font-size:11px;">${h.time || ''}${displayUser ? ' · ' + displayUser : ''}</div>
                                     </div>
                                 </div>
@@ -14045,6 +14054,36 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 // ============================================================
 
 // --- 1. AI Chat Assistant ---
+// อัปเดตสถานะการ์ด "AI Assistant (Gemini)" (จุดสี/ป้าย/เส้นขอบซ้าย) ให้ตรงกับค่าจริงในฟอร์ม — เรียกทุกครั้งที่โหลดหน้า/พิมพ์ Key/สลับ toggle
+function _updateAiStatusCard() {
+    const card = document.getElementById('aiSettingsCard');
+    const dot = document.getElementById('aiStatusDot');
+    const badge = document.getElementById('aiStatusBadge');
+    const quotaText = document.getElementById('aiQuotaText');
+    if (!card || !dot || !badge) return;
+    const keyEl = document.getElementById('setGeminiApiKey');
+    const enabledEl = document.getElementById('setAiEnabled');
+    const hasKey = !!(keyEl && keyEl.value.trim());
+    const isEnabled = !!(enabledEl && enabledEl.checked);
+
+    card.classList.remove('border-gray', 'border-green', 'border-yellow', 'border-red');
+    badge.classList.remove('badge-none', 'badge-ok', 'badge-warn', 'badge-full');
+
+    if (!hasKey) {
+        card.classList.add('border-gray'); dot.style.background = '#4b5563';
+        badge.classList.add('badge-none'); badge.textContent = 'ยังไม่ได้ตั้งค่า';
+        if (quotaText) quotaText.textContent = 'ใช้วิเคราะห์คลังทั้งระบบผ่าน AI Command Console — ต้องมี API Key ก่อนถึงจะใช้งานได้';
+    } else if (!isEnabled) {
+        card.classList.add('border-yellow'); dot.style.background = '#f59e0b';
+        badge.classList.add('badge-warn'); badge.textContent = 'ปิดใช้งานอยู่';
+        if (quotaText) quotaText.textContent = 'มี API Key แล้ว แต่ยังปิดใช้งาน AI Assistant อยู่ — เปิดสวิตช์ด้านบนเพื่อใช้งาน';
+    } else {
+        card.classList.add('border-green'); dot.style.background = '#22c55e';
+        badge.classList.add('badge-ok'); badge.textContent = 'พร้อมใช้งาน';
+        if (quotaText) quotaText.textContent = 'เชื่อมต่อ Gemini AI พร้อมใช้งานผ่าน AI Command Console แล้ว';
+    }
+}
+
 function testGeminiConnection() {
     Swal.fire({title: 'กำลังทดสอบ...', text: 'กำลังตรวจสอบการเชื่อมต่อ Gemini API...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
     
