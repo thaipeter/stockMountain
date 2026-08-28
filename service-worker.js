@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mountain-wms-cache-v4';
+const CACHE_NAME = 'mountain-wms-cache-v5';
 const urlsToCache = [
   './index.html',
   './indexqrv1.html',
