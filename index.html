@@ -1165,7 +1165,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 .line-card.border-gray { border-left-color:#4b5563; }
 .line-card .card-header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
 .line-card .account-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.line-card .account-title h3 { font-size:.9rem; font-weight:700; color:#e0e0e0; margin:0; }
+.line-card .line-card-title { font-size:.78rem; font-weight:700; color:#e0e0e0; }
 .line-card .line-icon { font-size:.7rem; }
 .line-card .badge { font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; }
 .line-card .badge-full { background:rgba(239,68,68,.15); color:#ef4444; border:1px solid rgba(239,68,68,.4); }
@@ -3757,7 +3757,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                      <div class="settings-box">
                                          <div class="d-flex justify-content-between align-items-center mb-3">
                                              <div style="font-size:.8rem;color:rgba(255,255,255,.5)">ตั้งค่า Token ของแต่ละ LINE OA — เว้นช่อง Token ว่างไว้ถ้าไม่ต้องการเปลี่ยนค่าเดิม</div>
-                                             <button class="btn btn-sm" onclick="loadLineQuotaStatus()" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px"><i class="fas fa-sync me-1"></i> รีเฟรชโควตา</button>
+                                             <button class="btn btn-sm" onclick="loadLineQuotaStatus(true)" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px"><i class="fas fa-sync me-1"></i> รีเฟรชโควตา</button>
                                          </div>
                                          <div id="lineChannelFormsWrap">
                                              <div class="text-center py-3" style="color:#6b7280"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</div>
@@ -6204,16 +6204,16 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         ============================================================ */
         window._lineQuotaCache = null;
 
-        function loadLineQuotaStatus() {
+        function loadLineQuotaStatus(forceRefresh) {
             const handleOk = (res) => {
                 window._lineQuotaCache = (res && res.success) ? res.bots : null;
                 if (!window._lineChannelDataCache) { loadLineChannelForms(); return; } // ยังไม่เคยโหลดฟอร์ม (ยังไม่ได้กรอกรหัสผ่าน) — เปิด prompt ให้กรอกก่อน
                 renderLineChannelCards(); // อัปเดตโควตาในการ์ดที่แสดงอยู่
             };
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(handleOk).withFailureHandler(() => {}).webGetLineQuotaStatus(currentUserProfile.uid);
+                google.script.run.withSuccessHandler(handleOk).withFailureHandler(() => {}).webGetLineQuotaStatus(currentUserProfile.uid, !!forceRefresh);
             } else {
-                callGAS('webGetLineQuotaStatus', [currentUserProfile.uid], handleOk, () => {});
+                callGAS('webGetLineQuotaStatus', [currentUserProfile.uid, !!forceRefresh], handleOk, () => {});
             }
         }
 
@@ -6239,6 +6239,20 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             return { cls: 'green', badgeCls: 'badge-ok', badgeText: '🟢 ปกติ', barCls: 'bg-green', barPct: pct, quotaText: `Used: ${q.used} / Limit: ${q.total} (${pct}%)` };
         }
 
+        function toggleLineCardFields(cardId) {
+            const fieldsEl = document.getElementById(`${cardId}_fields`);
+            const btnEl = document.getElementById(`${cardId}_toggleBtn`);
+            if (!fieldsEl || !btnEl) return;
+            const wasConfigured = fieldsEl.dataset.wasConfigured === '1';
+            fieldsEl.classList.toggle('fields-collapsed');
+            const isNowOpen = !fieldsEl.classList.contains('fields-collapsed');
+            if (isNowOpen) {
+                btnEl.innerHTML = '<i class="fas fa-chevron-up me-1"></i>ปิดฟอร์ม';
+            } else {
+                btnEl.innerHTML = `<i class="fas ${wasConfigured ? 'fa-pen' : 'fa-chevron-down'} me-1"></i>${wasConfigured ? 'แก้ไข Token' : 'ตั้งค่าตอนนี้'}`;
+            }
+        }
+
         function renderLineChannelCards() {
             const wrap = document.getElementById('lineChannelFormsWrap');
             if (!wrap || !window._lineChannelDataCache) return;
@@ -6257,18 +6271,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <div class="card-header">
                         <div class="account-title">
                             <span class="line-icon">${st.cls === 'red' ? '🔴' : st.cls === 'yellow' ? '🟡' : st.cls === 'green' ? '🟢' : '⚪'}</span>
-                            <h3>ไลน์${escapeHtml(b.label)}</h3>
+                            <span class="line-card-title">ไลน์${escapeHtml(b.label)}</span>
                             <span class="badge ${st.badgeCls}" title="${escapeHtml(st.quotaText)}">${st.badgeText}</span>
                         </div>
-                        <button type="button" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px;font-size:11px" onclick="document.getElementById('${cardId}_fields').classList.toggle('fields-collapsed')">
-                            <i class="fas fa-pen me-1"></i>${isConfigured ? 'เปลี่ยน Token' : 'เชื่อมต่อ'}
+                        <button type="button" id="${cardId}_toggleBtn" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px;font-size:11px" onclick="toggleLineCardFields('${cardId}')">
+                            <i class="fas ${isConfigured ? 'fa-pen' : 'fa-chevron-down'} me-1"></i>${isConfigured ? 'แก้ไข Token' : 'ตั้งค่าตอนนี้'}
                         </button>
                     </div>
                     <div class="quota-text">${escapeHtml(st.quotaText)}</div>
                     <div class="progress-container" title="${escapeHtml(st.quotaText)}">
                         <div class="progress-bar ${st.barCls}" style="width:${st.barPct}%;"></div>
                     </div>
-                    <div id="${cardId}_fields" class="${isConfigured ? 'fields-collapsed' : ''}">
+                    <div id="${cardId}_fields" data-was-configured="${isConfigured ? '1' : '0'}" class="${isConfigured ? 'fields-collapsed' : ''}">
                         <div class="form-group">
                             <label>Token${b.tokenMasked ? ' (ปัจจุบัน: ' + escapeHtml(b.tokenMasked) + ')' : ''}</label>
                             <input type="password" class="input-field" id="lineBotToken_${b.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน">
@@ -6294,7 +6308,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const handleOk = (res) => {
                 if (!res || !res.success) { Swal.fire({ icon: 'error', title: `ทดสอบไลน์${label}ไม่สำเร็จ`, text: (res && res.error) || 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' }); return; }
                 Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: res.message, timer: 2500, showConfirmButton: false, background: '#1a2230', color: '#e0e0e0' });
-                loadLineQuotaStatus(); // อัปเดตโควตาหลังทดสอบ (เสียไป 1 ข้อความ)
+                loadLineQuotaStatus(true); // อัปเดตโควตาหลังทดสอบ (เสียไป 1 ข้อความ) — บังคับข้าม cache เก่า
             };
             const handleFail = (err) => Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err), background: '#1a2230', color: '#e0e0e0' });
             if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -6351,6 +6365,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     window._lineDashPw = pw; // เก็บรหัสผ่านไว้ใช้รีโหลดฟอร์มแบบเงียบๆ ไม่ต้องถามซ้ำ
                     Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: res.message || 'บันทึกการตั้งค่าช่องทาง LINE เรียบร้อยแล้ว', timer: 2500, showConfirmButton: false, background: '#1a2230', color: '#e0e0e0' });
                     loadLineChannelForms(true); // โหมดเงียบ ใช้รหัสผ่านที่แคชไว้ ไม่เด้ง popup ทับ
+                    loadLineQuotaStatus(true); // บังคับข้าม cache เก่า เผื่อเพิ่งเพิ่ม/แก้ไขบอทตัวใหม่
                 };
                 const handleFail = (err) => Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err), background: '#1a2230', color: '#e0e0e0' });
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -14181,10 +14196,12 @@ function testGeminiConnection() {
         Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: String(err && err.message || err)});
     };
 
-    if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webTestGeminiConnection === 'function' && window.location.protocol !== 'file:') {
+    if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webTestGeminiConnection === 'function') {
         google.script.run.withSuccessHandler(handleRes).withFailureHandler(handleErr).webTestGeminiConnection();
-    } else if (typeof webPost === 'function' && window.location.protocol !== 'file:') {
-        webPost('webTestGeminiConnection', []).then(handleRes).catch(handleErr);
+    } else if (typeof callGAS === 'function') {
+        // เรียกผ่าน backend จริง (ผ่าน _callGeminiAI ที่มีระบบสลับไป Groq สำรองอัตโนมัติในตัวอยู่แล้ว)
+        // แก้จากเดิมที่อ้างอิง webPost() ซึ่งไม่มีฟังก์ชันนี้อยู่จริงในระบบ ทำให้หลุดไปเรียก Gemini ตรงจากเบราว์เซอร์แทนมาตลอด
+        callGAS('webTestGeminiConnection', [], handleRes, handleErr);
     } else {
         // Direct Client-side Fetch Test using entered or saved API Key
         const keyInput = document.getElementById('setGeminiApiKey');
