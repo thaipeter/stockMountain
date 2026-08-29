@@ -4958,59 +4958,70 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     return;
                 }
 
-                // 🔐 ยืนยันตัวตนก่อนเข้าหน้า ตั้งค่า / คลังเก็บ
+                // 🔐 ยืนยันตัวตนก่อนเข้าหน้า ตั้งค่า / คลังเก็บ — เช็คสถานะรหัสผ่านจริงจาก backend (ต่อผู้ใช้)
+                // แทนการอ่าน allData.settings.dashboardPassword ที่ backend ไม่เคยส่งค่านี้มาเลย (ระบบใหม่เก็บรหัสผ่าน
+                // แยกรายคนในชีต Users ไม่ใช่ค่าเดียวใช้ร่วมกันแบบเดิม) ทำให้เงื่อนไขเดิม "ยังไม่ได้ตั้งรหัสผ่าน" เป็นจริง
+                // เสมอ ไม่ว่าจะตั้งรหัสผ่านของตัวเองไว้แล้วหรือไม่ก็ตาม — และเปลี่ยนมาเช็ครหัสผ่านที่กรอกกับ backend
+                // จริง (webVerifyDashboardPassword) แทนการเทียบ string ฝั่ง browser ตรงๆ ซึ่งไม่ปลอดภัย
                 const PROTECTED_SECTIONS = ['settings', 'archive', 'archiveMgmt'];
                 if (PROTECTED_SECTIONS.indexOf(sectionId) !== -1) {
-                    const savedPw = allData.settings && allData.settings.dashboardPassword ? allData.settings.dashboardPassword : '';
-                    // ถ้ายังไม่ได้ตั้งรหัสผ่าน Dashboard ให้เตือนแล้วเข้าได้เลย (Admin ควรตั้งรหัสก่อน)
-                    if (!savedPw) {
+                    const uid = currentUserProfile.uid;
+                    const askAndVerifyPassword = () => {
                         Swal.fire({
-                            icon: 'warning',
-                            title: 'ยังไม่ได้ตั้งรหัสผ่าน',
-                            html: '<div style="text-align:left;color:#e0e0e0">ยังไม่ได้ตั้ง <b>รหัสผ่าน Dashboard</b><br>กรุณาตั้งรหัสผ่านในหน้าตั้งค่าเพื่อเพิ่มความปลอดภัย</div>',
-                            confirmButtonText: 'เข้าได้เลย (ตั้งรหัสก่อน)',
+                            title: '<span style="color:#fbbf24"><i class="fas fa-lock me-2"></i>ยืนยันตัวตน</span>',
+                            html: '<div style="color:rgba(255,255,255,.6);font-size:.85rem;margin-bottom:8px">กรุณากรอกรหัสผ่าน Dashboard ของคุณเพื่อเข้าหน้า<br><b style="color:#fff">ตั้งค่าระบบ</b></div>',
+                            input: 'password',
+                            inputPlaceholder: 'รหัสผ่าน Dashboard',
+                            inputAttributes: { autocomplete: 'current-password', style: 'background:#232838;color:#fff;border:1px solid #374151;border-radius:10px;padding:10px 14px;font-size:1rem;letter-spacing:2px;text-align:center' },
+                            showCancelButton: true,
+                            confirmButtonText: '<i class="fas fa-unlock me-1"></i> ยืนยัน',
+                            cancelButtonText: 'ยกเลิก',
                             confirmButtonColor: '#f59e0b',
+                            cancelButtonColor: '#374151',
                             background: '#1a2230',
-                            color: '#e0e0e0'
-                        }).then(function() {
-                            _doGoTo(sectionId);
+                            color: '#e0e0e0',
+                            customClass: { input: 'swal-pw-input' },
+                            didOpen: function() {
+                                const inp = Swal.getInput();
+                                if (inp) { inp.style.cssText = 'background:#232838!important;color:#fff!important;border:1px solid #374151!important;border-radius:10px!important;padding:10px 14px!important;font-size:1rem!important;letter-spacing:2px!important;text-align:center!important'; }
+                            }
+                        }).then(function(result) {
+                            if (!result.isConfirmed || !result.value) return;
+                            const handleVerify = (ok) => {
+                                if (!ok) {
+                                    Swal.fire({ icon: 'error', title: 'รหัสผ่านไม่ถูกต้อง', text: 'กรุณาตรวจสอบรหัสผ่าน Dashboard อีกครั้ง', confirmButtonColor: '#ef4444', background: '#1a2230', color: '#e0e0e0' });
+                                    return;
+                                }
+                                _doGoTo(sectionId);
+                            };
+                            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                                google.script.run.withSuccessHandler(handleVerify).withFailureHandler(() => {}).webVerifyDashboardPassword(uid, result.value);
+                            } else {
+                                callGAS('webVerifyDashboardPassword', [uid, result.value], handleVerify, () => {});
+                            }
                         });
-                        return;
-                    }
-                    Swal.fire({
-                        title: '<span style="color:#fbbf24"><i class="fas fa-lock me-2"></i>ยืนยันตัวตน</span>',
-                        html: '<div style="color:rgba(255,255,255,.6);font-size:.85rem;margin-bottom:8px">กรุณากรอกรหัสผ่าน Dashboard เพื่อเข้าหน้า<br><b style="color:#fff">ตั้งค่าระบบ</b></div>',
-                        input: 'password',
-                        inputPlaceholder: 'รหัสผ่าน Dashboard',
-                        inputAttributes: { autocomplete: 'current-password' },
-                        showCancelButton: true,
-                        confirmButtonText: '<i class="fas fa-unlock me-1"></i> ยืนยัน',
-                        cancelButtonText: 'ยกเลิก',
-                        confirmButtonColor: '#f59e0b',
-                        cancelButtonColor: '#374151',
-                        background: '#1a2230',
-                        color: '#e0e0e0',
-                        inputAttributes: { style: 'background:#232838;color:#fff;border:1px solid #374151;border-radius:10px;padding:10px 14px;font-size:1rem;letter-spacing:2px;text-align:center' },
-                        customClass: { input: 'swal-pw-input' },
-                        didOpen: function() {
-                            const inp = Swal.getInput();
-                            if (inp) { inp.style.cssText = 'background:#232838!important;color:#fff!important;border:1px solid #374151!important;border-radius:10px!important;padding:10px 14px!important;font-size:1rem!important;letter-spacing:2px!important;text-align:center!important'; }
-                        }
-                    }).then(function(result) {
-                        if (!result.isConfirmed || !result.value) return;
-                        if (result.value !== savedPw) {
+                    };
+                    const handleHasPw = (res) => {
+                        const hasPw = res && typeof res === 'object' ? !!res.hasPassword : !!res;
+                        if (!hasPw) {
                             Swal.fire({
-                                icon: 'error',
-                                title: 'รหัสผ่านไม่ถูกต้อง',
-                                text: 'กรุณาตรวจสอบรหัสผ่าน Dashboard อีกครั้ง',
-                                confirmButtonColor: '#ef4444',
+                                icon: 'warning',
+                                title: 'ยังไม่ได้ตั้งรหัสผ่าน',
+                                html: '<div style="text-align:left;color:#e0e0e0">ยังไม่ได้ตั้ง <b>รหัสผ่าน Dashboard</b><br>กรุณาตั้งรหัสผ่านในหน้าตั้งค่าเพื่อเพิ่มความปลอดภัย</div>',
+                                confirmButtonText: 'เข้าได้เลย (ตั้งรหัสก่อน)',
+                                confirmButtonColor: '#f59e0b',
                                 background: '#1a2230',
                                 color: '#e0e0e0'
-                            });
+                            }).then(function() { _doGoTo(sectionId); });
                             return;
                         }
-                        _doGoTo(sectionId);
-                    });
+                        askAndVerifyPassword();
+                    };
+                    if (typeof google !== 'undefined' && google.script && google.script.run) {
+                        google.script.run.withSuccessHandler(handleHasPw).withFailureHandler(() => { _doGoTo(sectionId); }).webHasDashboardPassword(uid);
+                    } else {
+                        callGAS('webHasDashboardPassword', [uid], handleHasPw, () => { _doGoTo(sectionId); });
+                    }
                     return;
                 }
 
