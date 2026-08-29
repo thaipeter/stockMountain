@@ -4727,7 +4727,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const targetSec = sessionStorage.getItem('last_section') || 'dashboard';
             const ADMIN_ONLY_SECTIONS = ['settings', 'archive'];
             const isAllowed = (ADMIN_ONLY_SECTIONS.indexOf(targetSec) === -1) || (currentUserProfile.role === 'admin');
-            goTo(isAllowed ? targetSec : 'dashboard');
+            // ★ แก้บั๊ก: เดิม goTo(targetSec) ตรงๆ ทำให้ถ้าแท็บล่าสุดก่อนรีเฟรชคือ "ตั้งค่า/คลังเก็บ" (PROTECTED_SECTIONS)
+            // ป๊อปอัพยืนยันรหัสผ่านจะเด้งขึ้นมาทันทีตั้งแต่หน้าโหลดเสร็จ โดยที่ผู้ใช้ยังไม่ได้กดอะไรเองในรอบนี้เลย
+            // — เปลี่ยนให้กลับไปหน้า Dashboard แทนถ้าแท็บล่าสุดเป็นหน้าที่มีการป้องกันด้วยรหัสผ่าน ต้องกดเข้าเองเท่านั้น
+            // ถึงจะเจอป๊อปอัพยืนยันตัวตน (การกระทำที่ตั้งใจ ไม่ใช่การเด้งขึ้นมาเองตอนโหลดหน้า)
+            const PROTECTED_SECTIONS = ['settings', 'archive', 'archiveMgmt'];
+            const isProtected = PROTECTED_SECTIONS.indexOf(targetSec) !== -1;
+            goTo((isAllowed && !isProtected) ? targetSec : 'dashboard');
         }
 
         let allData = { items: [], tools: [], history: [], activeBorrows: [], pendingPOs: [], users: [], settings: {} };
