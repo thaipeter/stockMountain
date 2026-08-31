@@ -3103,8 +3103,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <h3 class="fw-bold mb-0 text-white" style="letter-spacing:-.3px">AI Analytics Workspace</h3>
-                                        <span class="badge rounded-pill" style="background:rgba(139,92,246,.2);color:#c4b5fd;border:1px solid rgba(167,139,250,.4);font-size:.73rem;padding:6px 12px">
-                                            <i class="fas fa-sparkles text-warning me-1"></i>Gemini 2.5 Pro Engine
+                                        <span class="badge rounded-pill" id="aiEngineBadge" style="background:rgba(139,92,246,.2);color:#c4b5fd;border:1px solid rgba(167,139,250,.4);font-size:.73rem;padding:6px 12px">
+                                            <i class="fas fa-sparkles text-warning me-1"></i>กำลังเช็ค...
                                         </span>
                                         <span class="badge rounded-pill" style="background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3);font-size:.73rem;padding:6px 12px">
                                             <i class="fas fa-circle me-1" style="font-size:6px"></i>Live Inventory Sync
@@ -4984,44 +4984,52 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const PROTECTED_SECTIONS = ['settings', 'archive', 'archiveMgmt'];
                 if (PROTECTED_SECTIONS.indexOf(sectionId) !== -1) {
                     const uid = currentUserProfile.uid;
-                    const askAndVerifyPassword = () => {
-                        Swal.fire({
-                            title: '<span style="color:#fbbf24"><i class="fas fa-lock me-2"></i>ยืนยันตัวตน</span>',
-                            html: '<div style="color:rgba(255,255,255,.6);font-size:.85rem;margin-bottom:8px">กรุณากรอกรหัสผ่าน Dashboard ของคุณเพื่อเข้าหน้า<br><b style="color:#fff">ตั้งค่าระบบ</b></div>',
-                            input: 'password',
-                            inputPlaceholder: 'รหัสผ่าน Dashboard',
-                            inputAttributes: { autocomplete: 'current-password', style: 'background:#232838;color:#fff;border:1px solid #374151;border-radius:10px;padding:10px 14px;font-size:1rem;letter-spacing:2px;text-align:center' },
-                            showCancelButton: true,
-                            confirmButtonText: '<i class="fas fa-unlock me-1"></i> ยืนยัน',
-                            cancelButtonText: 'ยกเลิก',
-                            confirmButtonColor: '#f59e0b',
-                            cancelButtonColor: '#374151',
-                            background: '#1a2230',
-                            color: '#e0e0e0',
-                            customClass: { input: 'swal-pw-input' },
-                            didOpen: function() {
-                                const inp = Swal.getInput();
-                                if (inp) { inp.style.cssText = 'background:#232838!important;color:#fff!important;border:1px solid #374151!important;border-radius:10px!important;padding:10px 14px!important;font-size:1rem!important;letter-spacing:2px!important;text-align:center!important'; }
-                            }
-                        }).then(function(result) {
-                            if (!result.isConfirmed || !result.value) return;
-                            const handleVerify = (ok) => {
-                                if (!ok) {
-                                    Swal.fire({ icon: 'error', title: 'รหัสผ่านไม่ถูกต้อง', text: 'กรุณาตรวจสอบรหัสผ่าน Dashboard อีกครั้ง', confirmButtonColor: '#ef4444', background: '#1a2230', color: '#e0e0e0' });
-                                    return;
+                    // ★ โชว์ป๊อปอัพทันที ไม่ต้องรอ network เช็คก่อนว่ามีรหัสผ่านหรือยัง (ของเดิมทำให้ป๊อปอัพช้า 3-4 วิ)
+                    // ค่อยเช็คสถานะรหัสผ่านพร้อมกับตอนยืนยันรหัส (ทีเดียวจบ) แทน
+                    Swal.fire({
+                        title: '<span style="color:#fbbf24"><i class="fas fa-lock me-2"></i>ยืนยันตัวตน</span>',
+                        html: '<div style="color:rgba(255,255,255,.6);font-size:.85rem;margin-bottom:8px">กรุณากรอกรหัสผ่าน Dashboard ของคุณเพื่อเข้าหน้า<br><b style="color:#fff">ตั้งค่าระบบ</b></div>',
+                        input: 'password',
+                        inputPlaceholder: 'รหัสผ่าน Dashboard',
+                        inputAttributes: { autocomplete: 'current-password', style: 'background:#232838;color:#fff;border:1px solid #374151;border-radius:10px;padding:10px 14px;font-size:1rem;letter-spacing:2px;text-align:center' },
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fas fa-unlock me-1"></i> ยืนยัน',
+                        cancelButtonText: 'ยกเลิก',
+                        confirmButtonColor: '#f59e0b',
+                        cancelButtonColor: '#374151',
+                        background: '#1a2230',
+                        color: '#e0e0e0',
+                        customClass: { input: 'swal-pw-input' },
+                        didOpen: function() {
+                            const inp = Swal.getInput();
+                            if (inp) { inp.style.cssText = 'background:#232838!important;color:#fff!important;border:1px solid #374151!important;border-radius:10px!important;padding:10px 14px!important;font-size:1rem!important;letter-spacing:2px!important;text-align:center!important'; }
+                        },
+                        // ★ ป๊อปอัพจะไม่หายทันทีที่กดยืนยัน — ค้างไว้พร้อมโชว์ spinner ระหว่างรอผลตรวจสอบจริงจากเซิร์ฟเวอร์
+                        showLoaderOnConfirm: true,
+                        allowOutsideClick: () => !Swal.isLoading(),
+                        preConfirm: (password) => {
+                            if (!password) { Swal.showValidationMessage('กรุณากรอกรหัสผ่าน'); return false; }
+                            return new Promise((resolve) => {
+                                const handleVerify = (res) => {
+                                    const hasPw = res && typeof res === 'object' ? !!res.hasPassword : false;
+                                    if (!hasPw) { resolve({ notSet: true }); return; }
+                                    if (typeof google !== 'undefined' && google.script && google.script.run) {
+                                        google.script.run.withSuccessHandler((ok) => resolve({ valid: !!ok })).withFailureHandler(() => resolve({ valid: false, networkError: true })).webVerifyDashboardPassword(uid, password);
+                                    } else {
+                                        callGAS('webVerifyDashboardPassword', [uid, password], (ok) => resolve({ valid: !!ok }), () => resolve({ valid: false, networkError: true }));
+                                    }
+                                };
+                                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                                    google.script.run.withSuccessHandler(handleVerify).withFailureHandler(() => resolve({ valid: false, networkError: true })).webHasDashboardPassword(uid);
+                                } else {
+                                    callGAS('webHasDashboardPassword', [uid], handleVerify, () => resolve({ valid: false, networkError: true }));
                                 }
-                                _doGoTo(sectionId);
-                            };
-                            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                                google.script.run.withSuccessHandler(handleVerify).withFailureHandler(() => {}).webVerifyDashboardPassword(uid, result.value);
-                            } else {
-                                callGAS('webVerifyDashboardPassword', [uid, result.value], handleVerify, () => {});
-                            }
-                        });
-                    };
-                    const handleHasPw = (res) => {
-                        const hasPw = res && typeof res === 'object' ? !!res.hasPassword : !!res;
-                        if (!hasPw) {
+                            });
+                        }
+                    }).then(function(result) {
+                        if (!result.isConfirmed) return;
+                        const v = result.value;
+                        if (v && v.notSet) {
                             Swal.fire({
                                 icon: 'warning',
                                 title: 'ยังไม่ได้ตั้งรหัสผ่าน',
@@ -5033,13 +5041,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             }).then(function() { _doGoTo(sectionId); });
                             return;
                         }
-                        askAndVerifyPassword();
-                    };
-                    if (typeof google !== 'undefined' && google.script && google.script.run) {
-                        google.script.run.withSuccessHandler(handleHasPw).withFailureHandler(() => { _doGoTo(sectionId); }).webHasDashboardPassword(uid);
-                    } else {
-                        callGAS('webHasDashboardPassword', [uid], handleHasPw, () => { _doGoTo(sectionId); });
-                    }
+                        if (v && v.valid) { _doGoTo(sectionId); return; }
+                        Swal.fire({
+                            icon: 'error',
+                            title: v && v.networkError ? 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' : 'รหัสผ่านไม่ถูกต้อง',
+                            text: v && v.networkError ? 'กรุณาลองใหม่อีกครั้ง' : 'กรุณาตรวจสอบรหัสผ่าน Dashboard อีกครั้ง',
+                            confirmButtonColor: '#ef4444', background: '#1a2230', color: '#e0e0e0'
+                        });
+                    });
                     return;
                 }
 
@@ -6257,17 +6266,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             }
         }
 
-        function _quotaLineHtml(q) {
-            if (!q) return '<span style="color:#6b7280">กำลังเช็คโควตา...</span>';
-            if (!q.configured) return '<span style="color:#6b7280">ยังไม่ได้เชื่อมต่อ</span>';
-            if (q.error) return `<span style="color:#f87171">เชื่อมต่อแล้ว แต่เช็คโควตาไม่สำเร็จ: ${escapeHtml(q.error)}</span>`;
-            if (q.unlimited) return '<span style="color:#22c55e"><i class="fas fa-check-circle me-1"></i>เชื่อมต่อแล้ว · ไม่จำกัดโควตา</span>';
-            const pct = q.percent == null ? '-' : q.percent;
-            const color = pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
-            const statusTxt = pct >= 100 ? ' (เต็มแล้ว!)' : '';
-            return `<span style="color:${color}"><i class="fas fa-check-circle me-1"></i>เชื่อมต่อแล้ว · ${q.used}/${q.total} (${pct}%)${statusTxt}</span>`;
-        }
-
         function _statusInfo(b, q, isConfigured) {
             // ตัดสินสถานะ/สี ตามลำดับ: ยังไม่เชื่อมต่อ > error > เต็มแล้ว > ใกล้เต็ม > ปกติ
             if (!isConfigured) return { cls: 'gray', badgeCls: 'badge-none', badgeText: '⚪ ยังไม่เชื่อมต่อ', barCls: '', barPct: 0, quotaText: 'ยังไม่ได้ตั้งค่า' };
@@ -6440,18 +6438,28 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <option value="groq" ${data.primary === 'groq' ? 'selected' : ''}>Groq</option>
                     </select>
                 </div>
-            ` + data.providers.map(p => `
+            ` + data.providers.map(p => {
+                const cardId = `aiProviderCard_${p.id}`;
+                const isConfigured = !!p.keyMasked;
+                return `
                 <div class="mb-3 p-2 rounded-3" style="background:#232838;border:1px solid #2a2f3d">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="fw-bold" style="font-size:.85rem;color:#e0e0e0">${escapeHtml(p.label)}${data.primary === p.id ? ' <span class="badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:9px">หลัก</span>' : ' <span class="badge" style="background:#2a2f3d;color:#6b7280;font-size:9px">สำรอง</span>'}</div>
-                        <button type="button" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px;font-size:11px" onclick="testAIProvider('${p.id}','${escapeHtml(p.label)}')"><i class="fas fa-vial me-1"></i>ทดสอบ</button>
+                        <div class="d-flex gap-2">
+                            <button type="button" id="${cardId}_toggleBtn" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px;font-size:11px" onclick="toggleLineCardFields('${cardId}')">
+                                <i class="fas ${isConfigured ? 'fa-pen' : 'fa-chevron-down'} me-1"></i>${isConfigured ? 'แก้ไข' : 'ตั้งค่าตอนนี้'}
+                            </button>
+                            <button type="button" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px;font-size:11px" onclick="testAIProvider('${p.id}','${escapeHtml(p.label)}')"><i class="fas fa-vial me-1"></i>ทดสอบ</button>
+                        </div>
                     </div>
-                    <div class="mb-2"><label class="form-label small mb-1">API Key${p.keyMasked ? ' (ปัจจุบัน: ' + escapeHtml(p.keyMasked) + ')' : ' (ยังไม่ได้ตั้งค่า)'}</label>
-                        <input type="password" class="form-control form-control-sm" id="aiKey_${p.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน"></div>
-                    <div><label class="form-label small mb-1">โมเดล</label>
-                        <input type="text" class="form-control form-control-sm" id="aiModel_${p.id}" value="${escapeHtml(p.model || '')}"></div>
-                </div>
-            `).join('');
+                    <div id="${cardId}_fields" data-was-configured="${isConfigured ? '1' : '0'}" class="${isConfigured ? 'fields-collapsed' : ''}">
+                        <div class="mb-2"><label class="form-label small mb-1">API Key${p.keyMasked ? ' (ปัจจุบัน: ' + escapeHtml(p.keyMasked) + ')' : ' (ยังไม่ได้ตั้งค่า)'}</label>
+                            <input type="password" class="form-control form-control-sm" id="aiKey_${p.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน"></div>
+                        <div><label class="form-label small mb-1">โมเดล</label>
+                            <input type="text" class="form-control form-control-sm" id="aiModel_${p.id}" value="${escapeHtml(p.model || '')}"></div>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
         function loadAIProviderForms(silent) {
@@ -14415,6 +14423,21 @@ function sendAiChat() {
 }
 
 /* เรียกจากปุ่ม Quick Insight ในหน้า AI Center */
+function loadActiveAIProviderBadge() {
+    const badge = document.getElementById('aiEngineBadge');
+    if (!badge) return;
+    const handleOk = (res) => {
+        badge.innerHTML = `<i class="fas fa-sparkles text-warning me-1"></i>${(res && res.success) ? escapeHtml(res.label) : 'ไม่ทราบสถานะ'} Engine`;
+    };
+    const handleFail = () => { badge.innerHTML = '<i class="fas fa-sparkles text-warning me-1"></i>ไม่ทราบสถานะ'; };
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webGetActiveAIProviderLabel();
+    } else {
+        callGAS('webGetActiveAIProviderLabel', [], handleOk, handleFail);
+    }
+}
+if (document.getElementById('aiEngineBadge')) loadActiveAIProviderBadge();
+
 function askAiCenter(question) {
     const input = document.getElementById('aiChatInput');
     if (!input) return;
