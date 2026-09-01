@@ -4551,10 +4551,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const isExternal = (window.location.hostname !== 'script.google.com' && !window.location.hostname.endsWith('.googleusercontent.com'));
             window.GAS_URL = (typeof GAS_URL !== 'undefined' && GAS_URL && GAS_URL.indexOf('วาง_URL') === -1) ? GAS_URL : '';
             
-            function callGAS(fn, args, onOk, onFail) {
+            function callGAS(fn, args, onOk, onFail, timeoutMs) {
                 if (window.GAS_URL) {
                     const controller = new AbortController();
-                    const timer = setTimeout(() => controller.abort(), 30000);
+                    // ★ แก้บั๊ก: เดิม timeout ตายตัว 30 วิ สำหรับทุกฟังก์ชัน รวมถึง webAskAiAssistant (AI Command
+                    // Console) ด้วย — คำถามที่ต้องให้ Gemini วิเคราะห์ข้อมูลคลังทั้งระบบ (เช่น "สรุปภาพรวมคลังสินค้า
+                    // ทั้งระบบ") ใช้เวลาประมวลผลนานกว่า 30 วิได้บ่อยมาก โดยเฉพาะตอน Apps Script cold start ทำให้ถูก
+                    // ตัดกลางคันด้วย controller.abort() ที่ไม่ได้ใส่เหตุผลไว้เลย ผู้ใช้เลยเห็นข้อความดิบของเบราว์เซอร์
+                    // "signal is aborted without reason" ซึ่งไม่สื่อความหมายอะไรเลย — เพิ่มพารามิเตอร์ timeoutMs ให้
+                    // เรียกแบบ custom ได้ต่อจุด (ค่าเริ่มต้นยังเป็น 30 วิเหมือนเดิมสำหรับฟังก์ชันทั่วไป) และใส่เหตุผลที่
+                    // อ่านรู้เรื่องให้ abort() เผื่อยังหลุด timeout อยู่ดี
+                    const effectiveTimeout = timeoutMs || 30000;
+                    const timer = setTimeout(() => controller.abort('เซิร์ฟเวอร์ตอบกลับช้ากว่าปกติ (อาจกำลังประมวลผลอยู่) กรุณาลองใหม่อีกครั้ง'), effectiveTimeout);
                     fetch(window.GAS_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain' },
@@ -4569,7 +4577,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     })
                     .catch(e => {
                         clearTimeout(timer);
-                        if (onFail) onFail(e.message || e);
+                        // ★ เผื่อ browser บางตัวไม่ส่ง reason ที่เราตั้งไว้กลับมาใน e.message (ยังคงเจอ "signal is
+                        // aborted without reason" ดิบๆ) ให้เช็ค e.name === 'AbortError' แล้วแทนที่ด้วยข้อความที่อ่านง่ายเอง
+                        const msg = (e && e.name === 'AbortError') ? 'เซิร์ฟเวอร์ตอบกลับช้ากว่าปกติ (อาจกำลังประมวลผลอยู่) กรุณาลองใหม่อีกครั้ง' : (e.message || e);
+                        if (onFail) onFail(msg);
                     });
                     return;
                 }
@@ -4589,9 +4600,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             // webPost อยู่จริงในระบบเลย ทำให้ก่อนหน้านี้ทุกจุดพวกนี้แอบพังเงียบๆ (ReferenceError) หรือหลุดไป
             // ทำงานแบบอื่นที่ไม่ตั้งใจ — เพิ่มฟังก์ชันนี้ให้เป็น Promise ห่อ callGAS เดิมไว้ จะได้ใช้ syntax
             // .then()/.catch() ได้จริงตามที่โค้ดจุดอื่นคาดหวังไว้ โดยไม่ต้องไล่แก้ทีละจุด
-            function webPost(fn, args) {
+            function webPost(fn, args, timeoutMs) {
                 return new Promise((resolve, reject) => {
-                    callGAS(fn, args, resolve, reject);
+                    callGAS(fn, args, resolve, reject, timeoutMs);
                 });
             }
             window.webPost = webPost;
@@ -14350,7 +14361,9 @@ function sendAiChat() {
     if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webAskAiAssistant === 'function' && window.location.protocol !== 'file:') {
         google.script.run.withSuccessHandler(handleAiRes).withFailureHandler(handleAiErr).webAskAiAssistant(question);
     } else if (typeof webPost === 'function' && window.location.protocol !== 'file:') {
-        webPost('webAskAiAssistant', [question]).then(handleAiRes).catch(handleAiErr);
+        // ★ ใช้ timeout ยาวกว่าปกติ (90 วิ แทน 30 วิ default) เพราะคำถามที่ให้ AI วิเคราะห์คลังทั้งระบบ
+        // มักใช้เวลาประมวลผลนานกว่าฟังก์ชันทั่วไปมาก โดยเฉพาะตอน Apps Script cold start
+        webPost('webAskAiAssistant', [question], 90000).then(handleAiRes).catch(handleAiErr);
     } else {
         // Smart Local AI Response for Demo Testing (กระชับ ตรงประเด็น ทันที)
         setTimeout(function() {
