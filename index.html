@@ -3103,8 +3103,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <h3 class="fw-bold mb-0 text-white" style="letter-spacing:-.3px">AI Analytics Workspace</h3>
-                                        <span class="badge rounded-pill" id="aiEngineBadge" style="background:rgba(139,92,246,.2);color:#c4b5fd;border:1px solid rgba(167,139,250,.4);font-size:.73rem;padding:6px 12px">
-                                            <i class="fas fa-sparkles text-warning me-1"></i>กำลังเช็ค...
+                                        <span class="badge rounded-pill" style="background:rgba(139,92,246,.2);color:#c4b5fd;border:1px solid rgba(167,139,250,.4);font-size:.73rem;padding:6px 12px">
+                                            <i class="fas fa-sparkles text-warning me-1"></i>Gemini 2.5 Pro Engine
                                         </span>
                                         <span class="badge rounded-pill" style="background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3);font-size:.73rem;padding:6px 12px">
                                             <i class="fas fa-circle me-1" style="font-size:6px"></i>Live Inventory Sync
@@ -4551,18 +4551,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const isExternal = (window.location.hostname !== 'script.google.com' && !window.location.hostname.endsWith('.googleusercontent.com'));
             window.GAS_URL = (typeof GAS_URL !== 'undefined' && GAS_URL && GAS_URL.indexOf('วาง_URL') === -1) ? GAS_URL : '';
             
-            function callGAS(fn, args, onOk, onFail, timeoutMs) {
+            function callGAS(fn, args, onOk, onFail) {
                 if (window.GAS_URL) {
                     const controller = new AbortController();
-                    // ★ แก้บั๊ก: เดิม timeout ตายตัว 30 วิ สำหรับทุกฟังก์ชัน รวมถึง webAskAiAssistant (AI Command
-                    // Console) ด้วย — คำถามที่ต้องให้ Gemini วิเคราะห์ข้อมูลคลังทั้งระบบ (เช่น "สรุปภาพรวมคลังสินค้า
-                    // ทั้งระบบ") ใช้เวลาประมวลผลนานกว่า 30 วิได้บ่อยมาก โดยเฉพาะตอน Apps Script cold start ทำให้ถูก
-                    // ตัดกลางคันด้วย controller.abort() ที่ไม่ได้ใส่เหตุผลไว้เลย ผู้ใช้เลยเห็นข้อความดิบของเบราว์เซอร์
-                    // "signal is aborted without reason" ซึ่งไม่สื่อความหมายอะไรเลย — เพิ่มพารามิเตอร์ timeoutMs ให้
-                    // เรียกแบบ custom ได้ต่อจุด (ค่าเริ่มต้นยังเป็น 30 วิเหมือนเดิมสำหรับฟังก์ชันทั่วไป) และใส่เหตุผลที่
-                    // อ่านรู้เรื่องให้ abort() เผื่อยังหลุด timeout อยู่ดี
-                    const effectiveTimeout = timeoutMs || 30000;
-                    const timer = setTimeout(() => controller.abort('เซิร์ฟเวอร์ตอบกลับช้ากว่าปกติ (อาจกำลังประมวลผลอยู่) กรุณาลองใหม่อีกครั้ง'), effectiveTimeout);
+                    const timer = setTimeout(() => controller.abort(), 30000);
                     fetch(window.GAS_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain' },
@@ -4577,10 +4569,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     })
                     .catch(e => {
                         clearTimeout(timer);
-                        // ★ เผื่อ browser บางตัวไม่ส่ง reason ที่เราตั้งไว้กลับมาใน e.message (ยังคงเจอ "signal is
-                        // aborted without reason" ดิบๆ) ให้เช็ค e.name === 'AbortError' แล้วแทนที่ด้วยข้อความที่อ่านง่ายเอง
-                        const msg = (e && e.name === 'AbortError') ? 'เซิร์ฟเวอร์ตอบกลับช้ากว่าปกติ (อาจกำลังประมวลผลอยู่) กรุณาลองใหม่อีกครั้ง' : (e.message || e);
-                        if (onFail) onFail(msg);
+                        if (onFail) onFail(e.message || e);
                     });
                     return;
                 }
@@ -4594,18 +4583,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             // จากนอก IIFE นี้จะเจอ ReferenceError แบบเงียบๆ (ไม่มี error โชว์ผู้ใช้) ทำให้ spinner
             // ค้างโหลดตลอดไปเพราะฟังก์ชันตายก่อนจะได้เรียก callback ปิด spinner เลย
             window.callGAS = callGAS;
-
-            // ★ แก้บั๊ก: มีหลายจุดในไฟล์นี้ (webSaveSettings, webWriteAudit, webGetAuditLogs, webClearAuditLog,
-            // webAskAiAssistant) เรียก webPost(fn, args).then(...).catch(...) แบบ Promise แต่ไม่เคยมีฟังก์ชัน
-            // webPost อยู่จริงในระบบเลย ทำให้ก่อนหน้านี้ทุกจุดพวกนี้แอบพังเงียบๆ (ReferenceError) หรือหลุดไป
-            // ทำงานแบบอื่นที่ไม่ตั้งใจ — เพิ่มฟังก์ชันนี้ให้เป็น Promise ห่อ callGAS เดิมไว้ จะได้ใช้ syntax
-            // .then()/.catch() ได้จริงตามที่โค้ดจุดอื่นคาดหวังไว้ โดยไม่ต้องไล่แก้ทีละจุด
-            function webPost(fn, args, timeoutMs) {
-                return new Promise((resolve, reject) => {
-                    callGAS(fn, args, resolve, reject, timeoutMs);
-                });
-            }
-            window.webPost = webPost;
             
             if (isExternal || typeof google === 'undefined' || !google.script || !google.script.run) {
                 const makeRunner = (successCb, failureCb) => {
@@ -4995,52 +4972,44 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const PROTECTED_SECTIONS = ['settings', 'archive', 'archiveMgmt'];
                 if (PROTECTED_SECTIONS.indexOf(sectionId) !== -1) {
                     const uid = currentUserProfile.uid;
-                    // ★ โชว์ป๊อปอัพทันที ไม่ต้องรอ network เช็คก่อนว่ามีรหัสผ่านหรือยัง (ของเดิมทำให้ป๊อปอัพช้า 3-4 วิ)
-                    // ค่อยเช็คสถานะรหัสผ่านพร้อมกับตอนยืนยันรหัส (ทีเดียวจบ) แทน
-                    Swal.fire({
-                        title: '<span style="color:#fbbf24"><i class="fas fa-lock me-2"></i>ยืนยันตัวตน</span>',
-                        html: '<div style="color:rgba(255,255,255,.6);font-size:.85rem;margin-bottom:8px">กรุณากรอกรหัสผ่าน Dashboard ของคุณเพื่อเข้าหน้า<br><b style="color:#fff">ตั้งค่าระบบ</b></div>',
-                        input: 'password',
-                        inputPlaceholder: 'รหัสผ่าน Dashboard',
-                        inputAttributes: { autocomplete: 'current-password', style: 'background:#232838;color:#fff;border:1px solid #374151;border-radius:10px;padding:10px 14px;font-size:1rem;letter-spacing:2px;text-align:center' },
-                        showCancelButton: true,
-                        confirmButtonText: '<i class="fas fa-unlock me-1"></i> ยืนยัน',
-                        cancelButtonText: 'ยกเลิก',
-                        confirmButtonColor: '#f59e0b',
-                        cancelButtonColor: '#374151',
-                        background: '#1a2230',
-                        color: '#e0e0e0',
-                        customClass: { input: 'swal-pw-input' },
-                        didOpen: function() {
-                            const inp = Swal.getInput();
-                            if (inp) { inp.style.cssText = 'background:#232838!important;color:#fff!important;border:1px solid #374151!important;border-radius:10px!important;padding:10px 14px!important;font-size:1rem!important;letter-spacing:2px!important;text-align:center!important'; }
-                        },
-                        // ★ ป๊อปอัพจะไม่หายทันทีที่กดยืนยัน — ค้างไว้พร้อมโชว์ spinner ระหว่างรอผลตรวจสอบจริงจากเซิร์ฟเวอร์
-                        showLoaderOnConfirm: true,
-                        allowOutsideClick: () => !Swal.isLoading(),
-                        preConfirm: (password) => {
-                            if (!password) { Swal.showValidationMessage('กรุณากรอกรหัสผ่าน'); return false; }
-                            return new Promise((resolve) => {
-                                const handleVerify = (res) => {
-                                    const hasPw = res && typeof res === 'object' ? !!res.hasPassword : false;
-                                    if (!hasPw) { resolve({ notSet: true }); return; }
-                                    if (typeof google !== 'undefined' && google.script && google.script.run) {
-                                        google.script.run.withSuccessHandler((ok) => resolve({ valid: !!ok })).withFailureHandler(() => resolve({ valid: false, networkError: true })).webVerifyDashboardPassword(uid, password);
-                                    } else {
-                                        callGAS('webVerifyDashboardPassword', [uid, password], (ok) => resolve({ valid: !!ok }), () => resolve({ valid: false, networkError: true }));
-                                    }
-                                };
-                                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                                    google.script.run.withSuccessHandler(handleVerify).withFailureHandler(() => resolve({ valid: false, networkError: true })).webHasDashboardPassword(uid);
-                                } else {
-                                    callGAS('webHasDashboardPassword', [uid], handleVerify, () => resolve({ valid: false, networkError: true }));
+                    const askAndVerifyPassword = () => {
+                        Swal.fire({
+                            title: '<span style="color:#fbbf24"><i class="fas fa-lock me-2"></i>ยืนยันตัวตน</span>',
+                            html: '<div style="color:rgba(255,255,255,.6);font-size:.85rem;margin-bottom:8px">กรุณากรอกรหัสผ่าน Dashboard ของคุณเพื่อเข้าหน้า<br><b style="color:#fff">ตั้งค่าระบบ</b></div>',
+                            input: 'password',
+                            inputPlaceholder: 'รหัสผ่าน Dashboard',
+                            inputAttributes: { autocomplete: 'current-password', style: 'background:#232838;color:#fff;border:1px solid #374151;border-radius:10px;padding:10px 14px;font-size:1rem;letter-spacing:2px;text-align:center' },
+                            showCancelButton: true,
+                            confirmButtonText: '<i class="fas fa-unlock me-1"></i> ยืนยัน',
+                            cancelButtonText: 'ยกเลิก',
+                            confirmButtonColor: '#f59e0b',
+                            cancelButtonColor: '#374151',
+                            background: '#1a2230',
+                            color: '#e0e0e0',
+                            customClass: { input: 'swal-pw-input' },
+                            didOpen: function() {
+                                const inp = Swal.getInput();
+                                if (inp) { inp.style.cssText = 'background:#232838!important;color:#fff!important;border:1px solid #374151!important;border-radius:10px!important;padding:10px 14px!important;font-size:1rem!important;letter-spacing:2px!important;text-align:center!important'; }
+                            }
+                        }).then(function(result) {
+                            if (!result.isConfirmed || !result.value) return;
+                            const handleVerify = (ok) => {
+                                if (!ok) {
+                                    Swal.fire({ icon: 'error', title: 'รหัสผ่านไม่ถูกต้อง', text: 'กรุณาตรวจสอบรหัสผ่าน Dashboard อีกครั้ง', confirmButtonColor: '#ef4444', background: '#1a2230', color: '#e0e0e0' });
+                                    return;
                                 }
-                            });
-                        }
-                    }).then(function(result) {
-                        if (!result.isConfirmed) return;
-                        const v = result.value;
-                        if (v && v.notSet) {
+                                _doGoTo(sectionId);
+                            };
+                            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                                google.script.run.withSuccessHandler(handleVerify).withFailureHandler(() => {}).webVerifyDashboardPassword(uid, result.value);
+                            } else {
+                                callGAS('webVerifyDashboardPassword', [uid, result.value], handleVerify, () => {});
+                            }
+                        });
+                    };
+                    const handleHasPw = (res) => {
+                        const hasPw = res && typeof res === 'object' ? !!res.hasPassword : !!res;
+                        if (!hasPw) {
                             Swal.fire({
                                 icon: 'warning',
                                 title: 'ยังไม่ได้ตั้งรหัสผ่าน',
@@ -5052,14 +5021,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             }).then(function() { _doGoTo(sectionId); });
                             return;
                         }
-                        if (v && v.valid) { _doGoTo(sectionId); return; }
-                        Swal.fire({
-                            icon: 'error',
-                            title: v && v.networkError ? 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' : 'รหัสผ่านไม่ถูกต้อง',
-                            text: v && v.networkError ? 'กรุณาลองใหม่อีกครั้ง' : 'กรุณาตรวจสอบรหัสผ่าน Dashboard อีกครั้ง',
-                            confirmButtonColor: '#ef4444', background: '#1a2230', color: '#e0e0e0'
-                        });
-                    });
+                        askAndVerifyPassword();
+                    };
+                    if (typeof google !== 'undefined' && google.script && google.script.run) {
+                        google.script.run.withSuccessHandler(handleHasPw).withFailureHandler(() => { _doGoTo(sectionId); }).webHasDashboardPassword(uid);
+                    } else {
+                        callGAS('webHasDashboardPassword', [uid], handleHasPw, () => { _doGoTo(sectionId); });
+                    }
                     return;
                 }
 
@@ -5102,18 +5070,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if(sectionId === 'qrManagement' && typeof filterQRTable === 'function') filterQRTable();
                     if(sectionId === 'history' && typeof loadAuditFromServer === 'function') loadAuditFromServer(true);
                     if(sectionId === 'monthlyOrders' && typeof renderHistoryPOTableWithFilter === 'function') renderHistoryPOTableWithFilter(allData.pendingPOs || []);
-                    if(sectionId === 'settings') {
-                        setTimeout(function(){ if(typeof syncMasterDataTags === 'function') syncMasterDataTags(); }, 50);
-                        // โหลดฟอร์มช่องทาง LINE / ผู้ให้บริการ AI ตรงตอนที่กดเข้าเมนู "ตั้งค่า" เลย (ไม่ใช่รอตอนโหลดข้อมูลรอบแรกหลัง login)
-                        if (!window._lineChannelFormsLoaded && typeof loadLineChannelForms === 'function') {
-                            window._lineChannelFormsLoaded = true;
-                            loadLineChannelForms();
-                        }
-                        if (!window._aiProviderFormsLoaded && typeof loadAIProviderForms === 'function') {
-                            window._aiProviderFormsLoaded = true;
-                            loadAIProviderForms();
-                        }
-                    }
+                    if(sectionId === 'settings') { setTimeout(function(){ if(typeof syncMasterDataTags === 'function') syncMasterDataTags(); }, 50); }
                     if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
                     if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
                     if(sectionId === 'archiveMgmt' && typeof loadArchiveList === 'function') loadArchiveList();
@@ -6277,6 +6234,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             }
         }
 
+        function _quotaLineHtml(q) {
+            if (!q) return '<span style="color:#6b7280">กำลังเช็คโควตา...</span>';
+            if (!q.configured) return '<span style="color:#6b7280">ยังไม่ได้เชื่อมต่อ</span>';
+            if (q.error) return `<span style="color:#f87171">เชื่อมต่อแล้ว แต่เช็คโควตาไม่สำเร็จ: ${escapeHtml(q.error)}</span>`;
+            if (q.unlimited) return '<span style="color:#22c55e"><i class="fas fa-check-circle me-1"></i>เชื่อมต่อแล้ว · ไม่จำกัดโควตา</span>';
+            const pct = q.percent == null ? '-' : q.percent;
+            const color = pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#22c55e';
+            const statusTxt = pct >= 100 ? ' (เต็มแล้ว!)' : '';
+            return `<span style="color:${color}"><i class="fas fa-check-circle me-1"></i>เชื่อมต่อแล้ว · ${q.used}/${q.total} (${pct}%)${statusTxt}</span>`;
+        }
+
         function _statusInfo(b, q, isConfigured) {
             // ตัดสินสถานะ/สี ตามลำดับ: ยังไม่เชื่อมต่อ > error > เต็มแล้ว > ใกล้เต็ม > ปกติ
             if (!isConfigured) return { cls: 'gray', badgeCls: 'badge-none', badgeText: '⚪ ยังไม่เชื่อมต่อ', barCls: '', barPct: 0, quotaText: 'ยังไม่ได้ตั้งค่า' };
@@ -6449,28 +6417,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <option value="groq" ${data.primary === 'groq' ? 'selected' : ''}>Groq</option>
                     </select>
                 </div>
-            ` + data.providers.map(p => {
-                const cardId = `aiProviderCard_${p.id}`;
-                const isConfigured = !!p.keyMasked;
-                return `
+            ` + data.providers.map(p => `
                 <div class="mb-3 p-2 rounded-3" style="background:#232838;border:1px solid #2a2f3d">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="fw-bold" style="font-size:.85rem;color:#e0e0e0">${escapeHtml(p.label)}${data.primary === p.id ? ' <span class="badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:9px">หลัก</span>' : ' <span class="badge" style="background:#2a2f3d;color:#6b7280;font-size:9px">สำรอง</span>'}</div>
-                        <div class="d-flex gap-2">
-                            <button type="button" id="${cardId}_toggleBtn" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px;font-size:11px" onclick="toggleLineCardFields('${cardId}')">
-                                <i class="fas ${isConfigured ? 'fa-pen' : 'fa-chevron-down'} me-1"></i>${isConfigured ? 'แก้ไข' : 'ตั้งค่าตอนนี้'}
-                            </button>
-                            <button type="button" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px;font-size:11px" onclick="testAIProvider('${p.id}','${escapeHtml(p.label)}')"><i class="fas fa-vial me-1"></i>ทดสอบ</button>
-                        </div>
+                        <button type="button" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px;font-size:11px" onclick="testAIProvider('${p.id}','${escapeHtml(p.label)}')"><i class="fas fa-vial me-1"></i>ทดสอบ</button>
                     </div>
-                    <div id="${cardId}_fields" data-was-configured="${isConfigured ? '1' : '0'}" class="${isConfigured ? 'fields-collapsed' : ''}">
-                        <div class="mb-2"><label class="form-label small mb-1">API Key${p.keyMasked ? ' (ปัจจุบัน: ' + escapeHtml(p.keyMasked) + ')' : ' (ยังไม่ได้ตั้งค่า)'}</label>
-                            <input type="password" class="form-control form-control-sm" id="aiKey_${p.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน"></div>
-                        <div><label class="form-label small mb-1">โมเดล</label>
-                            <input type="text" class="form-control form-control-sm" id="aiModel_${p.id}" value="${escapeHtml(p.model || '')}"></div>
-                    </div>
-                </div>`;
-            }).join('');
+                    <div class="mb-2"><label class="form-label small mb-1">API Key${p.keyMasked ? ' (ปัจจุบัน: ' + escapeHtml(p.keyMasked) + ')' : ' (ยังไม่ได้ตั้งค่า)'}</label>
+                        <input type="password" class="form-control form-control-sm" id="aiKey_${p.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน"></div>
+                    <div><label class="form-label small mb-1">โมเดล</label>
+                        <input type="text" class="form-control form-control-sm" id="aiModel_${p.id}" value="${escapeHtml(p.model || '')}"></div>
+                </div>
+            `).join('');
         }
 
         function loadAIProviderForms(silent) {
@@ -6634,6 +6592,16 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 if (!window._lineQuotaLoaded && typeof loadLineQuotaStatus === 'function') {
                     window._lineQuotaLoaded = true;
                     loadLineQuotaStatus();
+                }
+                // โหลดฟอร์มช่องทาง LINE ครั้งเดียวต่อ session — ใช้รหัสผ่านที่แคชไว้ตอน login เลย ไม่ต้องถามซ้ำ
+                if (!window._lineChannelFormsLoaded && typeof loadLineChannelForms === 'function') {
+                    window._lineChannelFormsLoaded = true;
+                    loadLineChannelForms();
+                }
+                // โหลดฟอร์มผู้ให้บริการ AI ครั้งเดียวต่อ session เช่นกัน
+                if (!window._aiProviderFormsLoaded && typeof loadAIProviderForms === 'function') {
+                    window._aiProviderFormsLoaded = true;
+                    loadAIProviderForms();
                 }
 
                 // เช็คสุขภาพระบบครั้งเดียวต่อ session เช่นกัน (กดปุ่มรีเฟรชในการ์ดเพื่อเช็คซ้ำได้)
@@ -14361,9 +14329,7 @@ function sendAiChat() {
     if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webAskAiAssistant === 'function' && window.location.protocol !== 'file:') {
         google.script.run.withSuccessHandler(handleAiRes).withFailureHandler(handleAiErr).webAskAiAssistant(question);
     } else if (typeof webPost === 'function' && window.location.protocol !== 'file:') {
-        // ★ ใช้ timeout ยาวกว่าปกติ (90 วิ แทน 30 วิ default) เพราะคำถามที่ให้ AI วิเคราะห์คลังทั้งระบบ
-        // มักใช้เวลาประมวลผลนานกว่าฟังก์ชันทั่วไปมาก โดยเฉพาะตอน Apps Script cold start
-        webPost('webAskAiAssistant', [question], 90000).then(handleAiRes).catch(handleAiErr);
+        webPost('webAskAiAssistant', [question]).then(handleAiRes).catch(handleAiErr);
     } else {
         // Smart Local AI Response for Demo Testing (กระชับ ตรงประเด็น ทันที)
         setTimeout(function() {
@@ -14436,21 +14402,6 @@ function sendAiChat() {
 }
 
 /* เรียกจากปุ่ม Quick Insight ในหน้า AI Center */
-function loadActiveAIProviderBadge() {
-    const badge = document.getElementById('aiEngineBadge');
-    if (!badge) return;
-    const handleOk = (res) => {
-        badge.innerHTML = `<i class="fas fa-sparkles text-warning me-1"></i>${(res && res.success) ? escapeHtml(res.label) : 'ไม่ทราบสถานะ'} Engine`;
-    };
-    const handleFail = () => { badge.innerHTML = '<i class="fas fa-sparkles text-warning me-1"></i>ไม่ทราบสถานะ'; };
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-        google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webGetActiveAIProviderLabel();
-    } else {
-        callGAS('webGetActiveAIProviderLabel', [], handleOk, handleFail);
-    }
-}
-if (document.getElementById('aiEngineBadge')) loadActiveAIProviderBadge();
-
 function askAiCenter(question) {
     const input = document.getElementById('aiChatInput');
     if (!input) return;
