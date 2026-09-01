@@ -2790,18 +2790,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <div class="d-flex justify-content-between align-items-end mb-4 pb-2 border-bottom border-light flex-wrap gap-3">
                         <div><h3 class="fw-bold mb-1">ฐานข้อมูลคลังอะไหล่</h3><p class="text-muted small mb-0">Consumables & Spare Parts</p></div>
                         <div class="d-flex gap-2">
-                            <!-- ★ เพิ่ม: สลับมุมมองตาราง — "คงเหลือ" (ยอดปัจจุบัน) หรือ "รับเข้า/เบิกออก" (ยอดสะสมทั้งหมด) -->
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-secondary active" id="itemsViewBtnStock" onclick="setItemsViewMode('stock')" title="แสดงยอดคงเหลือปัจจุบัน">คงเหลือ</button>
-                                <button type="button" class="btn btn-outline-secondary" id="itemsViewBtnInOut" onclick="setItemsViewMode('inout')" title="แสดงยอดรับเข้า/เบิกออกสะสมทั้งหมด">รับเข้า/เบิกออก</button>
-                            </div>
                             <button class="btn btn-outline-success fw-bold shadow-sm bg-white" onclick="exportExcel('itemsTable', 'Inventory_Items')"><i class="fas fa-file-excel"></i> Export</button>
                             <button class="btn btn-theme fw-bold shadow-sm admin-only-element" onclick="openNewItemModal('Items')"><i class="fas fa-plus"></i> เพิ่มใหม่</button>
                         </div>
                     </div>
-                    <!-- ★ เพิ่ม: การ์ดประวัติรับเข้า/เบิกออกล่าสุด สไตล์เดียวกับหน้า "รับเข้า/เบิกออก (In/Out)"
-                         กรองเฉพาะรายการที่เป็นรหัสอะไหล่ (ไม่รวมเครื่องมือ) เพื่อให้เห็นความเคลื่อนไหวของคลังอะไหล่นี้โดยตรง -->
-                    <div id="itemsTxCardList" class="mb-4"></div>
                     <div class="filter-group mb-4 bg-white border shadow-sm">
                         <span class="text-muted fw-bold ms-2"><i class="fas fa-search text-primary"></i> ค้นหา:</span>
                         <select class="form-select w-auto shadow-none border-light bg-light fw-medium" id="itemCategoryFilter" onchange="filterTable('itemsTable')"><option value="">📁 ทุกหมวดหมู่</option></select>
@@ -2809,7 +2801,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <div class="table-container p-0">
                         <div id="itemsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
-                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center" id="itemsThStock">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center" id="itemsThStatus">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
+                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
 
@@ -6734,8 +6726,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 try { renderActiveBorrows(); } catch(e) { console.warn('renderActiveBorrows error:', e); }
 
                 setTimeout(() => {
-                    // ★ เพิ่ม: sync หัวตาราง/ปุ่มโหมด "คงเหลือ / รับเข้า-เบิกออก" ให้ตรงกับค่าที่บันทึกไว้ ก่อน render จริง
-                    if (typeof setItemsViewMode === 'function') { try { setItemsViewMode(itemsViewMode); } catch(e) {} }
                     filterTable('itemsTable'); filterTable('toolsTable'); filterHistoryTable(); filterTxTable();
                 }, 50);
 
@@ -7849,126 +7839,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             renderHistoryPOTableWithFilter(allData.pendingPOs);
         }
 
-        // ★ เพิ่ม: มุมมองตาราง "ฐานข้อมูลคลังอะไหล่" — สลับระหว่าง "คงเหลือ" (stock ปัจจุบัน)
-        // กับ "รับเข้า/เบิกออก" (ผลรวมสะสมทั้งหมดจาก history ของแต่ละรายการ)
-        let itemsViewMode = localStorage.getItem('itemsViewMode') || 'stock';
-
-        // รวมยอดรับเข้า/เบิกออกสะสมทั้งหมดของอะไหล่ 1 รายการ จาก log ประวัติ (allData.history)
-        function _getItemInOutTotals(code) {
-            let inQty = 0, outQty = 0;
-            (allData.history || []).forEach(h => {
-                if (String(h.code) !== String(code)) return;
-                const act = String(h.action || '').trim().toLowerCase();
-                const amt = Math.abs(Number(h.amount) || 0);
-                if (act === 'รับเข้า' || act === 'new item') inQty += amt;
-                else if (act.startsWith('เบิก')) outQty += amt;
-            });
-            return { inQty, outQty };
-        }
-
-        function setItemsViewMode(mode) {
-            itemsViewMode = mode;
-            try { localStorage.setItem('itemsViewMode', mode); } catch (e) {}
-            const thStock = document.getElementById('itemsThStock');
-            const thStatus = document.getElementById('itemsThStatus');
-            const btnStock = document.getElementById('itemsViewBtnStock');
-            const btnInOut = document.getElementById('itemsViewBtnInOut');
-            if (mode === 'inout') {
-                if (thStock) thStock.textContent = 'รับเข้าสะสม';
-                if (thStatus) thStatus.textContent = 'เบิกออกสะสม';
-                if (btnStock) { btnStock.classList.remove('btn-secondary', 'active'); btnStock.classList.add('btn-outline-secondary'); }
-                if (btnInOut) { btnInOut.classList.remove('btn-outline-secondary'); btnInOut.classList.add('btn-secondary', 'active'); }
-            } else {
-                if (thStock) thStock.textContent = 'คงเหลือ';
-                if (thStatus) thStatus.textContent = 'สถานะ';
-                if (btnInOut) { btnInOut.classList.remove('btn-secondary', 'active'); btnInOut.classList.add('btn-outline-secondary'); }
-                if (btnStock) { btnStock.classList.remove('btn-outline-secondary'); btnStock.classList.add('btn-secondary', 'active'); }
-            }
-            // ต้องมีข้อมูลโหลดแล้วก่อนถึงจะ re-render ตารางได้ (กันพังตอนหน้าเว็บยังโหลดไม่เสร็จ)
-            if (window.allData && Array.isArray(allData.items)) {
-                filterTable('itemsTable');
-            }
-        }
-
-        // ★ แก้: เปลี่ยนจากการ์ด grid มาเป็นแบบ "จัดกลุ่มตามวัน" (timeline) ตามที่ขอ — เหมือนปุ่มปฏิทินในหน้า In/Out เป๊ะๆ
-        function renderItemsTxCards() {
-            try {
-                const dayList = document.getElementById('itemsTxCardList');
-                if (!dayList) return;
-                dayList.innerHTML = '';
-                const itemCodes = new Set((allData.items || []).map(i => String(i.code)));
-                const relevant = (allData.history || []).filter(h => {
-                    const act = String(h.action || '').trim().toLowerCase();
-                    if (!['รับเข้า', 'เบิก', 'new item', 'แจ้งชำรุด', 'ซ่อมแซมแล้ว', 'คืน'].includes(act)) return false;
-                    return itemCodes.has(String(h.code));
-                });
-                const limit = 20; // แสดงล่าสุดพอเป็นสรุปหน้าเดียว ไม่ใช่ list เต็มแบบหน้า In/Out
-                const limited = relevant.slice(0, limit);
-                if (limited.length === 0) {
-                    dayList.innerHTML = '<div class="text-center py-4" style="color:#6b7280"><i class="fas fa-inbox fs-3 mb-2 d-block"></i>ยังไม่มีประวัติรับเข้า/เบิกออกของคลังอะไหล่นี้</div>';
-                    return;
-                }
-                let lastDayKey = null; let dayGroupEl = null;
-                limited.forEach(log => {
-                    const actLower = String(log.action).trim().toLowerCase();
-                    const isOut = (actLower === 'เบิก' || actLower === 'แจ้งชำรุด');
-                    const displayAction = actLower === 'new item' ? 'รับเข้า (ใหม่)' : log.action;
-                    const displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : 'ไม่ระบุ';
-                    const remarkText = log.remark ? String(log.remark) : '-';
-                    const dotColor = isOut ? '#ef4444' : '#22c55e';
-                    const badgeBg = isOut ? '#3a1e1e' : '#1e3a2f';
-                    const amountStr = (isOut ? '-' : '+') + log.amount;
-                    let slipOnclick = '';
-                    if (actLower.includes('เบิก') || actLower.includes('ยืม')) {
-                        const safeCode = String(log.code || '').replace(/'/g, "\\'");
-                        const safeTime = String(log.time || '').replace(/'/g, "\\'");
-                        const safeUser = String(displayUser || '').replace(/'/g, "\\'");
-                        const safeAmount = String(log.amount || '').replace(/'/g, "\\'");
-                        const safeAction = String(log.action || '').replace(/'/g, "\\'");
-                        slipOnclick = `viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')`;
-                    }
-                    const rawDateStr = String(log.time || '').split(' ')[0] || '';
-                    const dayKey = rawDateStr || 'ไม่ทราบวันที่';
-                    if (dayKey !== lastDayKey) {
-                        lastDayKey = dayKey;
-                        const group = document.createElement('div');
-                        group.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d;margin-bottom:12px';
-                        let dayHeaderLabel = dayKey;
-                        const dParsed = parseThaiDate(rawDateStr);
-                        if (dParsed) {
-                            const todayD = new Date(); todayD.setHours(0,0,0,0);
-                            const cmpD = new Date(dParsed); cmpD.setHours(0,0,0,0);
-                            const diffDays = Math.round((todayD - cmpD) / 86400000);
-                            const weekdayName = THAI_WEEKDAYS[dParsed.getDay()];
-                            if (diffDays === 0) dayHeaderLabel = `วันนี้ · ${weekdayName} ${dayKey}`;
-                            else if (diffDays === 1) dayHeaderLabel = `เมื่อวาน · ${weekdayName} ${dayKey}`;
-                            else dayHeaderLabel = `${weekdayName} ${dayKey}`;
-                        }
-                        group.innerHTML = `<p style="font-size:12px;font-weight:500;color:#a0aec0;margin:0 0 8px">${escapeHtml(dayHeaderLabel)}</p><div class="day-group-rows"></div>`;
-                        dayList.appendChild(group);
-                        dayGroupEl = group.querySelector('.day-group-rows');
-                    }
-                    const timePart = String(log.time || '').split(' ')[1] || '';
-                    const row = document.createElement('div');
-                    row.style.cssText = `display:flex;justify-content:space-between;align-items:start;gap:10px;padding:8px 0 8px 10px;border-bottom:1px solid #2a2f3d;border-left:3px solid ${dotColor};border-radius:2px`;
-                    row.innerHTML = `
-                        <div style="min-width:0">
-                            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                                <span style="background:${badgeBg};color:${dotColor};font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap"><i class="fas ${isOut?'fa-arrow-down':'fa-arrow-up'} me-1"></i>${escapeHtml(displayAction)}</span>
-                            </div>
-                            <p style="font-size:13px;margin:0;color:#e0e0e0">${escapeHtml(log.itemName)} <span class="badge-code-history ms-1"><i class="fas fa-barcode me-1"></i>${escapeHtml(log.code)}</span></p>
-                            <p style="font-size:11px;color:#6b7280;margin:2px 0 0">${escapeHtml(timePart)} · ${escapeHtml(displayUser)}${remarkText !== '-' ? ' · ' + escapeHtml(remarkText) : ''}</p>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                            <span style="color:${dotColor};font-size:13px;font-weight:500;white-space:nowrap">${amountStr} ${escapeHtml(log.unit||'')}</span>
-                            ${slipOnclick ? `<button class="btn btn-sm" style="background:transparent;color:#60a5fa;border:1px solid #2a2f3d;border-radius:6px;font-size:11px;padding:3px 8px" onclick="${slipOnclick}"><i class="fas fa-file-invoice"></i></button>` : ''}
-                        </div>`;
-                    if (dayGroupEl) dayGroupEl.appendChild(row);
-                });
-                dayList.querySelectorAll('.day-group-rows > div:last-child').forEach(r => r.style.borderBottom = 'none');
-            } catch (e) { console.error(e); }
-        }
-
         function filterTable(tableId) {
             try {
                 const isItems = (tableId === 'itemsTable');
@@ -7980,8 +7850,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if (text !== '' && !_matchesSearchQuery(`${item.code || ''} ${item.name || ''}`, text)) return false; if (category !== '' && !catText.includes(category)) return false; return true;
                 });
                 renderTable(tableId, filteredData, type);
-                // ★ เพิ่ม: รีเฟรชการ์ดประวัติรับเข้า/เบิกออกของหน้าคลังอะไหล่ให้ตรงกับข้อมูลล่าสุดเสมอ
-                if (isItems) renderItemsTxCards();
             } catch(e) { console.error(e); }
         }
 
@@ -8042,18 +7910,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         let qrBtn = `<button class="btn btn-sm btn-light text-primary border" onclick="showQRCode('${safeCode}', '${safeName}')" title="แสดง QR Code"><i class="fas fa-qrcode"></i></button>`;
                         if (type === 'item') { actionButtons = `<div class="d-flex justify-content-center">${qrBtn}</div>`; } else if (type === 'tool') { actionButtons = `<div class="d-flex justify-content-center gap-1">${qrBtn}<button class="btn btn-sm btn-outline-danger" onclick="openDamageModal('${safeCode}', '${safeName}', '${safeUnit}')"><i class="fas fa-heart-broken"></i> ส่งแจ้งเสีย</button></div>`; }
                     }
-                    // ★ เพิ่ม: ถ้าอยู่โหมด "รับเข้า/เบิกออก" (เฉพาะตารางอะไหล่ ไม่ใช่เครื่องมือ) ให้แสดงยอดสะสม
-                    // แทนยอดคงเหลือ/สถานะ — คำนวณจาก log ประวัติจริงของรหัสอะไหล่นั้น ไม่ใช่ค่า mock
-                    let stockCell, statusCell;
-                    if (type === 'item' && itemsViewMode === 'inout') {
-                        const { inQty, outQty } = _getItemInOutTotals(item.code);
-                        stockCell = `<td class="text-center text-success fw-bold fs-6"><i class="fas fa-arrow-down me-1"></i>${formatNumber(inQty)}</td>`;
-                        statusCell = `<td class="text-center text-danger fw-bold fs-6"><i class="fas fa-arrow-up me-1"></i>${formatNumber(outQty)}</td>`;
-                    } else {
-                        stockCell = `<td class="text-center ${isLow?'text-danger':'text-primary'} fw-bold fs-5">${formatNumber(item.stock)}</td>`;
-                        statusCell = `<td class="text-center">${statusBadge}</td>`;
-                    }
-                    tr.innerHTML = `<td><span class="badge badge-code px-2 py-1">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark fs-6">${escapeHtml(item.name)}</td><td><span class="badge badge-cat px-2 py-1">${escapeHtml(displayCat)}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td>${stockCell}<td class="text-muted fw-medium">${escapeHtml(item.unit)}</td>${statusCell}<td class="text-center">${actionButtons}</td>`;
+                    tr.innerHTML = `<td><span class="badge badge-code px-2 py-1">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark fs-6">${escapeHtml(item.name)}</td><td><span class="badge badge-cat px-2 py-1">${escapeHtml(displayCat)}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td><td class="text-center ${isLow?'text-danger':'text-primary'} fw-bold fs-5">${formatNumber(item.stock)}</td><td class="text-muted fw-medium">${escapeHtml(item.unit)}</td><td class="text-center">${statusBadge}</td><td class="text-center">${actionButtons}</td>`;
                     tr.style.cursor = 'pointer';
                     tr.title = 'คลิกเพื่อดูประวัติการรับเข้า';
                     tr.addEventListener('click', function(e) {
