@@ -4583,18 +4583,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             // จากนอก IIFE นี้จะเจอ ReferenceError แบบเงียบๆ (ไม่มี error โชว์ผู้ใช้) ทำให้ spinner
             // ค้างโหลดตลอดไปเพราะฟังก์ชันตายก่อนจะได้เรียก callback ปิด spinner เลย
             window.callGAS = callGAS;
-
-            // ★ แก้บั๊ก: มีหลายจุดในไฟล์นี้ (webSaveSettings, webWriteAudit, webGetAuditLogs, webClearAuditLog,
-            // webAskAiAssistant) เรียก webPost(fn, args).then(...).catch(...) แบบ Promise แต่ไม่เคยมีฟังก์ชัน
-            // webPost อยู่จริงในระบบเลย ทำให้ก่อนหน้านี้ทุกจุดพวกนี้แอบพังเงียบๆ (ReferenceError) หรือหลุดไป
-            // ทำงานแบบอื่นที่ไม่ตั้งใจ — เพิ่มฟังก์ชันนี้ให้เป็น Promise ห่อ callGAS เดิมไว้ จะได้ใช้ syntax
-            // .then()/.catch() ได้จริงตามที่โค้ดจุดอื่นคาดหวังไว้ โดยไม่ต้องไล่แก้ทีละจุด
-            function webPost(fn, args) {
-                return new Promise((resolve, reject) => {
-                    callGAS(fn, args, resolve, reject);
-                });
-            }
-            window.webPost = webPost;
             
             if (isExternal || typeof google === 'undefined' || !google.script || !google.script.run) {
                 const makeRunner = (successCb, failureCb) => {
@@ -4739,13 +4727,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const targetSec = sessionStorage.getItem('last_section') || 'dashboard';
             const ADMIN_ONLY_SECTIONS = ['settings', 'archive'];
             const isAllowed = (ADMIN_ONLY_SECTIONS.indexOf(targetSec) === -1) || (currentUserProfile.role === 'admin');
-            // ★ แก้บั๊ก: เดิม goTo(targetSec) ตรงๆ ทำให้ถ้าแท็บล่าสุดก่อนรีเฟรชคือ "ตั้งค่า/คลังเก็บ" (PROTECTED_SECTIONS)
-            // ป๊อปอัพยืนยันรหัสผ่านจะเด้งขึ้นมาทันทีตั้งแต่หน้าโหลดเสร็จ โดยที่ผู้ใช้ยังไม่ได้กดอะไรเองในรอบนี้เลย
-            // — เปลี่ยนให้กลับไปหน้า Dashboard แทนถ้าแท็บล่าสุดเป็นหน้าที่มีการป้องกันด้วยรหัสผ่าน ต้องกดเข้าเองเท่านั้น
-            // ถึงจะเจอป๊อปอัพยืนยันตัวตน (การกระทำที่ตั้งใจ ไม่ใช่การเด้งขึ้นมาเองตอนโหลดหน้า)
-            const PROTECTED_SECTIONS = ['settings', 'archive', 'archiveMgmt'];
-            const isProtected = PROTECTED_SECTIONS.indexOf(targetSec) !== -1;
-            goTo((isAllowed && !isProtected) ? targetSec : 'dashboard');
+            goTo(isAllowed ? targetSec : 'dashboard');
         }
 
         let allData = { items: [], tools: [], history: [], activeBorrows: [], pendingPOs: [], users: [], settings: {} };
@@ -5082,18 +5064,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if(sectionId === 'qrManagement' && typeof filterQRTable === 'function') filterQRTable();
                     if(sectionId === 'history' && typeof loadAuditFromServer === 'function') loadAuditFromServer(true);
                     if(sectionId === 'monthlyOrders' && typeof renderHistoryPOTableWithFilter === 'function') renderHistoryPOTableWithFilter(allData.pendingPOs || []);
-                    if(sectionId === 'settings') {
-                        setTimeout(function(){ if(typeof syncMasterDataTags === 'function') syncMasterDataTags(); }, 50);
-                        // โหลดฟอร์มช่องทาง LINE / ผู้ให้บริการ AI ตรงตอนที่กดเข้าเมนู "ตั้งค่า" เลย (ไม่ใช่รอตอนโหลดข้อมูลรอบแรกหลัง login)
-                        if (!window._lineChannelFormsLoaded && typeof loadLineChannelForms === 'function') {
-                            window._lineChannelFormsLoaded = true;
-                            loadLineChannelForms();
-                        }
-                        if (!window._aiProviderFormsLoaded && typeof loadAIProviderForms === 'function') {
-                            window._aiProviderFormsLoaded = true;
-                            loadAIProviderForms();
-                        }
-                    }
+                    if(sectionId === 'settings') { setTimeout(function(){ if(typeof syncMasterDataTags === 'function') syncMasterDataTags(); }, 50); }
                     if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
                     if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
                     if(sectionId === 'archiveMgmt' && typeof loadArchiveList === 'function') loadArchiveList();
@@ -6615,6 +6586,16 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 if (!window._lineQuotaLoaded && typeof loadLineQuotaStatus === 'function') {
                     window._lineQuotaLoaded = true;
                     loadLineQuotaStatus();
+                }
+                // โหลดฟอร์มช่องทาง LINE ครั้งเดียวต่อ session — ใช้รหัสผ่านที่แคชไว้ตอน login เลย ไม่ต้องถามซ้ำ
+                if (!window._lineChannelFormsLoaded && typeof loadLineChannelForms === 'function') {
+                    window._lineChannelFormsLoaded = true;
+                    loadLineChannelForms();
+                }
+                // โหลดฟอร์มผู้ให้บริการ AI ครั้งเดียวต่อ session เช่นกัน
+                if (!window._aiProviderFormsLoaded && typeof loadAIProviderForms === 'function') {
+                    window._aiProviderFormsLoaded = true;
+                    loadAIProviderForms();
                 }
 
                 // เช็คสุขภาพระบบครั้งเดียวต่อ session เช่นกัน (กดปุ่มรีเฟรชในการ์ดเพื่อเช็คซ้ำได้)
