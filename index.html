@@ -1119,6 +1119,19 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
     /* List ประวัติคร่าวๆ ในการ์ดแนวโน้มสต็อก: ตัดคำสั้นลงกันล้นจอแคบ */
     #stockTrendHistoryList .text-truncate { max-width: 150px !important; }
 }
+
+/* ★ เพิ่ม: สลับมุมมอง การ์ด/ตาราง แบบกดปุ่มเอง ทำงานได้ทุกขนาดจอ ไม่ต้องพึ่ง media query ด้านบน */
+.table-container.view-mode-card .desktop-table-view { display: none !important; }
+.table-container.view-mode-card .mobile-card-list   { display: flex !important; }
+.table-container.view-mode-table .desktop-table-view{ display: block !important; }
+.table-container.view-mode-table .mobile-card-list  { display: none !important; }
+/* จอกว้าง (เดสก์ท็อป) ให้การ์ดเรียงเป็นกริดหลายคอลัมน์แทนวางซ้อนแนวตั้งยาวๆ */
+@media (min-width: 769px) {
+    .table-container.view-mode-card .mobile-card-list {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
 </style>
 
 <style>
@@ -2790,6 +2803,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <div class="d-flex justify-content-between align-items-end mb-4 pb-2 border-bottom border-light flex-wrap gap-3">
                         <div><h3 class="fw-bold mb-1">ฐานข้อมูลคลังอะไหล่</h3><p class="text-muted small mb-0">Consumables & Spare Parts</p></div>
                         <div class="d-flex gap-2">
+                            <!-- ★ เพิ่ม: สลับมุมมอง การ์ด/ตาราง แบบกดปุ่มเอง -->
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-secondary active" id="itemsViewBtnCard" onclick="setInventoryViewMode('items','card')" title="มุมมองการ์ด (มีรูป หาง่าย)"><i class="fas fa-th-large"></i></button>
+                                <button type="button" class="btn btn-outline-secondary" id="itemsViewBtnTable" onclick="setInventoryViewMode('items','table')" title="มุมมองตาราง"><i class="fas fa-list"></i></button>
+                            </div>
                             <!-- ★ เพิ่ม: สลับมุมมองตาราง — "คงเหลือ" (ยอดปัจจุบัน) หรือ "รับเข้า/เบิกออก" (ยอดสะสมทั้งหมด) -->
                             <div class="btn-group btn-group-sm" role="group">
                                 <button type="button" class="btn btn-secondary active" id="itemsViewBtnStock" onclick="setItemsViewMode('stock')" title="แสดงยอดคงเหลือปัจจุบัน">คงเหลือ</button>
@@ -2807,7 +2825,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <select class="form-select w-auto shadow-none border-light bg-light fw-medium" id="itemCategoryFilter" onchange="filterTable('itemsTable')"><option value="">📁 ทุกหมวดหมู่</option></select>
                         <div class="search-box mx-2"><i class="fas fa-search text-primary"></i><input type="text" class="form-control form-control-lg shadow-sm" placeholder="พิมพ์ชื่อ, รหัส..." onkeyup="filterTable('itemsTable')"></div>
                     </div>
-                    <div class="table-container p-0">
+                    <div class="table-container p-0" id="itemsTableContainer">
                         <div id="itemsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
                         <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center" id="itemsThStock">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center" id="itemsThStatus">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
@@ -2817,6 +2835,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <div class="d-flex justify-content-between align-items-end mb-4 pb-2 border-bottom border-light flex-wrap gap-3">
                         <div><h3 class="fw-bold mb-1">ฐานข้อมูลเครื่องมือ</h3><p class="text-muted small mb-0">Tools & Equipments (Returnable)</p></div>
                         <div class="d-flex gap-2">
+                            <!-- ★ เพิ่ม: สลับมุมมอง การ์ด/ตาราง แบบกดปุ่มเอง -->
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-secondary active" id="toolsViewBtnCard" onclick="setInventoryViewMode('tools','card')" title="มุมมองการ์ด (มีรูป หาง่าย)"><i class="fas fa-th-large"></i></button>
+                                <button type="button" class="btn btn-outline-secondary" id="toolsViewBtnTable" onclick="setInventoryViewMode('tools','table')" title="มุมมองตาราง"><i class="fas fa-list"></i></button>
+                            </div>
                             <button class="btn btn-outline-success fw-bold shadow-sm bg-white" onclick="exportExcel('toolsTable', 'Inventory_Tools')"><i class="fas fa-file-excel"></i> Export</button>
                             <button class="btn btn-info text-white fw-bold shadow-sm admin-only-element" onclick="openNewItemModal('Tools')"><i class="fas fa-plus"></i> ขึ้นทะเบียน</button>
                         </div>
@@ -2826,7 +2849,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <select class="form-select w-auto shadow-none border-light bg-light fw-medium" id="toolCategoryFilter" onchange="filterTable('toolsTable')"><option value="">📁 ทุกหมวดหมู่</option></select>
                         <div class="search-box mx-2"><i class="fas fa-search text-info"></i><input type="text" class="form-control form-control-lg shadow-sm" placeholder="พิมพ์ชื่อ, รหัส..." onkeyup="filterTable('toolsTable')"></div>
                     </div>
-                    <div class="table-container p-0">
+                    <div class="table-container p-0" id="toolsTableContainer">
                         <div id="toolsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
                         <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="toolsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อเครื่องมือ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">พร้อมใช้</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
@@ -4556,7 +4579,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
         // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
         // ใส่ URL เดียวกับที่ใช้ในหน้า QR (indexqrv1.html) เพราะเป็น backend เดียวกัน
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzqeRTqqj1dV9z_JqJTAvWTOn7ib3K9iR2YUXxhoQ-IBi_A6UPXNjZ5uxeWwWGG0BmLuw/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
         const isGAS = (typeof google !== 'undefined' && google.script && google.script.run && typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:');
         window.isGAS = isGAS;
 
@@ -6736,6 +6759,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 setTimeout(() => {
                     // ★ เพิ่ม: sync หัวตาราง/ปุ่มโหมด "คงเหลือ / รับเข้า-เบิกออก" ให้ตรงกับค่าที่บันทึกไว้ ก่อน render จริง
                     if (typeof setItemsViewMode === 'function') { try { setItemsViewMode(itemsViewMode); } catch(e) {} }
+                    try { restoreInventoryViewMode(); } catch(e) {}
                     filterTable('itemsTable'); filterTable('toolsTable'); filterHistoryTable(); filterTxTable();
                 }, 50);
 
@@ -7966,6 +7990,26 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 // ★ เพิ่ม: รีเฟรชการ์ดประวัติรับเข้า/เบิกออกของหน้าคลังอะไหล่ให้ตรงกับข้อมูลล่าสุดเสมอ
                 if (isItems) renderItemsTxCards();
             } catch(e) { console.error(e); }
+        }
+
+        // ★ เพิ่ม: สลับมุมมอง การ์ด/ตาราง แบบกดปุ่มเอง (จำค่าที่เลือกไว้ผ่าน localStorage)
+        function setInventoryViewMode(which, mode) {
+            try {
+                const container = document.getElementById(which === 'items' ? 'itemsTableContainer' : 'toolsTableContainer');
+                if (container) { container.classList.remove('view-mode-card', 'view-mode-table'); container.classList.add('view-mode-' + mode); }
+                ['Card', 'Table'].forEach(kind => {
+                    const btn = document.getElementById(which + 'ViewBtn' + kind);
+                    if (!btn) return;
+                    const isActive = (kind.toLowerCase() === mode);
+                    btn.classList.toggle('active', isActive);
+                    btn.classList.toggle('btn-secondary', isActive);
+                    btn.classList.toggle('btn-outline-secondary', !isActive);
+                });
+                localStorage.setItem('invViewMode_' + which, mode);
+            } catch (e) { console.error(e); }
+        }
+        function restoreInventoryViewMode() {
+            ['items', 'tools'].forEach(which => setInventoryViewMode(which, localStorage.getItem('invViewMode_' + which) || 'card'));
         }
 
         function renderTable(tableId, data, type) {
