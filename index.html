@@ -4934,6 +4934,19 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
 
             localStorage.removeItem('user_session');
             clearSessionToken(); // ★ เพิ่ม: ล้าง session token ตอน logout ด้วย ไม่งั้น token เดิมยังใช้ยิง request ได้อยู่
+            // ★ เพิ่ม: รีเซ็ต flag/สถานะที่ค้างจากรอบก่อนหน้าทั้งหมด ไม่งั้นถ้ามี auto-refresh หรือ request ค้างอยู่
+            // ตอนกดออกจากระบบ (isFetchingData ค้างเป็น true, lastDataSnapshot เทียบกับข้อมูลรอบเก่า) จะทำให้
+            // ล็อกอินรอบถัดไปในหน้าเดียวกัน (ไม่ได้ F5) โหลด/แสดงข้อมูลไม่ขึ้นหรือขึ้นไม่ครบ ต้อง F5 ถึงจะหาย
+            // เพราะตัวแปรเหล่านี้เป็น global ที่ยังไม่เคยถูกล้างตอน logout มาก่อน
+            isFetchingData = false;
+            lastDataSnapshot = null;
+            window._driveStorageLoaded = false;
+            window._lineQuotaLoaded = false;
+            window._systemHealthLoaded = false;
+            window._lineChannelFormsLoaded = false;
+            window._aiProviderFormsLoaded = false;
+            window._lineDashPw = null;
+            window._lineChannelDataCache = null;
             // ★ เพิ่ม: หยุด polling กระดิ่งแจ้งเตือนที่รันเบื้องหลัง และรีเซ็ต flag ให้ล็อกอินรอบถัดไปเริ่ม poll ใหม่ได้
             if (window._globalBadgePollTimer) { clearInterval(window._globalBadgePollTimer); window._globalBadgePollTimer = null; }
             window._globalBadgePollStarted = false;
@@ -5667,10 +5680,31 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     _dataDone = true;
                     tryFinishLogin();
                 }
-                function _onDataFail() {
+                // ★ แก้บั๊ก: เดิมถ้า getInventoryData() พังหลังล็อกอิน (เช่น network error/เซิร์ฟเวอร์ตอบ 500 ชั่วคราว
+                // ตอนยิง 2 request พร้อมกันกับ webLoginCheck) จะ fallback ไปใช้ allData เดิมในหน่วยความจำเงียบๆ
+                // โดยไม่แจ้งอะไรเลย — ถ้าเพิ่งกด "ออกจากระบบ" มา allData ตอนนั้นเพิ่งถูกรีเซ็ตเป็นข้อมูลว่าง/mock
+                // (ดู forceLogoutToScreen) ผลคือเข้าระบบสำเร็จแต่ข้อมูลในชีตหายไปหมด ต้องกด F5 เพื่อเริ่มใหม่ทั้งหน้า
+                // ถึงจะยิง request สำเร็จ — แก้โดยลองใหม่อัตโนมัติ 1 ครั้งก่อน ถ้ายังพังอีกค่อยแจ้งเตือนผู้ใช้ตรงๆ
+                // แทนการเงียบแล้วใช้ข้อมูลว่างเสมือนไม่มีอะไรผิดปกติ
+                let _dataFailRetried = false;
+                function _onDataFail(err) {
+                    if (!_dataFailRetried) {
+                        _dataFailRetried = true;
+                        setTimeout(function() {
+                            if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.getInventoryData === 'function') {
+                                google.script.run.withSuccessHandler(_onDataResult).withFailureHandler(_onDataFail).getInventoryData();
+                            } else {
+                                callGAS('getInventoryData', [], _onDataResult, _onDataFail);
+                            }
+                        }, 800);
+                        return;
+                    }
                     _inventoryData = allData;
                     _dataDone = true;
                     tryFinishLogin();
+                    setTimeout(function() {
+                        Swal.fire({ icon: 'warning', title: 'โหลดข้อมูลคลังไม่สำเร็จ', text: 'เข้าสู่ระบบสำเร็จ แต่ดึงข้อมูลคลังจากชีตไม่ได้ (' + String(err || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้') + ') กรุณากดรีเฟรชหน้า (F5) เพื่อลองใหม่', confirmButtonText: 'รีเฟรชตอนนี้', showCancelButton: true, cancelButtonText: 'ไว้ทีหลัง' }).then(function(r) { if (r.isConfirmed) location.reload(); });
+                    }, 900);
                 }
                 if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.getInventoryData === 'function') {
                     google.script.run.withSuccessHandler(_onDataResult).withFailureHandler(_onDataFail).getInventoryData();
