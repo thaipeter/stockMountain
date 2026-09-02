@@ -4946,7 +4946,22 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             window._lineChannelFormsLoaded = false;
             window._aiProviderFormsLoaded = false;
             window._lineDashPw = null;
+            window._lineDashPwExpiry = 0;
             window._lineChannelDataCache = null;
+
+            // ★ เพิ่ม: ตัวช่วยกลาง cache รหัสผ่าน Dashboard แบบมีอายุ 5 นาที (ไม่ใช่ทั้งเซสชันแบบเดิม)
+            // ให้ยืนยันครั้งเดียวแล้วใช้ซ้ำได้ 5 นาที พ้นเวลานี้ต้องกรอกใหม่เพื่อความปลอดภัย
+            window._lineDashPwExpiry = window._lineDashPwExpiry || 0;
+            window.getCachedDashboardPassword = function() {
+                if (window._lineDashPw && Date.now() < window._lineDashPwExpiry) return window._lineDashPw;
+                window._lineDashPw = null;
+                window._lineDashPwExpiry = 0;
+                return null;
+            };
+            window.setCachedDashboardPassword = function(pw) {
+                window._lineDashPw = pw;
+                window._lineDashPwExpiry = Date.now() + 5 * 60 * 1000; // 5 นาที
+            };
             // ★ เพิ่ม: หยุด polling กระดิ่งแจ้งเตือนที่รันเบื้องหลัง และรีเซ็ต flag ให้ล็อกอินรอบถัดไปเริ่ม poll ใหม่ได้
             if (window._globalBadgePollTimer) { clearInterval(window._globalBadgePollTimer); window._globalBadgePollTimer = null; }
             window._globalBadgePollStarted = false;
@@ -5598,7 +5613,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if (loginCard) { loginCard.classList.remove('glow-red'); loginCard.classList.add('glow-green'); }
                     // เก็บรหัสผ่านที่ใช้ล็อกอินไว้ในหน่วยความจำของหน้านี้ (หายไปเมื่อรีเฟรชหน้า ไม่ได้เก็บถาวร)
                     // ใช้กับฟีเจอร์ที่ต้องยืนยันรหัสผ่าน Dashboard ซ้ำ (เช่นตั้งค่าไลน์) จะได้ไม่ต้องถามซ้ำในเซสชันเดียวกัน
-                    if (!_needsSetup) window._lineDashPw = pin;
+                    if (!_needsSetup) window.setCachedDashboardPassword(pin);
                     if (loginPinInput) { loginPinInput.classList.remove('glow-red'); loginPinInput.classList.add('glow-green'); }
                     document.getElementById('loginError').classList.add('d-none');
                     webFailedAttempts[uid] = 0;
@@ -6431,7 +6446,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         }
 
         function testLineBotSend(botId, label) {
-            if (!window._lineDashPw) { Swal.fire({ icon: 'warning', title: 'กรุณายืนยันตัวตนก่อน', text: 'ลองรีเฟรชหน้าใหม่แล้วเข้าสู่ระบบอีกครั้ง' }); return; }
+            if (!window.getCachedDashboardPassword()) { Swal.fire({ icon: 'warning', title: 'กรุณายืนยันตัวตนก่อน', text: 'รหัสผ่านที่ยืนยันไว้หมดอายุแล้ว (เกิน 5 นาที) กรุณายืนยันตัวตนใหม่' }); return; }
             Swal.fire({ title: 'กำลังทดสอบส่ง...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
             const handleOk = (res) => {
                 if (!res || !res.success) { Swal.fire({ icon: 'error', title: `ทดสอบไลน์${label}ไม่สำเร็จ`, text: (res && res.error) || 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' }); return; }
@@ -6440,9 +6455,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             };
             const handleFail = (err) => Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err), background: '#1a2230', color: '#e0e0e0' });
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webTestLineBotSend(currentUserProfile.uid, window._lineDashPw, botId);
+                google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webTestLineBotSend(currentUserProfile.uid, window.getCachedDashboardPassword(), botId);
             } else {
-                callGAS('webTestLineBotSend', [currentUserProfile.uid, window._lineDashPw, botId], handleOk, handleFail);
+                callGAS('webTestLineBotSend', [currentUserProfile.uid, window.getCachedDashboardPassword(), botId], handleOk, handleFail);
             }
         }
 
@@ -6465,7 +6480,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 }
             };
 
-            if (window._lineDashPw) { fetchAndRender(window._lineDashPw); return; } // มีรหัสผ่านที่ยืนยันไว้แล้วในหน้านี้ ไม่ต้องถามซ้ำ
+            const _cachedPw1 = window.getCachedDashboardPassword();
+            if (_cachedPw1) { fetchAndRender(_cachedPw1); return; } // มีรหัสผ่านที่ยืนยันไว้ไม่เกิน 5 นาที ไม่ต้องถามซ้ำ
             if (silent) return; // โหมดเงียบ (เรียกหลังบันทึก) แต่ไม่มีรหัสผ่านแคชไว้ — ข้าม ไม่เด้งถามซ้ำโดยไม่จำเป็น
 
             Swal.fire({
@@ -6475,7 +6491,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 background: '#1a2230', color: '#e0e0e0'
             }).then(result => {
                 if (!result.isConfirmed || !result.value) { wrap.innerHTML = '<div class="text-center py-3 text-muted small">ยกเลิกแล้ว — กดรีเฟรชหน้าเพื่อลองใหม่</div>'; return; }
-                window._lineDashPw = result.value;
+                window.setCachedDashboardPassword(result.value);
                 fetchAndRender(result.value);
             });
         }
@@ -6490,7 +6506,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
                 const handleOk = (res) => {
                     if (!res || !res.success) { Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: (res && res.error) || 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' }); return; }
-                    window._lineDashPw = pw; // เก็บรหัสผ่านไว้ใช้รีโหลดฟอร์มแบบเงียบๆ ไม่ต้องถามซ้ำ
+                    window.setCachedDashboardPassword(pw); // เก็บไว้ใช้ซ้ำได้ 5 นาที ไม่ต้องถามซ้ำทันที
                     Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: res.message || 'บันทึกการตั้งค่าช่องทาง LINE เรียบร้อยแล้ว', timer: 2500, showConfirmButton: false, background: '#1a2230', color: '#e0e0e0' });
                     loadLineChannelForms(true); // โหมดเงียบ ใช้รหัสผ่านที่แคชไว้ ไม่เด้ง popup ทับ
                     loadLineQuotaStatus(true); // บังคับข้าม cache เก่า เผื่อเพิ่งเพิ่ม/แก้ไขบอทตัวใหม่
@@ -6502,7 +6518,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     callGAS('webSaveLineChannelSettings', [currentUserProfile.uid, pw, bots], handleOk, handleFail);
                 }
             };
-            if (window._lineDashPw) { doSave(window._lineDashPw); return; }
+            const _cachedPw2 = window.getCachedDashboardPassword();
+            if (_cachedPw2) { doSave(_cachedPw2); return; }
             Swal.fire({
                 title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อบันทึกการตั้งค่าช่องทาง LINE',
                 input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
@@ -6568,7 +6585,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     callGAS('webGetAIProviderSettings', [currentUserProfile.uid, pw], handleOk, handleFail);
                 }
             };
-            if (window._lineDashPw) { fetchAndRender(window._lineDashPw); return; } // ใช้รหัสผ่านเดียวกับที่แคชไว้ตอน login/ตั้งค่าไลน์
+            const _cachedPw3 = window.getCachedDashboardPassword();
+            if (_cachedPw3) { fetchAndRender(_cachedPw3); return; } // ใช้รหัสผ่านที่แคชไว้ไม่เกิน 5 นาที
             if (silent) return;
             Swal.fire({
                 title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อดูการตั้งค่าผู้ให้บริการ AI',
@@ -6577,7 +6595,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 background: '#1a2230', color: '#e0e0e0'
             }).then(result => {
                 if (!result.isConfirmed || !result.value) { wrap.innerHTML = '<div class="text-center py-3 text-muted small">ยกเลิกแล้ว — กดรีเฟรชหน้าเพื่อลองใหม่</div>'; return; }
-                window._lineDashPw = result.value;
+                window.setCachedDashboardPassword(result.value);
                 fetchAndRender(result.value);
             });
         }
@@ -6593,7 +6611,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
                 const handleOk = (res) => {
                     if (!res || !res.success) { Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: (res && res.error) || 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' }); return; }
-                    window._lineDashPw = pw;
+                    window.setCachedDashboardPassword(pw);
                     Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: res.message || '', timer: 2500, showConfirmButton: false, background: '#1a2230', color: '#e0e0e0' });
                     loadAIProviderForms(true);
                 };
@@ -6604,7 +6622,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     callGAS('webSaveAIProviderSettings', [currentUserProfile.uid, pw, primary, providers], handleOk, handleFail);
                 }
             };
-            if (window._lineDashPw) { doSave(window._lineDashPw); return; }
+            const _cachedPw4 = window.getCachedDashboardPassword();
+            if (_cachedPw4) { doSave(_cachedPw4); return; }
             Swal.fire({
                 title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อบันทึกการตั้งค่าผู้ให้บริการ AI',
                 input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
@@ -6617,7 +6636,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         }
 
         function testAIProvider(providerId, label) {
-            if (!window._lineDashPw) { Swal.fire({ icon: 'warning', title: 'กรุณายืนยันตัวตนก่อน' }); return; }
+            if (!window.getCachedDashboardPassword()) { Swal.fire({ icon: 'warning', title: 'กรุณายืนยันตัวตนก่อน', text: 'รหัสผ่านที่ยืนยันไว้หมดอายุแล้ว (เกิน 5 นาที) กรุณายืนยันตัวตนใหม่' }); return; }
             Swal.fire({ title: `กำลังทดสอบ ${label}...`, allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
             const handleOk = (res) => {
                 if (!res || !res.success) { Swal.fire({ icon: 'error', title: `ทดสอบ ${label} ไม่สำเร็จ`, text: (res && res.error) || 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' }); return; }
@@ -6625,9 +6644,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             };
             const handleFail = (err) => Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err), background: '#1a2230', color: '#e0e0e0' });
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webTestAIProvider(currentUserProfile.uid, window._lineDashPw, providerId);
+                google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webTestAIProvider(currentUserProfile.uid, window.getCachedDashboardPassword(), providerId);
             } else {
-                callGAS('webTestAIProvider', [currentUserProfile.uid, window._lineDashPw, providerId], handleOk, handleFail);
+                callGAS('webTestAIProvider', [currentUserProfile.uid, window.getCachedDashboardPassword(), providerId], handleOk, handleFail);
             }
         }
 
