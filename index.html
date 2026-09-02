@@ -4922,6 +4922,24 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             });
         }
         
+        // ★ เพิ่ม: ตัวช่วยกลาง cache รหัสผ่าน Dashboard แบบมีอายุ 5 นาที (ไม่ใช่ทั้งเซสชันแบบเดิม)
+        // ให้ยืนยันครั้งเดียวแล้วใช้ซ้ำได้ 5 นาที พ้นเวลานี้ต้องกรอกใหม่เพื่อความปลอดภัย
+        // ★ แก้บั๊ก: ต้องนิยามตรงนี้ที่ระดับบนสุดของสคริปต์ (ทำงานทันทีตอนหน้าเว็บโหลด) ไม่ใช่ซ่อนอยู่ใน
+        // forceLogoutToScreen() เพราะฟังก์ชันนั้นทำงานเฉพาะตอน "กดออกจากระบบ" เท่านั้น — ถ้านิยามไว้ในนั้น
+        // ตอนล็อกอินครั้งแรก (ยังไม่เคย logout เลย) window.setCachedDashboardPassword จะยังไม่มีอยู่จริง
+        // เรียกใช้แล้วเกิด TypeError ทำให้ล็อกอินค้างไปเลยหลังกรอก PIN ถูกต้อง (แก้ปัญหานี้ตรงนี้)
+        window._lineDashPwExpiry = window._lineDashPwExpiry || 0;
+        window.getCachedDashboardPassword = function() {
+            if (window._lineDashPw && Date.now() < window._lineDashPwExpiry) return window._lineDashPw;
+            window._lineDashPw = null;
+            window._lineDashPwExpiry = 0;
+            return null;
+        };
+        window.setCachedDashboardPassword = function(pw) {
+            window._lineDashPw = pw;
+            window._lineDashPwExpiry = Date.now() + 5 * 60 * 1000; // 5 นาที
+        };
+
         function forceLogoutToScreen() {
             try {
                 if (currentUserProfile && currentUserProfile.name) {
@@ -4949,19 +4967,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             window._lineDashPwExpiry = 0;
             window._lineChannelDataCache = null;
 
-            // ★ เพิ่ม: ตัวช่วยกลาง cache รหัสผ่าน Dashboard แบบมีอายุ 5 นาที (ไม่ใช่ทั้งเซสชันแบบเดิม)
-            // ให้ยืนยันครั้งเดียวแล้วใช้ซ้ำได้ 5 นาที พ้นเวลานี้ต้องกรอกใหม่เพื่อความปลอดภัย
-            window._lineDashPwExpiry = window._lineDashPwExpiry || 0;
-            window.getCachedDashboardPassword = function() {
-                if (window._lineDashPw && Date.now() < window._lineDashPwExpiry) return window._lineDashPw;
-                window._lineDashPw = null;
-                window._lineDashPwExpiry = 0;
-                return null;
-            };
-            window.setCachedDashboardPassword = function(pw) {
-                window._lineDashPw = pw;
-                window._lineDashPwExpiry = Date.now() + 5 * 60 * 1000; // 5 นาที
-            };
             // ★ เพิ่ม: หยุด polling กระดิ่งแจ้งเตือนที่รันเบื้องหลัง และรีเซ็ต flag ให้ล็อกอินรอบถัดไปเริ่ม poll ใหม่ได้
             if (window._globalBadgePollTimer) { clearInterval(window._globalBadgePollTimer); window._globalBadgePollTimer = null; }
             window._globalBadgePollStarted = false;
