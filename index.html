@@ -5094,22 +5094,33 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         allowOutsideClick: () => !Swal.isLoading(),
                         preConfirm: (password) => {
                             if (!password) { Swal.showValidationMessage('กรุณากรอกรหัสผ่าน'); return false; }
-                            return new Promise((resolve) => {
-                                const handleVerify = (res) => {
-                                    const hasPw = res && typeof res === 'object' ? !!res.hasPassword : false;
-                                    if (!hasPw) { resolve({ notSet: true }); return; }
-                                    if (typeof google !== 'undefined' && google.script && google.script.run) {
-                                        google.script.run.withSuccessHandler((ok) => resolve({ valid: !!ok })).withFailureHandler(() => resolve({ valid: false, networkError: true })).webVerifyDashboardPassword(uid, password);
-                                    } else {
-                                        callGAS('webVerifyDashboardPassword', [uid, password], (ok) => resolve({ valid: !!ok }), () => resolve({ valid: false, networkError: true }));
-                                    }
-                                };
-                                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                                    google.script.run.withSuccessHandler(handleVerify).withFailureHandler(() => resolve({ valid: false, networkError: true })).webHasDashboardPassword(uid);
-                                } else {
-                                    callGAS('webHasDashboardPassword', [uid], handleVerify, () => resolve({ valid: false, networkError: true }));
-                                }
-                            });
+                            // ★ แก้บั๊ก: เดิม Promise นี้ไม่มี timeout ของตัวเอง — ถ้า callGAS ไม่เรียก callback กลับมาเลย
+                            // ไม่ว่าจะจาก error ที่ไม่คาดคิด (เช่น exception ในโค้ดฝั่งนี้เอง) หรือเซิร์ฟเวอร์ค้างจริงๆ
+                            // resolve() จะไม่ถูกเรียกตลอดไป ทำให้ Swal โชว์ spinner ค้างอยู่แบบนั้นไม่มีที่สิ้นสุด
+                            // เพิ่ม timeout อิสระ 20 วิ กันไว้อีกชั้น ถ้าเกินเวลานี้ให้ถือว่าเชื่อมต่อไม่ได้แทนการค้างเงียบๆ
+                            return Promise.race([
+                                new Promise((resolve) => {
+                                    try {
+                                        const handleVerify = (res) => {
+                                            try {
+                                                const hasPw = res && typeof res === 'object' ? !!res.hasPassword : false;
+                                                if (!hasPw) { resolve({ notSet: true }); return; }
+                                                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                                                    google.script.run.withSuccessHandler((ok) => resolve({ valid: !!ok })).withFailureHandler(() => resolve({ valid: false, networkError: true })).webVerifyDashboardPassword(uid, password);
+                                                } else {
+                                                    callGAS('webVerifyDashboardPassword', [uid, password], (ok) => resolve({ valid: !!ok }), () => resolve({ valid: false, networkError: true }));
+                                                }
+                                            } catch (e) { resolve({ valid: false, networkError: true }); }
+                                        };
+                                        if (typeof google !== 'undefined' && google.script && google.script.run) {
+                                            google.script.run.withSuccessHandler(handleVerify).withFailureHandler(() => resolve({ valid: false, networkError: true })).webHasDashboardPassword(uid);
+                                        } else {
+                                            callGAS('webHasDashboardPassword', [uid], handleVerify, () => resolve({ valid: false, networkError: true }));
+                                        }
+                                    } catch (e) { resolve({ valid: false, networkError: true }); }
+                                }),
+                                new Promise((resolve) => setTimeout(() => resolve({ valid: false, networkError: true, timedOut: true }), 20000))
+                            ]);
                         }
                     }).then(function(result) {
                         if (!result.isConfirmed) return;
@@ -5129,8 +5140,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         if (v && v.valid) { _doGoTo(sectionId); return; }
                         Swal.fire({
                             icon: 'error',
-                            title: v && v.networkError ? 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' : 'รหัสผ่านไม่ถูกต้อง',
-                            text: v && v.networkError ? 'กรุณาลองใหม่อีกครั้ง' : 'กรุณาตรวจสอบรหัสผ่าน Dashboard อีกครั้ง',
+                            title: v && v.timedOut ? 'หมดเวลาเชื่อมต่อ' : (v && v.networkError ? 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' : 'รหัสผ่านไม่ถูกต้อง'),
+                            text: v && v.timedOut ? 'รอเกิน 20 วินาทีแล้วยังไม่ได้รับคำตอบจากเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง' : (v && v.networkError ? 'กรุณาลองใหม่อีกครั้ง' : 'กรุณาตรวจสอบรหัสผ่าน Dashboard อีกครั้ง'),
                             confirmButtonColor: '#ef4444', background: '#1a2230', color: '#e0e0e0'
                         });
                     });
@@ -8150,29 +8161,43 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     // ── การ์ดสำหรับจอมือถือ (สลับกับตารางด้วย CSS media query, ไม่ใช่ทั้งสองพร้อมกัน) ──
                     if (cardList) {
                         const stockLabel = type === 'tool' ? 'พร้อมใช้' : 'คงเหลือ';
+                        const _cardImg = getProxyImgUrl(item.imageUrl);
+                        const _cardImgSafe = item.imageUrl ? String(item.imageUrl).replace(/"/g, '&quot;').replace(/'/g, "\\'") : '';
+                        let cardImgHtml;
+                        if (_cardImg) {
+                            cardImgHtml = `<img src="${_cardImg}" style="width:100%;height:100%;object-fit:cover" onclick="viewItemImage('${safeCode}','${safeType}','${safeName}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+                                + `<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px">📦</div>`;
+                            if (currentUserProfile.role === 'admin') {
+                                cardImgHtml += `<button title="เปลี่ยนรูป" onclick="event.stopPropagation();triggerImgUpload('${safeCode}','${safeType}')" style="position:absolute;bottom:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;display:flex;align-items:center;justify-content:center"><i class="fas fa-camera" style="font-size:12px"></i></button>`;
+                            }
+                        } else if (currentUserProfile.role === 'admin') {
+                            cardImgHtml = `<button onclick="event.stopPropagation();triggerImgUpload('${safeCode}','${safeType}')" style="background:none;border:none;color:#6b7280;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px"><i class="fas fa-camera" style="font-size:28px"></i>เพิ่มรูปภาพ</button>`;
+                        } else {
+                            cardImgHtml = `<span style="font-size:32px;color:#6b7280">📦</span>`;
+                        }
                         const card = document.createElement('div');
-                        card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d;cursor:pointer';
+                        card.style.cssText = 'background:#20242f;border-radius:12px;overflow:hidden;border:1px solid #2a2f3d;cursor:pointer';
                         card.innerHTML = `
-                            <div class="d-flex gap-3">
-                                <div style="flex-shrink:0" class="ml-card-img"></div>
-                                <div style="flex:1;min-width:0">
-                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
-                                        <span class="font-monospace" style="background:#232838;color:#e0e0e0;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap">${escapeHtml(item.code)}</span>
-                                        <div class="ml-card-status" style="font-size:11px"></div>
-                                    </div>
-                                    <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 6px;overflow-wrap:break-word">${escapeHtml(item.name)}</p>
-                                    <div class="d-flex flex-wrap gap-2 align-items-center" style="font-size:12px;color:#6b7280">
-                                        <span>${escapeHtml(displayCat)}</span>
-                                        ${item.location ? `<span>· <i class="fas fa-map-marker-alt text-danger"></i> ${escapeHtml(item.location)}</span>` : ''}
-                                    </div>
-                                </div>
+                            <div style="width:100%;aspect-ratio:16/10;background:#181b24;display:flex;align-items:center;justify-content:center;position:relative">
+                                ${cardImgHtml}
+                                <div class="ml-card-status" style="position:absolute;top:8px;right:8px;font-size:11px"></div>
+                                <span style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;font-family:monospace">${escapeHtml(item.code)}</span>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2" style="border-top:1px solid #2a2f3d">
-                                <span style="font-size:12px;color:#6b7280">${stockLabel} <b style="color:${isLow?'#ef4444':'#60a5fa'};font-size:15px">${formatNumber(item.stock)}</b> ${escapeHtml(item.unit)}</span>
-                                <div class="ml-card-actions"></div>
+                            <div style="padding:12px">
+                                <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 4px;overflow-wrap:break-word">${escapeHtml(item.name)}</p>
+                                <div class="d-flex flex-wrap gap-2 align-items-center" style="font-size:12px;color:#6b7280">
+                                    <span>${escapeHtml(displayCat)}</span>
+                                    ${item.location ? `<span>· <i class="fas fa-map-marker-alt text-danger"></i> ${escapeHtml(item.location)}</span>` : ''}
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2 pt-2" style="border-top:1px solid #2a2f3d">
+                                    <div>
+                                        <div style="font-size:11px;color:#6b7280">${stockLabel}</div>
+                                        <div style="font-size:20px;font-weight:700;color:${isLow?'#ef4444':'#60a5fa'};line-height:1.2">${formatNumber(item.stock)} <span style="font-size:12px;font-weight:400;color:#9ca3af">${escapeHtml(item.unit)}</span></div>
+                                    </div>
+                                    <div class="ml-card-actions"></div>
+                                </div>
                             </div>`;
-                        // ใส่รูป/สถานะ/ปุ่ม action ผ่าน DOM แทนการต่อ string ตรงๆ กัน HTML ของปุ่มที่มี onclick ซับซ้อนพัง
-                        card.querySelector('.ml-card-img').innerHTML = imageCell;
+                        // ใส่สถานะ/ปุ่ม action ผ่าน DOM แทนการต่อ string ตรงๆ กัน HTML ของปุ่มที่มี onclick ซับซ้อนพัง
                         card.querySelector('.ml-card-status').innerHTML = statusBadge;
                         card.querySelector('.ml-card-actions').innerHTML = actionButtons;
                         card.addEventListener('click', function(e) {
