@@ -2790,10 +2790,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <div class="d-flex justify-content-between align-items-end mb-4 pb-2 border-bottom border-light flex-wrap gap-3">
                         <div><h3 class="fw-bold mb-1">ฐานข้อมูลคลังอะไหล่</h3><p class="text-muted small mb-0">Consumables & Spare Parts</p></div>
                         <div class="d-flex gap-2">
+                            <!-- ★ เพิ่ม: สลับมุมมองตาราง — "คงเหลือ" (ยอดปัจจุบัน) หรือ "รับเข้า/เบิกออก" (ยอดสะสมทั้งหมด) -->
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-secondary active" id="itemsViewBtnStock" onclick="setItemsViewMode('stock')" title="แสดงยอดคงเหลือปัจจุบัน">คงเหลือ</button>
+                                <button type="button" class="btn btn-outline-secondary" id="itemsViewBtnInOut" onclick="setItemsViewMode('inout')" title="แสดงยอดรับเข้า/เบิกออกสะสมทั้งหมด">รับเข้า/เบิกออก</button>
+                            </div>
                             <button class="btn btn-outline-success fw-bold shadow-sm bg-white" onclick="exportExcel('itemsTable', 'Inventory_Items')"><i class="fas fa-file-excel"></i> Export</button>
                             <button class="btn btn-theme fw-bold shadow-sm admin-only-element" onclick="openNewItemModal('Items')"><i class="fas fa-plus"></i> เพิ่มใหม่</button>
                         </div>
                     </div>
+                    <!-- ★ เพิ่ม: การ์ดประวัติรับเข้า/เบิกออกล่าสุด สไตล์เดียวกับหน้า "รับเข้า/เบิกออก (In/Out)"
+                         กรองเฉพาะรายการที่เป็นรหัสอะไหล่ (ไม่รวมเครื่องมือ) เพื่อให้เห็นความเคลื่อนไหวของคลังอะไหล่นี้โดยตรง -->
+                    <div id="itemsTxCardList" class="mb-4" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
                     <div class="filter-group mb-4 bg-white border shadow-sm">
                         <span class="text-muted fw-bold ms-2"><i class="fas fa-search text-primary"></i> ค้นหา:</span>
                         <select class="form-select w-auto shadow-none border-light bg-light fw-medium" id="itemCategoryFilter" onchange="filterTable('itemsTable')"><option value="">📁 ทุกหมวดหมู่</option></select>
@@ -2801,7 +2809,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <div class="table-container p-0">
                         <div id="itemsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
-                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
+                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center" id="itemsThStock">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center" id="itemsThStatus">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
 
@@ -4538,6 +4546,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ★ เพิ่ม: session token helper — เก็บ token ที่ backend ออกให้ตอน login (ไม่ใช่ role)
+        // role ที่เก็บใน user_session ยังใช้ได้แค่ "ซ่อน/โชว์ UI" เท่านั้น backend ไม่เชื่อค่านี้อีกต่อไป
+        function getSessionToken() { try { return localStorage.getItem('sess_token') || ''; } catch (e) { return ''; } }
+        function setSessionToken(t) { try { if (t) localStorage.setItem('sess_token', t); } catch (e) {} }
+        function clearSessionToken() { try { localStorage.removeItem('sess_token'); } catch (e) {} }
+
         // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
         // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
         // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
@@ -4566,7 +4580,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     fetch(window.GAS_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify({ fn, args: args || [] }),
+                        // ★ เพิ่ม: แนบ session token ทุก request — backend (doPost) จะปฏิเสธถ้าไม่มี/หมดอายุ
+                        // ป้องกันไม่ให้ผู้ใช้ทั่วไปปลอม userId ของแอดมินแล้วเรียกฟังก์ชันเสี่ยงสูงตรงๆ
+                        body: JSON.stringify({ fn, args: args || [], token: getSessionToken() }),
                         signal: controller.signal
                     })
                     .then(r => r.json())
@@ -4896,6 +4912,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const savedUsers = (allData.users && allData.users.length > 0) ? [...allData.users] : [];
 
             localStorage.removeItem('user_session');
+            clearSessionToken(); // ★ เพิ่ม: ล้าง session token ตอน logout ด้วย ไม่งั้น token เดิมยังใช้ยิง request ได้อยู่
+            // ★ เพิ่ม: หยุด polling กระดิ่งแจ้งเตือนที่รันเบื้องหลัง และรีเซ็ต flag ให้ล็อกอินรอบถัดไปเริ่ม poll ใหม่ได้
+            if (window._globalBadgePollTimer) { clearInterval(window._globalBadgePollTimer); window._globalBadgePollTimer = null; }
+            window._globalBadgePollStarted = false;
             if (typeof createMockData === 'function') {
                 allData = createMockData();
             } else {
@@ -5283,6 +5303,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             uid = session.uid;
                         } else {
                             localStorage.removeItem('user_session');
+                            clearSessionToken(); // ★ เพิ่ม: เซสชันหมดอายุฝั่ง client ก็ล้าง token ทิ้งด้วย
                         }
                     }
                 } catch (e) {
@@ -5600,6 +5621,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if (res && typeof res === 'object') {
                         _pinValid = !!res.valid;
                         _needsSetup = !!res.needsSetup;
+                        // ★ เพิ่ม: เก็บ session token ที่ backend ออกให้ตอน login สำเร็จ
+                        if (_pinValid && res.token) setSessionToken(res.token);
                     } else {
                         _pinValid = !!res;
                     }
@@ -6650,7 +6673,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 if (!window._globalBadgePollStarted && currentUserProfile && currentUserProfile.role === 'admin') {
                     window._globalBadgePollStarted = true;
                     refreshPendingApprovalBadge();
-                    setInterval(refreshPendingApprovalBadge, 15000);
+                    // ★ แก้: เดิมไม่เก็บ interval id ไว้เลย ทำให้ตอน logout เช็คจำนวนคำขอนี้ยังรันอยู่เบื้องหลัง
+                    // ต่อไปเรื่อยๆ ทุก 15 วิ (ยิง request ค้างแม้ล็อกเอาต์ไปแล้ว) และ flag ก็ไม่เคย reset ทำให้
+                    // ล็อกอินใหม่รอบถัดไปในหน้าเดียวกันจะไม่เริ่ม poll ให้อีกเลย
+                    if (window._globalBadgePollTimer) clearInterval(window._globalBadgePollTimer);
+                    window._globalBadgePollTimer = setInterval(refreshPendingApprovalBadge, 15000);
                 }
 
                 applySettingsUI(allData.settings);
@@ -6707,6 +6734,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 try { renderActiveBorrows(); } catch(e) { console.warn('renderActiveBorrows error:', e); }
 
                 setTimeout(() => {
+                    // ★ เพิ่ม: sync หัวตาราง/ปุ่มโหมด "คงเหลือ / รับเข้า-เบิกออก" ให้ตรงกับค่าที่บันทึกไว้ ก่อน render จริง
+                    if (typeof setItemsViewMode === 'function') { try { setItemsViewMode(itemsViewMode); } catch(e) {} }
                     filterTable('itemsTable'); filterTable('toolsTable'); filterHistoryTable(); filterTxTable();
                 }, 50);
 
@@ -7786,7 +7815,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     else if (p.status === 'กำลังผลิต') { statusColor = '#60a5fa'; statusBg = '#1e3a5f'; }
                     else if (p.status === 'ยกเลิกแล้ว') { statusColor = '#9ca3af'; statusBg = '#232838'; }
 
-                    tr.innerHTML = `<td>${p.poCode}</td><td>${p.date}</td><td>${p.supplier}</td><td>${p.itemName}</td><td class="text-end">${formatNumber(p.qty)}</td><td class="text-center">${p.status}</td><td>${p.remark || '-'}</td><td class="text-center">-</td>`;
+                    // ★ แก้: จุดนี้เดิมไม่ได้ escape ค่าที่มาจากผู้ใช้ (itemName/supplier/remark ฯลฯ) ก่อนยัดเข้า
+                    // innerHTML ต่างจากตารางอื่นในไฟล์นี้ที่ escape ครบแล้ว — เป็นช่องโหว่ Stored XSS จริง
+                    // (เช่น ตั้งชื่อสินค้าเป็น <img src=x onerror=...> แล้วรอแอดมินเปิดหน้า PO)
+                    tr.innerHTML = `<td>${escapeHtml(p.poCode)}</td><td>${escapeHtml(p.date)}</td><td>${escapeHtml(p.supplier)}</td><td>${escapeHtml(p.itemName)}</td><td class="text-end">${formatNumber(p.qty)}</td><td class="text-center">${escapeHtml(p.status)}</td><td>${escapeHtml(p.remark || '-')}</td><td class="text-center">-</td>`;
                     tbody.appendChild(tr);
 
                     if (cardList) {
@@ -7817,6 +7849,109 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             renderHistoryPOTableWithFilter(allData.pendingPOs);
         }
 
+        // ★ เพิ่ม: มุมมองตาราง "ฐานข้อมูลคลังอะไหล่" — สลับระหว่าง "คงเหลือ" (stock ปัจจุบัน)
+        // กับ "รับเข้า/เบิกออก" (ผลรวมสะสมทั้งหมดจาก history ของแต่ละรายการ)
+        let itemsViewMode = localStorage.getItem('itemsViewMode') || 'stock';
+
+        // รวมยอดรับเข้า/เบิกออกสะสมทั้งหมดของอะไหล่ 1 รายการ จาก log ประวัติ (allData.history)
+        function _getItemInOutTotals(code) {
+            let inQty = 0, outQty = 0;
+            (allData.history || []).forEach(h => {
+                if (String(h.code) !== String(code)) return;
+                const act = String(h.action || '').trim().toLowerCase();
+                const amt = Math.abs(Number(h.amount) || 0);
+                if (act === 'รับเข้า' || act === 'new item') inQty += amt;
+                else if (act.startsWith('เบิก')) outQty += amt;
+            });
+            return { inQty, outQty };
+        }
+
+        function setItemsViewMode(mode) {
+            itemsViewMode = mode;
+            try { localStorage.setItem('itemsViewMode', mode); } catch (e) {}
+            const thStock = document.getElementById('itemsThStock');
+            const thStatus = document.getElementById('itemsThStatus');
+            const btnStock = document.getElementById('itemsViewBtnStock');
+            const btnInOut = document.getElementById('itemsViewBtnInOut');
+            if (mode === 'inout') {
+                if (thStock) thStock.textContent = 'รับเข้าสะสม';
+                if (thStatus) thStatus.textContent = 'เบิกออกสะสม';
+                if (btnStock) { btnStock.classList.remove('btn-secondary', 'active'); btnStock.classList.add('btn-outline-secondary'); }
+                if (btnInOut) { btnInOut.classList.remove('btn-outline-secondary'); btnInOut.classList.add('btn-secondary', 'active'); }
+            } else {
+                if (thStock) thStock.textContent = 'คงเหลือ';
+                if (thStatus) thStatus.textContent = 'สถานะ';
+                if (btnInOut) { btnInOut.classList.remove('btn-secondary', 'active'); btnInOut.classList.add('btn-outline-secondary'); }
+                if (btnStock) { btnStock.classList.remove('btn-outline-secondary'); btnStock.classList.add('btn-secondary', 'active'); }
+            }
+            // ต้องมีข้อมูลโหลดแล้วก่อนถึงจะ re-render ตารางได้ (กันพังตอนหน้าเว็บยังโหลดไม่เสร็จ)
+            if (window.allData && Array.isArray(allData.items)) {
+                filterTable('itemsTable');
+            }
+        }
+
+        // ★ เพิ่ม: การ์ดประวัติรับเข้า/เบิกออกล่าสุด สำหรับหน้า "ฐานข้อมูลคลังอะไหล่" โดยเฉพาะ
+        // ใช้เทมเพลตการ์ดแบบเดียวกับหน้า "รับเข้า/เบิกออก (In/Out)" (renderTransactionsInOut)
+        // แต่กรองเฉพาะ log ที่รหัสตรงกับรายการในคลังอะไหล่ (allData.items) ไม่รวมเครื่องมือ
+        function renderItemsTxCards() {
+            try {
+                const cardList = document.getElementById('itemsTxCardList');
+                if (!cardList) return;
+                cardList.innerHTML = '';
+                const itemCodes = new Set((allData.items || []).map(i => String(i.code)));
+                const relevant = (allData.history || []).filter(h => {
+                    const act = String(h.action || '').trim().toLowerCase();
+                    if (!['รับเข้า', 'เบิก', 'new item', 'แจ้งชำรุด', 'ซ่อมแซมแล้ว', 'คืน'].includes(act)) return false;
+                    return itemCodes.has(String(h.code));
+                });
+                const limit = 12; // แสดงล่าสุดพอเป็นสรุปหน้าเดียว ไม่ใช่ list เต็มแบบหน้า In/Out
+                const limited = relevant.slice(0, limit);
+                if (limited.length === 0) {
+                    cardList.innerHTML = '<div class="text-center py-4 w-100" style="color:#6b7280;grid-column:1/-1"><i class="fas fa-inbox fs-3 mb-2 d-block"></i>ยังไม่มีประวัติรับเข้า/เบิกออกของคลังอะไหล่นี้</div>';
+                    return;
+                }
+                limited.forEach(log => {
+                    const actLower = String(log.action).trim().toLowerCase();
+                    const isOut = (actLower === 'เบิก' || actLower === 'แจ้งชำรุด');
+                    const displayAction = actLower === 'new item' ? 'รับเข้า (ใหม่)' : log.action;
+                    const displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : 'ไม่ระบุ';
+                    const remarkText = log.remark ? String(log.remark) : '-';
+                    const dotColor = isOut ? '#ef4444' : '#22c55e';
+                    const badgeBg = isOut ? '#3a1e1e' : '#1e3a2f';
+                    const amountStr = (isOut ? '-' : '+') + log.amount;
+                    let slipOnclick = '';
+                    if (actLower.includes('เบิก') || actLower.includes('ยืม')) {
+                        const safeCode = String(log.code || '').replace(/'/g, "\\'");
+                        const safeTime = String(log.time || '').replace(/'/g, "\\'");
+                        const safeUser = String(displayUser || '').replace(/'/g, "\\'");
+                        const safeAmount = String(log.amount || '').replace(/'/g, "\\'");
+                        const safeAction = String(log.action || '').replace(/'/g, "\\'");
+                        slipOnclick = `viewSlipReceipt('${safeCode}', '${safeTime}', '${safeUser}', '${safeAmount}', '${safeAction}')`;
+                    }
+                    const card = document.createElement('div');
+                    card.style.cssText = 'background:#20242f;border-radius:10px;padding:14px;border:1px solid #2a2f3d';
+                    card.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0"></span>
+                                <span style="color:#6b7280;font-size:11px">${escapeHtml(log.time)}</span>
+                            </div>
+                            <span style="background:${badgeBg};color:${dotColor};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px"><i class="fas ${isOut?'fa-arrow-down':'fa-arrow-up'} me-1"></i>${escapeHtml(displayAction)}</span>
+                        </div>
+                        <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 8px">${escapeHtml(log.itemName)} <span class="badge-code-history ms-1"><i class="fas fa-barcode me-1"></i>${escapeHtml(log.code)}</span></p>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div style="font-size:12px;color:#6b7280">
+                                <span class="fw-bold" style="color:${dotColor};font-size:14px">${amountStr} ${escapeHtml(log.unit||'')}</span>
+                                · <i class="fas fa-user-circle"></i> ${escapeHtml(displayUser)}
+                                ${remarkText !== '-' ? ' · ' + escapeHtml(remarkText) : ''}
+                            </div>
+                            <div>${slipOnclick ? `<button class="btn btn-sm" style="background:transparent;color:#60a5fa;border:1px solid #2a2f3d;border-radius:6px;font-size:11px;padding:4px 10px" onclick="${slipOnclick}"><i class="fas fa-file-invoice me-1"></i>ดูใบเบิก</button>` : ''}</div>
+                        </div>`;
+                    cardList.appendChild(card);
+                });
+            } catch (e) { console.error(e); }
+        }
+
         function filterTable(tableId) {
             try {
                 const isItems = (tableId === 'itemsTable');
@@ -7828,6 +7963,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if (text !== '' && !_matchesSearchQuery(`${item.code || ''} ${item.name || ''}`, text)) return false; if (category !== '' && !catText.includes(category)) return false; return true;
                 });
                 renderTable(tableId, filteredData, type);
+                // ★ เพิ่ม: รีเฟรชการ์ดประวัติรับเข้า/เบิกออกของหน้าคลังอะไหล่ให้ตรงกับข้อมูลล่าสุดเสมอ
+                if (isItems) renderItemsTxCards();
             } catch(e) { console.error(e); }
         }
 
@@ -7888,7 +8025,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         let qrBtn = `<button class="btn btn-sm btn-light text-primary border" onclick="showQRCode('${safeCode}', '${safeName}')" title="แสดง QR Code"><i class="fas fa-qrcode"></i></button>`;
                         if (type === 'item') { actionButtons = `<div class="d-flex justify-content-center">${qrBtn}</div>`; } else if (type === 'tool') { actionButtons = `<div class="d-flex justify-content-center gap-1">${qrBtn}<button class="btn btn-sm btn-outline-danger" onclick="openDamageModal('${safeCode}', '${safeName}', '${safeUnit}')"><i class="fas fa-heart-broken"></i> ส่งแจ้งเสีย</button></div>`; }
                     }
-                    tr.innerHTML = `<td><span class="badge badge-code px-2 py-1">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark fs-6">${escapeHtml(item.name)}</td><td><span class="badge badge-cat px-2 py-1">${escapeHtml(displayCat)}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td><td class="text-center ${isLow?'text-danger':'text-primary'} fw-bold fs-5">${formatNumber(item.stock)}</td><td class="text-muted fw-medium">${escapeHtml(item.unit)}</td><td class="text-center">${statusBadge}</td><td class="text-center">${actionButtons}</td>`;
+                    // ★ เพิ่ม: ถ้าอยู่โหมด "รับเข้า/เบิกออก" (เฉพาะตารางอะไหล่ ไม่ใช่เครื่องมือ) ให้แสดงยอดสะสม
+                    // แทนยอดคงเหลือ/สถานะ — คำนวณจาก log ประวัติจริงของรหัสอะไหล่นั้น ไม่ใช่ค่า mock
+                    let stockCell, statusCell;
+                    if (type === 'item' && itemsViewMode === 'inout') {
+                        const { inQty, outQty } = _getItemInOutTotals(item.code);
+                        stockCell = `<td class="text-center text-success fw-bold fs-6"><i class="fas fa-arrow-down me-1"></i>${formatNumber(inQty)}</td>`;
+                        statusCell = `<td class="text-center text-danger fw-bold fs-6"><i class="fas fa-arrow-up me-1"></i>${formatNumber(outQty)}</td>`;
+                    } else {
+                        stockCell = `<td class="text-center ${isLow?'text-danger':'text-primary'} fw-bold fs-5">${formatNumber(item.stock)}</td>`;
+                        statusCell = `<td class="text-center">${statusBadge}</td>`;
+                    }
+                    tr.innerHTML = `<td><span class="badge badge-code px-2 py-1">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark fs-6">${escapeHtml(item.name)}</td><td><span class="badge badge-cat px-2 py-1">${escapeHtml(displayCat)}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td>${stockCell}<td class="text-muted fw-medium">${escapeHtml(item.unit)}</td>${statusCell}<td class="text-center">${actionButtons}</td>`;
                     tr.style.cursor = 'pointer';
                     tr.title = 'คลิกเพื่อดูประวัติการรับเข้า';
                     tr.addEventListener('click', function(e) {
