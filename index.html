@@ -3789,7 +3789,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                              <button class="btn btn-sm" onclick="loadLineQuotaStatus(true)" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px"><i class="fas fa-sync me-1"></i> รีเฟรชโควตา</button>
                                          </div>
                                          <div id="lineChannelFormsWrap">
-                                             <div class="text-center py-3" style="color:#6b7280"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</div>
+                                             <button class="btn btn-warning fw-bold w-100" onclick="forcePromptLineSettings()"><i class="fas fa-lock me-1"></i> ยืนยันตัวตน / แก้ไข</button>
                                          </div>
                                          <button class="btn btn-warning fw-bold w-100 mt-2" onclick="submitLineChannelSettings()"><i class="fas fa-save me-1"></i> บันทึกช่องทาง LINE</button>
                                      </div>
@@ -3801,7 +3801,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                      <div class="settings-box">
                                          <div style="font-size:.8rem;color:rgba(255,255,255,.5)" class="mb-3">กดปุ่ม "ตั้งค่าตอนนี้ / แก้ไข" ที่มุมขวาบนของแต่ละการ์ดด้านล่าง เพื่อเปิดช่องกรอก API Key แล้วกด "บันทึกผู้ให้บริการ AI" ด้านล่างสุด — ถ้าตัวหลัก error (เช่นโควตาเต็ม) ระบบจะสลับไปตัวสำรองอัตโนมัติ</div>
                                          <div id="aiProviderFormsWrap">
-                                             <div class="text-center py-3" style="color:#6b7280"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</div>
+                                             <button class="btn btn-warning fw-bold w-100" onclick="forcePromptAISettings()"><i class="fas fa-lock me-1"></i> ยืนยันตัวตน / แก้ไข</button>
                                          </div>
                                          <button class="btn btn-warning fw-bold w-100 mt-2" onclick="submitAIProviderSettings()"><i class="fas fa-save me-1"></i> บันทึกผู้ให้บริการ AI</button>
                                      </div>
@@ -5189,15 +5189,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if(sectionId === 'monthlyOrders' && typeof renderHistoryPOTableWithFilter === 'function') renderHistoryPOTableWithFilter(allData.pendingPOs || []);
                     if(sectionId === 'settings') {
                         setTimeout(function(){ if(typeof syncMasterDataTags === 'function') syncMasterDataTags(); }, 50);
-                        // โหลดฟอร์มช่องทาง LINE / ผู้ให้บริการ AI ตรงตอนที่กดเข้าเมนู "ตั้งค่า" เลย (ไม่ใช่รอตอนโหลดข้อมูลรอบแรกหลัง login)
-                        if (!window._lineChannelFormsLoaded && typeof loadLineChannelForms === 'function') {
-                            window._lineChannelFormsLoaded = true;
-                            loadLineChannelForms();
-                        }
-                        if (!window._aiProviderFormsLoaded && typeof loadAIProviderForms === 'function') {
-                            window._aiProviderFormsLoaded = true;
-                            loadAIProviderForms();
-                        }
                     }
                     if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
                     if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
@@ -6475,6 +6466,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             } else {
                 callGAS('webTestLineBotSend', [currentUserProfile.uid, window.getCachedDashboardPassword(), botId], handleOk, handleFail);
             }
+        }
+
+        // ★ เพิ่ม: บังคับถามรหัสผ่าน Dashboard ใหม่ทุกครั้งที่กดปุ่ม "ยืนยันตัวตน / แก้ไข" เอง
+        // ไม่ใช้รหัสผ่านที่แคชไว้จากตอน login (ซึ่งเป็นแค่ PIN ไม่ใช่รหัสผ่าน Dashboard จริง) เพื่อไม่ให้
+        // ข้อมูล/ปุ่มแก้ไขโผล่มาเองโดยไม่ได้ยืนยันตัวตนด้วยรหัสผ่าน Dashboard ที่ถูกต้องจริงๆ ก่อน
+        function forcePromptLineSettings() {
+            window._lineDashPw = null; window._lineDashPwExpiry = 0;
+            loadLineChannelForms();
+        }
+        function forcePromptAISettings() {
+            window._lineDashPw = null; window._lineDashPwExpiry = 0;
+            loadAIProviderForms();
         }
 
         function loadLineChannelForms(silent) {
@@ -8162,41 +8165,34 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if (cardList) {
                         const stockLabel = type === 'tool' ? 'พร้อมใช้' : 'คงเหลือ';
                         const _cardImg = getProxyImgUrl(item.imageUrl);
-                        const _cardImgSafe = item.imageUrl ? String(item.imageUrl).replace(/"/g, '&quot;').replace(/'/g, "\\'") : '';
                         let cardImgHtml;
                         if (_cardImg) {
                             cardImgHtml = `<img src="${_cardImg}" style="width:100%;height:100%;object-fit:cover" onclick="viewItemImage('${safeCode}','${safeType}','${safeName}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-                                + `<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px">📦</div>`;
-                            if (currentUserProfile.role === 'admin') {
-                                cardImgHtml += `<button title="เปลี่ยนรูป" onclick="event.stopPropagation();triggerImgUpload('${safeCode}','${safeType}')" style="position:absolute;bottom:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;display:flex;align-items:center;justify-content:center"><i class="fas fa-camera" style="font-size:12px"></i></button>`;
-                            }
+                                + `<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:26px">📦</div>`;
                         } else if (currentUserProfile.role === 'admin') {
-                            cardImgHtml = `<button onclick="event.stopPropagation();triggerImgUpload('${safeCode}','${safeType}')" style="background:none;border:none;color:#6b7280;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px"><i class="fas fa-camera" style="font-size:28px"></i>เพิ่มรูปภาพ</button>`;
+                            cardImgHtml = `<button onclick="event.stopPropagation();triggerImgUpload('${safeCode}','${safeType}')" style="background:none;border:none;color:#6b7280;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;padding:0"><i class="fas fa-camera" style="font-size:18px"></i>เพิ่มรูป</button>`;
                         } else {
-                            cardImgHtml = `<span style="font-size:32px;color:#6b7280">📦</span>`;
+                            cardImgHtml = `<span style="font-size:26px;color:#6b7280">📦</span>`;
                         }
                         const card = document.createElement('div');
-                        card.style.cssText = 'background:#20242f;border-radius:12px;overflow:hidden;border:1px solid #2a2f3d;cursor:pointer';
+                        card.style.cssText = 'background:#20242f;border-radius:12px;padding:12px;border:1px solid #2a2f3d;cursor:pointer';
                         card.innerHTML = `
-                            <div style="width:100%;aspect-ratio:16/10;background:#181b24;display:flex;align-items:center;justify-content:center;position:relative">
-                                ${cardImgHtml}
-                                <div class="ml-card-status" style="position:absolute;top:8px;right:8px;font-size:11px"></div>
-                                <span style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;font-family:monospace">${escapeHtml(item.code)}</span>
-                            </div>
-                            <div style="padding:12px">
-                                <p style="color:#fff;font-size:14px;font-weight:500;margin:0 0 4px;overflow-wrap:break-word">${escapeHtml(item.name)}</p>
-                                <div class="d-flex flex-wrap gap-2 align-items-center" style="font-size:12px;color:#6b7280">
-                                    <span>${escapeHtml(displayCat)}</span>
-                                    ${item.location ? `<span>· <i class="fas fa-map-marker-alt text-danger"></i> ${escapeHtml(item.location)}</span>` : ''}
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mt-2 pt-2" style="border-top:1px solid #2a2f3d">
+                            <div class="d-flex gap-3">
+                                <div style="width:88px;height:88px;flex-shrink:0;border-radius:10px;background:#181b24;display:flex;align-items:center;justify-content:center;position:relative">${cardImgHtml}</div>
+                                <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between">
                                     <div>
-                                        <div style="font-size:11px;color:#6b7280">${stockLabel}</div>
-                                        <div style="font-size:20px;font-weight:700;color:${isLow?'#ef4444':'#60a5fa'};line-height:1.2">${formatNumber(item.stock)} <span style="font-size:12px;font-weight:400;color:#9ca3af">${escapeHtml(item.unit)}</span></div>
+                                        <p style="color:#fff;font-size:14px;font-weight:500;margin:0;overflow-wrap:break-word">${escapeHtml(item.name)}</p>
+                                        <div style="font-size:12px;color:#6b7280;margin-top:2px">${escapeHtml(item.code)} · ${escapeHtml(displayCat)}${item.location ? ` · <i class="fas fa-map-marker-alt text-danger"></i> ${escapeHtml(item.location)}` : ''}</div>
+                                        <div class="ml-card-status" style="margin-top:4px;font-size:11px"></div>
                                     </div>
-                                    <div class="ml-card-actions"></div>
                                 </div>
-                            </div>`;
+                                <div style="text-align:right;flex-shrink:0">
+                                    <div style="font-size:11px;color:#6b7280">${stockLabel}</div>
+                                    <div style="font-size:22px;font-weight:700;color:${isLow?'#ef4444':'#60a5fa'};line-height:1.2">${formatNumber(item.stock)}</div>
+                                    <div style="font-size:11px;color:#9ca3af">${escapeHtml(item.unit)}</div>
+                                </div>
+                            </div>
+                            <div class="ml-card-actions d-flex gap-2 mt-2 pt-2" style="border-top:1px solid #2a2f3d"></div>`;
                         // ใส่สถานะ/ปุ่ม action ผ่าน DOM แทนการต่อ string ตรงๆ กัน HTML ของปุ่มที่มี onclick ซับซ้อนพัง
                         card.querySelector('.ml-card-status').innerHTML = statusBadge;
                         card.querySelector('.ml-card-actions').innerHTML = actionButtons;
