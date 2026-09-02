@@ -4538,12 +4538,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ★ เพิ่ม: session token helper — เก็บ token ที่ backend ออกให้ตอน login (ไม่ใช่ role)
-        // role ที่เก็บใน user_session ยังใช้ได้แค่ "ซ่อน/โชว์ UI" เท่านั้น backend ไม่เชื่อค่านี้อีกต่อไป
-        function getSessionToken() { try { return localStorage.getItem('sess_token') || ''; } catch (e) { return ''; } }
-        function setSessionToken(t) { try { if (t) localStorage.setItem('sess_token', t); } catch (e) {} }
-        function clearSessionToken() { try { localStorage.removeItem('sess_token'); } catch (e) {} }
-
         // 🚨 วาง URL ของ Web App หลังบ้าน (Google Apps Script) ที่นี่
         // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
         // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
@@ -4572,9 +4566,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     fetch(window.GAS_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain' },
-                        // ★ เพิ่ม: แนบ session token ทุก request — backend (doPost) จะปฏิเสธถ้าไม่มี/หมดอายุ
-                        // ป้องกันไม่ให้ผู้ใช้ทั่วไปปลอม userId ของแอดมินแล้วเรียกฟังก์ชันเสี่ยงสูงตรงๆ
-                        body: JSON.stringify({ fn, args: args || [], token: getSessionToken() }),
+                        body: JSON.stringify({ fn, args: args || [] }),
                         signal: controller.signal
                     })
                     .then(r => r.json())
@@ -4904,10 +4896,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const savedUsers = (allData.users && allData.users.length > 0) ? [...allData.users] : [];
 
             localStorage.removeItem('user_session');
-            clearSessionToken(); // ★ เพิ่ม: ล้าง session token ตอน logout ด้วย ไม่งั้น token เดิมยังใช้ยิง request ได้อยู่
-            // ★ เพิ่ม: หยุด polling กระดิ่งแจ้งเตือนที่รันเบื้องหลัง และรีเซ็ต flag ให้ล็อกอินรอบถัดไปเริ่ม poll ใหม่ได้
-            if (window._globalBadgePollTimer) { clearInterval(window._globalBadgePollTimer); window._globalBadgePollTimer = null; }
-            window._globalBadgePollStarted = false;
             if (typeof createMockData === 'function') {
                 allData = createMockData();
             } else {
@@ -5295,7 +5283,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             uid = session.uid;
                         } else {
                             localStorage.removeItem('user_session');
-                            clearSessionToken(); // ★ เพิ่ม: เซสชันหมดอายุฝั่ง client ก็ล้าง token ทิ้งด้วย
                         }
                     }
                 } catch (e) {
@@ -5613,8 +5600,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if (res && typeof res === 'object') {
                         _pinValid = !!res.valid;
                         _needsSetup = !!res.needsSetup;
-                        // ★ เพิ่ม: เก็บ session token ที่ backend ออกให้ตอน login สำเร็จ
-                        if (_pinValid && res.token) setSessionToken(res.token);
                     } else {
                         _pinValid = !!res;
                     }
@@ -6665,11 +6650,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 if (!window._globalBadgePollStarted && currentUserProfile && currentUserProfile.role === 'admin') {
                     window._globalBadgePollStarted = true;
                     refreshPendingApprovalBadge();
-                    // ★ แก้: เดิมไม่เก็บ interval id ไว้เลย ทำให้ตอน logout เช็คจำนวนคำขอนี้ยังรันอยู่เบื้องหลัง
-                    // ต่อไปเรื่อยๆ ทุก 15 วิ (ยิง request ค้างแม้ล็อกเอาต์ไปแล้ว) และ flag ก็ไม่เคย reset ทำให้
-                    // ล็อกอินใหม่รอบถัดไปในหน้าเดียวกันจะไม่เริ่ม poll ให้อีกเลย
-                    if (window._globalBadgePollTimer) clearInterval(window._globalBadgePollTimer);
-                    window._globalBadgePollTimer = setInterval(refreshPendingApprovalBadge, 15000);
+                    setInterval(refreshPendingApprovalBadge, 15000);
                 }
 
                 applySettingsUI(allData.settings);
@@ -7805,10 +7786,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     else if (p.status === 'กำลังผลิต') { statusColor = '#60a5fa'; statusBg = '#1e3a5f'; }
                     else if (p.status === 'ยกเลิกแล้ว') { statusColor = '#9ca3af'; statusBg = '#232838'; }
 
-                    // ★ แก้: จุดนี้เดิมไม่ได้ escape ค่าที่มาจากผู้ใช้ (itemName/supplier/remark ฯลฯ) ก่อนยัดเข้า
-                    // innerHTML ต่างจากตารางอื่นในไฟล์นี้ที่ escape ครบแล้ว — เป็นช่องโหว่ Stored XSS จริง
-                    // (เช่น ตั้งชื่อสินค้าเป็น <img src=x onerror=...> แล้วรอแอดมินเปิดหน้า PO)
-                    tr.innerHTML = `<td>${escapeHtml(p.poCode)}</td><td>${escapeHtml(p.date)}</td><td>${escapeHtml(p.supplier)}</td><td>${escapeHtml(p.itemName)}</td><td class="text-end">${formatNumber(p.qty)}</td><td class="text-center">${escapeHtml(p.status)}</td><td>${escapeHtml(p.remark || '-')}</td><td class="text-center">-</td>`;
+                    tr.innerHTML = `<td>${p.poCode}</td><td>${p.date}</td><td>${p.supplier}</td><td>${p.itemName}</td><td class="text-end">${formatNumber(p.qty)}</td><td class="text-center">${p.status}</td><td>${p.remark || '-'}</td><td class="text-center">-</td>`;
                     tbody.appendChild(tr);
 
                     if (cardList) {
