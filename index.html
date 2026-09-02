@@ -1202,6 +1202,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 .line-card .btn-test.btn-disabled { opacity:.4; cursor:not-allowed; }
 .line-card .btn-icon { margin-right:3px; }
 .line-card .fields-collapsed { display:none; }
+.fields-collapsed { display:none; } /* ★ แก้บั๊ก: การ์ดผู้ให้บริการ AI ไม่ได้อยู่ใน .line-card เลยไม่โดนซ่อนตามที่ปุ่มควรทำ */
 </style>
 
 
@@ -2817,9 +2818,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <button class="btn btn-theme fw-bold shadow-sm admin-only-element" onclick="openNewItemModal('Items')"><i class="fas fa-plus"></i> เพิ่มใหม่</button>
                         </div>
                     </div>
-                    <!-- ★ เพิ่ม: การ์ดประวัติรับเข้า/เบิกออกล่าสุด สไตล์เดียวกับหน้า "รับเข้า/เบิกออก (In/Out)"
-                         กรองเฉพาะรายการที่เป็นรหัสอะไหล่ (ไม่รวมเครื่องมือ) เพื่อให้เห็นความเคลื่อนไหวของคลังอะไหล่นี้โดยตรง -->
-                    <div id="itemsTxCardList" class="mb-4" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
                     <div class="filter-group mb-4 bg-white border shadow-sm">
                         <span class="text-muted fw-bold ms-2"><i class="fas fa-search text-primary"></i> ค้นหา:</span>
                         <select class="form-select w-auto shadow-none border-light bg-light fw-medium" id="itemCategoryFilter" onchange="filterTable('itemsTable')"><option value="">📁 ทุกหมวดหมู่</option></select>
@@ -3787,7 +3785,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                      <h6 class="settings-section-title"><i class="fas fa-comment-dots me-2"></i>ช่องทาง LINE OA</h6>
                                      <div class="settings-box">
                                          <div class="d-flex justify-content-between align-items-center mb-3">
-                                             <div style="font-size:.8rem;color:rgba(255,255,255,.5)">ตั้งค่า Token ของแต่ละ LINE OA — เว้นช่อง Token ว่างไว้ถ้าไม่ต้องการเปลี่ยนค่าเดิม</div>
+                                             <div style="font-size:.8rem;color:rgba(255,255,255,.5)">กดปุ่ม "ตั้งค่าตอนนี้ / แก้ไข Token" ที่มุมขวาบนของแต่ละการ์ดด้านล่าง เพื่อเปิดช่องกรอก Token — เว้นช่อง Token ว่างไว้ถ้าไม่ต้องการเปลี่ยนค่าเดิม แล้วกด "บันทึกช่องทาง LINE" ด้านล่างสุด</div>
                                              <button class="btn btn-sm" onclick="loadLineQuotaStatus(true)" style="background:#232838;color:#a0aec0;border:1px solid #2a2f3d;border-radius:8px"><i class="fas fa-sync me-1"></i> รีเฟรชโควตา</button>
                                          </div>
                                          <div id="lineChannelFormsWrap">
@@ -3801,7 +3799,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                  <div class="settings-section">
                                      <h6 class="settings-section-title"><i class="fas fa-robot me-2"></i>ผู้ให้บริการ AI</h6>
                                      <div class="settings-box">
-                                         <div style="font-size:.8rem;color:rgba(255,255,255,.5)" class="mb-3">ตั้งค่า API Key ของแต่ละผู้ให้บริการ — ถ้าตัวหลัก error (เช่นโควตาเต็ม) ระบบจะสลับไปตัวสำรองอัตโนมัติ</div>
+                                         <div style="font-size:.8rem;color:rgba(255,255,255,.5)" class="mb-3">กดปุ่ม "ตั้งค่าตอนนี้ / แก้ไข" ที่มุมขวาบนของแต่ละการ์ดด้านล่าง เพื่อเปิดช่องกรอก API Key แล้วกด "บันทึกผู้ให้บริการ AI" ด้านล่างสุด — ถ้าตัวหลัก error (เช่นโควตาเต็ม) ระบบจะสลับไปตัวสำรองอัตโนมัติ</div>
                                          <div id="aiProviderFormsWrap">
                                              <div class="text-center py-3" style="color:#6b7280"><i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...</div>
                                          </div>
@@ -6373,6 +6371,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <i class="fas ${isConfigured ? 'fa-pen' : 'fa-chevron-down'} me-1"></i>${isConfigured ? 'แก้ไข Token' : 'ตั้งค่าตอนนี้'}
                         </button>
                     </div>
+                    <div style="font-size:11px;color:${isConfigured ? '#6b7280' : '#f59e0b'};margin-bottom:8px">${isConfigured ? 'Token: ' + escapeHtml(b.tokenMasked || 'ตั้งค่าแล้ว') : '⚠️ ยังไม่ได้ตั้งค่า Token — กดปุ่ม "ตั้งค่าตอนนี้" ด้านบนเพื่อกรอก'}</div>
                     <div class="quota-text">${escapeHtml(st.quotaText)}</div>
                     <div class="progress-container" title="${escapeHtml(st.quotaText)}">
                         <div class="progress-bar ${st.barCls}" style="width:${st.barPct}%;"></div>
@@ -6509,6 +6508,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <button type="button" class="btn btn-sm" style="background:#2a2f3d;color:#a0aec0;border:1px solid #383e50;border-radius:8px;font-size:11px" onclick="testAIProvider('${p.id}','${escapeHtml(p.label)}')"><i class="fas fa-vial me-1"></i>ทดสอบ</button>
                         </div>
                     </div>
+                    <div style="font-size:11px;color:${isConfigured ? '#6b7280' : '#f59e0b'};margin-bottom:8px">${isConfigured ? 'API Key: ' + escapeHtml(p.keyMasked) : '⚠️ ยังไม่ได้ตั้งค่า API Key — กดปุ่ม "ตั้งค่าตอนนี้" ด้านบนเพื่อกรอก'}</div>
                     <div id="${cardId}_fields" data-was-configured="${isConfigured ? '1' : '0'}" class="${isConfigured ? 'fields-collapsed' : ''}">
                         <div class="mb-2"><label class="form-label small mb-1">API Key${p.keyMasked ? ' (ปัจจุบัน: ' + escapeHtml(p.keyMasked) + ')' : ' (ยังไม่ได้ตั้งค่า)'}</label>
                             <input type="password" class="form-control form-control-sm" id="aiKey_${p.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน"></div>
