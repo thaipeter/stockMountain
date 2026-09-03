@@ -6521,32 +6521,105 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             loadBotMsgTemplateForms();
         }
 
+        // นิยามช่องข้อความทั้งหมดไว้ที่เดียว กันโค้ดซ้ำระหว่างส่วน render / preview / reset
+        const BOT_MSG_FIELDS = [
+            { key: 'welcome', elPrefix: 'botMsgWelcome', icon: '👋', label: 'ข้อความต้อนรับ', hint: 'ส่งตอนมีคนแอดไลน์บอทครั้งแรก' },
+            { key: 'withdrawSuccess', elPrefix: 'botMsgWithdraw', icon: '📦', label: 'ข้อความเบิกสำเร็จ', hint: 'ส่งหลังทำรายการเบิกสำเร็จ — ใช้ {item} {qty} {unit} ได้' },
+            { key: 'receiveSuccess', elPrefix: 'botMsgReceive', icon: '📥', label: 'ข้อความรับเข้าสำเร็จ', hint: 'ส่งหลังทำรายการรับเข้าสต็อกสำเร็จ — ใช้ {item} {qty} {unit} ได้' },
+        ];
+        // ตัวอย่างค่าไว้แสดงในพรีวิว (ไม่ใช่ค่าจริง แค่ให้เห็นภาพว่าตัวแปรจะถูกแทนที่ตรงไหน)
+        const BOT_MSG_PREVIEW_VARS = { item: 'สายพานลำเลียง B-12', qty: 2, unit: 'เส้น' };
+
+        function _applyBotMsgVars(text) {
+            let out = String(text || '');
+            Object.keys(BOT_MSG_PREVIEW_VARS).forEach(k => { out = out.split('{' + k + '}').join(String(BOT_MSG_PREVIEW_VARS[k])); });
+            return out;
+        }
+
+        function switchBotMsgTab(botId) {
+            (window._botMsgTemplateCache.bots || []).forEach(b => {
+                const pane = document.getElementById(`botMsgPane_${b.id}`);
+                const tab = document.getElementById(`botMsgTab_${b.id}`);
+                if (pane) pane.style.display = (b.id === botId) ? 'block' : 'none';
+                if (tab) {
+                    tab.style.background = (b.id === botId) ? '#f59e0b' : '#232838';
+                    tab.style.color = (b.id === botId) ? '#000' : '#a0aec0';
+                }
+            });
+        }
+
+        function updateBotMsgPreview(botId, fieldKey, elPrefix) {
+            const el = document.getElementById(`${elPrefix}_${botId}`);
+            const previewEl = document.getElementById(`${elPrefix}_${botId}_preview`);
+            const badgeEl = document.getElementById(`${elPrefix}_${botId}_badge`);
+            if (!el || !previewEl) return;
+            const defaults = (window._botMsgTemplateCache && window._botMsgTemplateCache.defaults) || {};
+            const isCustom = !!el.value.trim();
+            const raw = el.value.trim() || defaults[fieldKey] || '';
+            previewEl.innerHTML = escapeHtml(_applyBotMsgVars(raw)).replace(/\n/g, '<br>') || '<span style="opacity:.4">(ไม่มีข้อความ)</span>';
+            if (badgeEl) {
+                badgeEl.innerHTML = isCustom
+                    ? '🟢 ข้อความจริงที่บอทนี้ใช้ตอบตอนนี้ (ตั้งเอง)'
+                    : '⚪ ยังไม่ได้ตั้งเอง — บอทนี้ใช้ข้อความเริ่มต้นของระบบอยู่ตอนนี้จริง (ตามพรีวิวด้านล่าง)';
+                badgeEl.style.color = isCustom ? '#4ade80' : '#9ca3af';
+            }
+        }
+
+        function resetBotMsgField(botId, fieldKey, elPrefix) {
+            const el = document.getElementById(`${elPrefix}_${botId}`);
+            if (!el) return;
+            el.value = '';
+            updateBotMsgPreview(botId, fieldKey, elPrefix);
+        }
+
         function renderBotMsgTemplateCards() {
             const wrap = document.getElementById('botMsgTemplateFormsWrap');
             if (!wrap || !window._botMsgTemplateCache) return;
             const bots = window._botMsgTemplateCache.bots || [];
             const defaults = window._botMsgTemplateCache.defaults || {};
-            wrap.innerHTML = bots.map(b => `
-                <div class="line-card border-green" style="margin-bottom:12px">
-                    <div class="card-header">
-                        <div class="account-title">
-                            <span class="line-icon">💬</span>
-                            <span class="line-card-title">ไลน์${escapeHtml(b.label)}</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>ข้อความต้อนรับ (ตอนแอดไลน์ครั้งแรก)</label>
-                        <textarea class="input-field" rows="3" id="botMsgWelcome_${b.id}" placeholder="${escapeHtml(defaults.welcome || '')}">${escapeHtml(b.welcome || '')}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>ข้อความเบิกสำเร็จ</label>
-                        <textarea class="input-field" rows="3" id="botMsgWithdraw_${b.id}" placeholder="${escapeHtml(defaults.withdrawSuccess || '')}">${escapeHtml(b.withdrawSuccess || '')}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>ข้อความรับเข้าสำเร็จ</label>
-                        <textarea class="input-field" rows="3" id="botMsgReceive_${b.id}" placeholder="${escapeHtml(defaults.receiveSuccess || '')}">${escapeHtml(b.receiveSuccess || '')}</textarea>
-                    </div>
+
+            const tabsHtml = bots.map((b, idx) => `
+                <button type="button" id="botMsgTab_${b.id}" onclick="switchBotMsgTab(${b.id})"
+                    style="flex:1;padding:10px 6px;border:none;border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;transition:.15s;
+                    background:${idx === 0 ? '#f59e0b' : '#232838'};color:${idx === 0 ? '#000' : '#a0aec0'}">
+                    💬 ไลน์${escapeHtml(b.label)}
+                </button>`).join('');
+
+            const panesHtml = bots.map((b, idx) => `
+                <div id="botMsgPane_${b.id}" style="display:${idx === 0 ? 'block' : 'none'}">
+                    ${BOT_MSG_FIELDS.map(f => {
+                        const currentVal = b[f.key] || '';
+                        const isCustom = !!currentVal.trim();
+                        const previewText = escapeHtml(_applyBotMsgVars(currentVal.trim() || defaults[f.key] || ''));
+                        const badgeText = isCustom
+                            ? '🟢 ข้อความจริงที่บอทนี้ใช้ตอบตอนนี้ (ตั้งเอง)'
+                            : '⚪ ยังไม่ได้ตั้งเอง — บอทนี้ใช้ข้อความเริ่มต้นของระบบอยู่ตอนนี้จริง (ตามพรีวิวด้านล่าง)';
+                        const badgeColor = isCustom ? '#4ade80' : '#9ca3af';
+                        return `
+                        <div class="form-group" style="margin-bottom:16px;padding:14px;border-radius:12px;background:#1c2130;border:1px solid #2a2f3d">
+                            <div class="d-flex justify-content-between align-items-start mb-1" style="gap:8px">
+                                <label style="margin-bottom:0"><span style="margin-right:4px">${f.icon}</span>${f.label}</label>
+                                <button type="button" onclick="resetBotMsgField(${b.id}, '${f.key}', '${f.elPrefix}')"
+                                    style="background:none;border:none;color:#6b7280;font-size:.72rem;white-space:nowrap;cursor:pointer;text-decoration:underline">
+                                    ใช้ค่าเริ่มต้น
+                                </button>
+                            </div>
+                            <div style="font-size:.7rem;color:rgba(255,255,255,.4);margin-bottom:6px">${f.hint}</div>
+                            <div id="${f.elPrefix}_${b.id}_badge" style="font-size:.72rem;font-weight:600;margin-bottom:8px;color:${badgeColor}">${badgeText}</div>
+                            <textarea class="input-field" rows="3" id="${f.elPrefix}_${b.id}"
+                                placeholder="${escapeHtml(defaults[f.key] || '')}"
+                                oninput="updateBotMsgPreview(${b.id}, '${f.key}', '${f.elPrefix}')">${escapeHtml(currentVal)}</textarea>
+                            <div style="margin-top:8px;font-size:.72rem;color:rgba(255,255,255,.35)">ตัวอย่างที่ผู้ใช้จะเห็น (ข้อความจริงที่ใช้งานอยู่ตอนนี้):</div>
+                            <div style="margin-top:4px;padding:10px 12px;border-radius:14px 14px 14px 4px;background:#06c755;color:#fff;font-size:.82rem;line-height:1.5;max-width:85%;white-space:pre-wrap"
+                                id="${f.elPrefix}_${b.id}_preview">${previewText.replace(/\n/g, '<br>') || '<span style="opacity:.6">(ไม่มีข้อความ)</span>'}</div>
+                        </div>`;
+                    }).join('')}
                 </div>`).join('');
+
+            wrap.innerHTML = `
+                <div style="display:flex;gap:6px;margin-bottom:16px">${tabsHtml}</div>
+                ${panesHtml}
+            `;
         }
 
         function loadBotMsgTemplateForms(silent) {
