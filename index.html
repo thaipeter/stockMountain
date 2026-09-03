@@ -3795,6 +3795,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                      </div>
                                  </div>
 
+                                 <!-- ข้อความตอบกลับ LINE แยกตามบอท (ต้อนรับ / เบิกสำเร็จ / รับเข้าสำเร็จ) -->
+                                 <div class="settings-section">
+                                     <h6 class="settings-section-title"><i class="fas fa-comment-alt me-2"></i>ข้อความตอบกลับ LINE (แยกตามบอท)</h6>
+                                     <div class="settings-box">
+                                         <div style="font-size:.8rem;color:rgba(255,255,255,.5)" class="mb-3">แก้ไขข้อความที่บอทแต่ละตัวตอบกลับผู้ใช้ — เว้นช่องว่างไว้เพื่อใช้ข้อความเริ่มต้นของระบบ ใช้ตัวแปรได้: <code>{item}</code> <code>{qty}</code> <code>{unit}</code> (สำหรับข้อความเบิก/รับเข้า)</div>
+                                         <div id="botMsgTemplateFormsWrap">
+                                             <button class="btn btn-warning fw-bold w-100" onclick="forcePromptBotMsgTemplates()"><i class="fas fa-lock me-1"></i> ยืนยันตัวตน / แก้ไข</button>
+                                         </div>
+                                         <button class="btn btn-warning fw-bold w-100 mt-2" onclick="submitBotMsgTemplateSettings()"><i class="fas fa-save me-1"></i> บันทึกข้อความตอบกลับ</button>
+                                     </div>
+                                 </div>
+
                                  <!-- ผู้ให้บริการ AI (Gemini/Groq) + สลับสำรองอัตโนมัติ -->
                                  <div class="settings-section">
                                      <h6 class="settings-section-title"><i class="fas fa-robot me-2"></i>ผู้ให้บริการ AI</h6>
@@ -4577,7 +4589,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
         // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
         // ใส่ URL เดียวกับที่ใช้ในหน้า QR (indexqrv1.html) เพราะเป็น backend เดียวกัน
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbylisKoMy8pBAxmBewSMATjEsxQySUvq2Y6_znHQwNI1Z2JkgwKFjVM_5RsgrUn4uceTQ/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzb6p2kuTkoP5jLlEC0ZX8wkSSm5pDtYDDNM4wRfTxXT1LlPmh2aNFiHyGErTZMVuvvqA/exec";
         const isGAS = (typeof google !== 'undefined' && google.script && google.script.run && typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:');
         window.isGAS = isGAS;
 
@@ -5733,48 +5745,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 } else {
                     callGAS('getInventoryData', [], _onDataResult, _onDataFail);
                 }
-            } else {
-                // Demo Mode: ตรวจสอบ PIN (ถ้าใส่ 1234 หรือรหัสใดๆ จะสว่างไฟเขียวทันที)
-                const cleanPin = String(pin || '').trim();
-                const loginCard = document.querySelector('.login-card');
-                const loginPinInput = document.getElementById('loginPin');
-
-                if (cleanPin.length === 0) {
-                    if (loginCard) { loginCard.classList.remove('glow-green'); loginCard.classList.add('glow-red'); }
-                    if (loginPinInput) { loginPinInput.classList.remove('glow-green'); loginPinInput.classList.add('glow-red'); loginPinInput.focus(); }
-                    document.getElementById('loginError').classList.remove('d-none');
-                    btn.disabled = false; btn.innerHTML = 'เข้าสู่ระบบ';
-                    return;
-                }
-
-                // สว่างแสงสีเขียวเปล่งออร่า
-                if (loginCard) { loginCard.classList.remove('glow-red'); loginCard.classList.add('glow-green'); }
-                if (loginPinInput) { loginPinInput.classList.remove('glow-red'); loginPinInput.classList.add('glow-green'); }
-                document.getElementById('loginError').classList.add('d-none');
-
-                currentUserProfile.uid = uid || 'u_admin123';
-                const selectedOpt = document.querySelector('#loginUid option:checked');
-                currentUserProfile.name = selectedOpt ? selectedOpt.text.replace(/\s*\(.*?\)/, '').trim() : 'Test Admin';
-                currentUserProfile.role = uid.includes('staff') ? 'staff' : uid.includes('user') ? 'user' : 'admin';
-                
-                localStorage.setItem('user_session', JSON.stringify({
-                    uid: currentUserProfile.uid,
-                    name: currentUserProfile.name,
-                    role: currentUserProfile.role,
-                    timestamp: Date.now()
-                }));
-
-                setTimeout(() => {
-                    document.getElementById('loginScreen').style.display = 'none';
-                    btn.disabled = false; btn.innerHTML = 'เข้าสู่ระบบ';
-                    if (loginCard) loginCard.classList.remove('glow-green');
-                    if (loginPinInput) loginPinInput.classList.remove('glow-green');
-                }, 450);
-
-                allData = createMockData();
-                onDataLoaded(allData);
-                restoreLastSection();
-                Swal.fire({icon: 'success', title: 'เข้าสู่ระบบสำเร็จ (Demo)', text: 'ยินดีต้อนรับ ' + currentUserProfile.name, timer: 800, showConfirmButton: false});
             }
         }
 
@@ -6266,16 +6236,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 google.script.run.withSuccessHandler(handleSaveSettingsRes).withFailureHandler(handleSaveSettingsErr).webSaveSettings(payload);
             } else if (typeof webPost === 'function') {
                 webPost('webSaveSettings', [payload]).then(handleSaveSettingsRes).catch(handleSaveSettingsErr);
-            } else { 
-                setTimeout(() => { 
-                    document.getElementById('loading').style.display = 'none'; 
-                    writeAudit('SETTINGS', `บันทึกการตั้งค่าระบบ (Demo) — ชื่อ: ${payload.sysName}`); 
-                    Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'บันทึกการตั้งค่าสำเร็จ!', timer: 2000, showConfirmButton: false}); 
-                    allData.settings = { ...allData.settings, ...payload }; 
-                    window.masterTagsUserModified = false;
-                    try { localStorage.setItem('allData_settings', JSON.stringify(allData.settings)); } catch(e){}
-                    applySettingsUI(allData.settings); 
-                }, 500); 
             }
         }
 
@@ -6541,6 +6501,124 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             if (_cachedPw2) { doSave(_cachedPw2); return; }
             Swal.fire({
                 title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อบันทึกการตั้งค่าช่องทาง LINE',
+                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
+                showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก',
+                background: '#1a2230', color: '#e0e0e0'
+            }).then(result => {
+                if (!result.isConfirmed || !result.value) return;
+                doSave(result.value);
+            });
+        }
+
+        /* ============================================================
+           ข้อความตอบกลับ LINE แยกตามบอท (ต้อนรับ / เบิกสำเร็จ / รับเข้าสำเร็จ)
+           รูปแบบเดียวกับ "ช่องทาง LINE OA" ด้านบน (ยืนยันรหัสผ่าน Dashboard เดียวกัน)
+        ============================================================ */
+        window._botMsgTemplateCache = null;
+
+        function forcePromptBotMsgTemplates() {
+            window._lineDashPw = null; window._lineDashPwExpiry = 0;
+            loadBotMsgTemplateForms();
+        }
+
+        function renderBotMsgTemplateCards() {
+            const wrap = document.getElementById('botMsgTemplateFormsWrap');
+            if (!wrap || !window._botMsgTemplateCache) return;
+            const bots = window._botMsgTemplateCache.bots || [];
+            const defaults = window._botMsgTemplateCache.defaults || {};
+            wrap.innerHTML = bots.map(b => `
+                <div class="line-card border-green" style="margin-bottom:12px">
+                    <div class="card-header">
+                        <div class="account-title">
+                            <span class="line-icon">💬</span>
+                            <span class="line-card-title">ไลน์${escapeHtml(b.label)}</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>ข้อความต้อนรับ (ตอนแอดไลน์ครั้งแรก)</label>
+                        <textarea class="input-field" rows="3" id="botMsgWelcome_${b.id}" placeholder="${escapeHtml(defaults.welcome || '')}">${escapeHtml(b.welcome || '')}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>ข้อความเบิกสำเร็จ</label>
+                        <textarea class="input-field" rows="3" id="botMsgWithdraw_${b.id}" placeholder="${escapeHtml(defaults.withdrawSuccess || '')}">${escapeHtml(b.withdrawSuccess || '')}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>ข้อความรับเข้าสำเร็จ</label>
+                        <textarea class="input-field" rows="3" id="botMsgReceive_${b.id}" placeholder="${escapeHtml(defaults.receiveSuccess || '')}">${escapeHtml(b.receiveSuccess || '')}</textarea>
+                    </div>
+                </div>`).join('');
+        }
+
+        function loadBotMsgTemplateForms(silent) {
+            const wrap = document.getElementById('botMsgTemplateFormsWrap');
+            if (!wrap) return;
+
+            const fetchAndRender = (pw) => {
+                const handleOk = (res) => {
+                    if (!res || !res.success) { wrap.innerHTML = `<div class="text-danger small py-2">${escapeHtml((res && res.error) || 'โหลดไม่สำเร็จ')}</div>`; return; }
+                    window._botMsgTemplateCache = res;
+                    renderBotMsgTemplateCards();
+                };
+                const handleFail = (err) => { wrap.innerHTML = `<div class="text-danger small py-2">${escapeHtml(String(err))}</div>`; };
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webGetBotMessageTemplates(currentUserProfile.uid, pw);
+                } else {
+                    callGAS('webGetBotMessageTemplates', [currentUserProfile.uid, pw], handleOk, handleFail);
+                }
+            };
+
+            const _cachedPw3 = window.getCachedDashboardPassword();
+            if (_cachedPw3) { fetchAndRender(_cachedPw3); return; }
+            if (silent) return;
+
+            Swal.fire({
+                title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อดูข้อความตอบกลับของแต่ละบอท',
+                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
+                showCancelButton: true, confirmButtonText: 'ตกลง', cancelButtonText: 'ยกเลิก',
+                background: '#1a2230', color: '#e0e0e0'
+            }).then(result => {
+                if (!result.isConfirmed || !result.value) { wrap.innerHTML = '<div class="text-center py-3 text-muted small">ยกเลิกแล้ว — กดรีเฟรชหน้าเพื่อลองใหม่</div>'; return; }
+                window.setCachedDashboardPassword(result.value);
+                fetchAndRender(result.value);
+            });
+        }
+
+        function submitBotMsgTemplateSettings() {
+            const bots = window._botMsgTemplateCache && window._botMsgTemplateCache.bots ? window._botMsgTemplateCache.bots : [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+            const doSaveOne = (pw, idx, doneCb) => {
+                if (idx >= bots.length) { doneCb(); return; }
+                const b = bots[idx];
+                const welcomeEl = document.getElementById(`botMsgWelcome_${b.id}`);
+                const withdrawEl = document.getElementById(`botMsgWithdraw_${b.id}`);
+                const receiveEl = document.getElementById(`botMsgReceive_${b.id}`);
+                if (!welcomeEl) { doSaveOne(pw, idx + 1, doneCb); return; } // ไม่มีฟอร์มของบอทนี้ (ยังไม่ได้โหลด) ข้ามไป
+                const templates = {
+                    welcome: welcomeEl.value.trim(),
+                    withdrawSuccess: withdrawEl ? withdrawEl.value.trim() : '',
+                    receiveSuccess: receiveEl ? receiveEl.value.trim() : '',
+                };
+                const handleOk = () => doSaveOne(pw, idx + 1, doneCb);
+                const handleFail = (err) => { Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err), background: '#1a2230', color: '#e0e0e0' }); };
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webSaveBotMessageTemplates(currentUserProfile.uid, pw, b.id, templates);
+                } else {
+                    callGAS('webSaveBotMessageTemplates', [currentUserProfile.uid, pw, b.id, templates], handleOk, handleFail);
+                }
+            };
+
+            const doSave = (pw) => {
+                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
+                doSaveOne(pw, 0, () => {
+                    window.setCachedDashboardPassword(pw);
+                    Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: 'บันทึกข้อความตอบกลับของทุกบอทเรียบร้อยแล้ว', timer: 2500, showConfirmButton: false, background: '#1a2230', color: '#e0e0e0' });
+                    loadBotMsgTemplateForms(true);
+                });
+            };
+            const _cachedPw4 = window.getCachedDashboardPassword();
+            if (_cachedPw4) { doSave(_cachedPw4); return; }
+            Swal.fire({
+                title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อบันทึกข้อความตอบกลับ',
                 input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
                 showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก',
                 background: '#1a2230', color: '#e0e0e0'
@@ -8497,15 +8575,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             writeAudit('TRANSACTION', `${payload.mode} — [${payload.code}] ล้มเหลว: ${errMsg}`, 'FAIL');
             Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: errMsg});
         }).webTransaction(payload);
-    } else { 
-        setTimeout(() => { 
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-            document.getElementById('loading').style.display = 'none';
-            writeAudit('TRANSACTION', `${payload.mode} — [${payload.code}] จำนวน ${payload.qty} (Demo)`);
-            Swal.fire({icon: 'success', title: 'เสร็จสิ้น!', text: `จำลองทำรายการ${payload.mode}เสร็จสิ้น!`, timer: 1500, showConfirmButton: false});
-            loadData(true);
-        }, 500); 
     }
 }
 
@@ -8606,7 +8675,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     document.getElementById('loading').style.display = 'none';
                     Swal.fire({icon: 'error', title: 'ผิดพลาด', text: String(err)});
                 }).webAddBorrow(payload);
-            } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; writeAudit('BORROW', `ยืม [${payload.code}] จำนวน ${payload.qty} | ผู้ยืม: ${payload.borrower} (Demo)`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองการยืมสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
+            }
         }
 
         function returnBorrowedItem(reqId, itemCode, itemName, qty) {
@@ -8782,33 +8851,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         resetPOForm();
                     }
                 }).webAddPendingPO(poData);
-            } else { 
-                setTimeout(() => { 
-                    document.getElementById('loading').style.display = 'none'; 
-                    writeAudit('PO', `เปิด PO ใหม่ [${poData.poCode}] Supplier: ${poData.supplier} | ${poData.items.length} รายการ (Demo)`);
-                    Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองเปิด PO สำเร็จ (' + poData.items.length + ' รายการ)', timer: 2000, showConfirmButton: false}); 
-                    
-                    // เพิ่มข้อมูลลง allData สำหรับ Simulation mode
-                    let d = new Date(poData.date); 
-                    let fDate = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()+543).slice(-2)}`;
-                    
-                    poData.items.forEach(item => {
-                        allData.pendingPOs.push({ 
-                            poCode: poData.poCode, 
-                            date: fDate, 
-                            supplier: poData.supplier, 
-                            itemCode: '-', 
-                            itemName: item.itemName, 
-                            qty: item.qty, 
-                            status: item.status, 
-                            remark: poData.remark, 
-                            fileUrl: poData.fileUrl || ""
-                        });
-                    });
-                    
-                    onDataLoaded(allData);
-                    resetPOForm();
-                }, 500); 
             }
         }
         
@@ -9008,34 +9050,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         renderHistoryPOTableWithFilter(allData.pendingPOs);
                     }
                 }).webUpdatePendingPO(poData);
-            } else {
-                // Simulation mode
-                setTimeout(() => {
-                    document.getElementById('loading').style.display = 'none';
-                    Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองแก้ไข PO สำเร็จ (' + poData.items.length + ' รายการ)', timer: 2000, showConfirmButton: false});
-                    
-                    // อัปเดต allData
-                    allData.pendingPOs = allData.pendingPOs.filter(p => p.poCode !== poData.poCode);
-                    poData.items.forEach(item => {
-                        allData.pendingPOs.push({
-                            poCode: poData.poCode,
-                            date: poData.date,
-                            supplier: poData.supplier,
-                            itemCode: '-',
-                            itemName: item.itemName,
-                            qty: item.qty,
-                            status: item.status,
-                            remark: poData.remark,
-                            fileUrl: poData.fileUrl || ''
-                        });
-                    });
-                    
-                    onDataLoaded(allData);
-                    
-                    // ✅ อัปเดตตาราง Summary และ History
-                    renderSummaryPOTable(allData.pendingPOs);
-                    renderHistoryPOTableWithFilter(allData.pendingPOs);
-                }, 500);
             }
         }
 
@@ -9059,15 +9073,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                                 renderHistoryPOTableWithFilter(allData.pendingPOs);
                             }
                         }).webReceivePO(poCode, currentUserProfile.name, currentUserProfile.uid);
-                    } else { 
-                        setTimeout(() => { 
-                            document.getElementById('loading').style.display = 'none'; 
-                            allData.pendingPOs.forEach(p => { if (p.poCode === poCode) p.status = 'ได้รับแล้ว'; });
-                            Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองรับ PO สำเร็จ'}); 
-                            onDataLoaded(allData);
-                            renderSummaryPOTable(allData.pendingPOs);
-                            renderHistoryPOTableWithFilter(allData.pendingPOs);
-                        }, 500); 
                     }
                 }
             });
@@ -9120,16 +9125,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: String(err)});
                         })
                         .webCancelPO(poCode, reason, currentUserProfile.name, currentUserProfile.uid);
-                } else {
-                    setTimeout(() => {
-                        document.getElementById('loading').style.display = 'none';
-                        writeAudit('PO', `ยกเลิก PO [${poCode}] — สาเหตุ: ${reason} (Demo)`);
-                        allData.pendingPOs = allData.pendingPOs.filter(p => p.poCode !== poCode);
-                        Swal.fire({icon: 'success', title: 'ยกเลิก PO แล้ว (Demo)', timer: 2000, showConfirmButton: false});
-                        onDataLoaded(allData);
-                        renderSummaryPOTable(allData.pendingPOs);
-                        renderHistoryPOTableWithFilter(allData.pendingPOs);
-                    }, 500);
                 }
             });
         }
@@ -9167,16 +9162,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: String(err)});
                         })
                         .webDeletePendingPO(poCode, currentUserProfile.uid);
-                } else {
-                    setTimeout(() => {
-                        document.getElementById('loading').style.display = 'none';
-                        writeAudit('PO', `ลบรายการ PO [${poCode}] ออกจากระบบ (Demo)`);
-                        allData.pendingPOs = (allData.pendingPOs || []).filter(p => p.poCode !== poCode);
-                        Swal.fire({icon: 'success', title: 'ลบรายการแล้ว (Demo)', timer: 2000, showConfirmButton: false});
-                        onDataLoaded(allData);
-                        renderSummaryPOTable(allData.pendingPOs);
-                        renderHistoryPOTableWithFilter(allData.pendingPOs);
-                    }, 500);
                 }
             });
         }
@@ -9696,21 +9681,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         onDataLoaded(allData);
                     }
                 }).webAddNewItems(gasPayloads);
-            } else {
-                setTimeout(() => {
-                    document.getElementById('loading').style.display = 'none';
-                    clearNewItemDraft();
-                    writeAudit('NEW_ITEM', `ขึ้นทะเบียนใหม่ ${payloads.length} รายการ — ประเภท: ${type} | หมวด: ${category} (Demo)`);
-                    Swal.fire({icon: 'success', title: 'สำเร็จ!', text: `จำลองเพิ่มรายการใหม่ ${payloads.length} รายการสำเร็จ`, timer: 2000, showConfirmButton: false});
-                    const itemList = type === 'Tools' ? allData.tools : allData.items;
-                    payloads.forEach(p => {
-                        // ถ้ามีรูป ให้ใช้ base64 preview ชั่วคราว
-                        const tempImg = p._imgBase64 ? `data:${p._imgMime};base64,${p._imgBase64}` : '';
-                        itemList.push({ code: p.code, name: p.name, category: p.category, location: p.location, unit: p.unit, min: p.min, stock: p.qty, date: p.date, remark: p.remark, imageUrl: tempImg });
-                        allData.history.unshift({ time: getFormattedDate(), action: 'รับเข้า', code: p.code, itemName: p.name, amount: '+' + formatNumber(p.qty), balance: formatNumber(p.qty), user: p.user });
-                    });
-                    onDataLoaded(allData);
-                }, 500);
             }
         }
 
@@ -9802,19 +9772,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err) });
                         })
                         .webSaveItemImage({ code: code, type: type, base64: base64, mimeType: mimeType, imageIndex: imgIdx, userName: currentUserProfile.name, userId: currentUserProfile.uid });
-                } else {
-                    // Demo mode
-                    const arr = type === 'tool' ? allData.tools : allData.items;
-                    const found = arr.find(function(i) { return i.code === code; });
-                    if (found) {
-                        let urls = found.imageUrl ? found.imageUrl.split(',') : [];
-                        urls[imgIdx] = e.target.result;
-                        found.imageUrl = urls.filter(x => x).join(',');
-                    }
-                    filterTable(type === 'tool' ? 'toolsTable' : 'itemsTable');
-                    Swal.fire({ icon: 'success', title: 'อัปโหลดรูปสำเร็จ! (Demo)', timer: 1500, showConfirmButton: false }).then(() => {
-                        viewItemImage(code, type, found.name);
-                    });
                 }
             };
             reader.readAsDataURL(file);
@@ -9842,19 +9799,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err) });
                     })
                     .webDeleteItemImage({ code: code, type: type, imageIndex: index, userName: currentUserProfile.name, userId: currentUserProfile.uid });
-            } else {
-                // Demo mode
-                const arr = type === 'tool' ? allData.tools : allData.items;
-                const found = arr.find(function(i) { return i.code === code; });
-                if (found) {
-                    let urls = found.imageUrl ? found.imageUrl.split(',') : [];
-                    urls.splice(index, 1);
-                    found.imageUrl = urls.filter(x => x).join(',');
-                }
-                filterTable(type === 'tool' ? 'toolsTable' : 'itemsTable');
-                Swal.fire({ icon: 'success', title: 'ลบรูปภาพสำเร็จ! (Demo)', timer: 1500, showConfirmButton: false }).then(() => {
-                    viewItemImage(code, type, name);
-                });
             }
         }
 
@@ -10136,7 +10080,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         onDataLoaded(allData);
                     }
                 }).webAdjustStock(code, adjustQty, currentUserProfile.name, currentUserProfile.uid);
-            } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; writeAudit('ADJUST', `ปรับยอด [${code}] ${adjustQty > 0 ? '+' : ''}${adjustQty} (Demo)`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองปรับยอดสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
+            }
         }
 
         function openDamageModal(code, name, unit) {
@@ -10161,7 +10105,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         onDataLoaded(allData);
                     }
                 }).webTransaction(payload);
-            } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; writeAudit('DAMAGE', `แจ้งชำรุด [${code}] จำนวน ${qty} (Demo)`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองแจ้งชำรุดสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
+            }
         }
 
         function openRepairModal(code, name, unit, defaultQty = 1) {
@@ -10187,7 +10131,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         onDataLoaded(allData);
                     }
                 }).webTransaction(payload);
-            } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; writeAudit('DAMAGE', `ซ่อมแซมแล้ว [${code}] จำนวน ${qty} (Demo)`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองซ่อมเสร็จสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
+            }
         }
 
         function updateUserRole(userId, newRole) {
@@ -10204,7 +10148,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                             else { writeAudit('USER_MGMT', `เปลี่ยนสิทธิ์ผู้ใช้ [${userId}] เป็น: ${newRole}`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'เปลี่ยนสิทธิ์สำเร็จ!', timer: 2000, showConfirmButton: false}); let u = allData.users.find(u => u.userId === userId); if(u) u.role = newRole; onDataLoaded(allData); }
                         }).webUpdateUser({userId: userId, role: newRole, actionBy: currentUserProfile.name, actorUserId: currentUserProfile.uid});
-                    } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองปรับสิทธิ์สำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
+                    }
                 }
             });
         }
@@ -10344,11 +10288,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: String(err)});
                         })
                         .webBackfillMissingWithdraws(currentUserProfile.uid, pin);
-                } else {
-                    setTimeout(() => {
-                        document.getElementById('loading').style.display = 'none';
-                        Swal.fire({icon: 'success', title: 'สำเร็จ! (จำลอง)', text: 'เติมข้อมูลจำลองสำเร็จ 3 รายการ', timer: 2000, showConfirmButton: false});
-                    }, 500);
                 }
             });
         }
@@ -10366,7 +10305,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                             else { Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'ล้างประวัติLogs เรียบร้อย!', timer: 2000, showConfirmButton: false}); allData.history = []; onDataLoaded(allData); }
                         }).webClearLogs(currentUserProfile.name);
-                    } else { setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองล้างล็อกสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500); }
+                    }
                 }
             });
         }
@@ -10395,8 +10334,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         document.getElementById('loading').style.display = 'none';
                         Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: String(err)});
                     }).webBroadcastMessage(payload);
-                } else {
-                    setTimeout(() => { document.getElementById('loading').style.display = 'none'; Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองส่งแจ้งเตือนสำเร็จ', timer: 2000, showConfirmButton: false}); }, 500);
                 }
             });
         }
@@ -11940,11 +11877,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         Swal.fire({icon:'error', title:'ข้อผิดพลาด', text: String(err)});
                     })
                     .webUpdateUserPin(currentUserProfile.uid, pin1);
-            } else {
-                setTimeout(() => {
-                    document.getElementById('loading').style.display = 'none';
-                    Swal.fire({icon:'success', title:'สำเร็จ! (Demo)', text:'เปลี่ยน PIN เรียบร้อยแล้ว', timer:2000, showConfirmButton:false});
-                }, 500);
             }
         }
 
@@ -12252,11 +12184,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         webPost('webClearAuditLog', [currentUserProfile.uid, pin])
                             .then(handleClearSuccess)
                             .catch(handleClearFailure);
-                    } else {
-                        document.getElementById('loading').style.display = 'none';
-                        _auditCache = [];
-                        filterAuditLog();
-                        Swal.fire({ icon:'success', title:'ล้างแล้ว (Demo)', timer:1500, showConfirmButton:false });
                     }
                 }
             });
@@ -13606,25 +13533,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: String(err)});
                     })
                     .webGetReceiptData(code, time, user, amount, action);
-            } else {
-                // จำลองใน Demo Mode
-                setTimeout(function() {
-                    document.getElementById('loading').style.display = 'none';
-                    showSlipModal({
-                        success: true,
-                        transId: 'WD' + Date.now(),
-                        date: time,
-                        user: user,
-                        itemCode: code,
-                        itemName: 'ตัวอย่างอะไหล่/เครื่องมือในการทดสอบ',
-                        qty: amount,
-                        category: 'หมวดหมู่จำลอง',
-                        remark: 'หมายเหตุการทดสอบระบบใบเบิกพัสดุและลายเซ็น',
-                        signatureUrl: 'https://i.imgur.com/8Fk3XyN.png',
-                        machine: 'Line 2 / แผนกซ่อมบำรุง',
-                        type: action.includes('ยืม') ? 'ยืม' : 'เบิก'
-                    });
-                }, 500);
             }
         }
 
@@ -14148,18 +14056,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             resolve(logs.map(function(log) { return { success: false, error: String(err), _log: log }; }));
                         })
                         .webGetReceiptDataBatch(payloadItems);
-                } else {
-                    // Demo Mode
-                    setTimeout(function() {
-                        resolve(logs.map(function(log) {
-                            const displayUser = log.user ? String(log.user).replace(/\[.*?\]/g, '').replace(' (แจ้งชำรุด)', '').replace(' (ซ่อมแซมแล้ว)', '') : '';
-                            return {
-                                success: true, transId: 'WD' + Math.floor(Math.random()*100000), date: log.time, user: displayUser,
-                                itemCode: log.code, itemName: log.itemName, qty: log.amount, category: '-', remark: log.remark || '-',
-                                signatureUrl: '', machine: '-', dept: '-', type: log.action.includes('ยืม') ? 'ยืม' : 'เบิก', _log: log
-                            };
-                        }));
-                    }, 200);
                 }
             });
         }
@@ -14635,74 +14531,6 @@ function sendAiChat() {
         // ★ ใช้ timeout ยาวกว่าปกติ (90 วิ แทน 30 วิ default) เพราะคำถามที่ให้ AI วิเคราะห์คลังทั้งระบบ
         // มักใช้เวลาประมวลผลนานกว่าฟังก์ชันทั่วไปมาก โดยเฉพาะตอน Apps Script cold start
         webPost('webAskAiAssistant', [question], 90000).then(handleAiRes).catch(handleAiErr);
-    } else {
-        // Smart Local AI Response for Demo Testing (กระชับ ตรงประเด็น ทันที)
-        setTimeout(function() {
-            const loadEl = document.getElementById(loadingId);
-            if (loadEl) loadEl.remove();
-            sendBtn.disabled = false;
-
-            const qLower = question.toLowerCase();
-            const items = allData.items || [];
-            const tools = allData.tools || [];
-            const all = items.concat(tools);
-            let answer = '';
-
-            if (qLower.includes('ต่ำกว่า min') || qLower.includes('สั่งเติม') || qLower.includes('ใกล้หมด')) {
-                const lowItems = items.filter(i => i.stock <= i.min);
-                const lowTools = tools.filter(t => t.stock <= t.min);
-                if (lowItems.length === 0 && lowTools.length === 0) {
-                    answer = '🟢 สรุป: ไม่มีรายการที่ต่ำกว่าค่า Min ในขณะนี้ ทุกรายการคงเหลือเพียงพอครับ';
-                } else {
-                    answer = `⚠️ รายการสต็อกต่ำกว่าค่า Min ที่ต้องสั่งเติมตอนนี้:
-` +
-                        lowItems.concat(lowTools).map(p => `• [${p.code}] ${p.name} | คงเหลือ: ${p.stock} ${p.unit} (Min: ${p.min})`).join('\n');
-                }
-            } else if (qLower.includes('ยืม') || qLower.includes('ค้างยืม')) {
-                const borrows = allData.activeBorrows || [];
-                if (borrows.length === 0) {
-                    answer = '🟢 ไม่มีรายการเครื่องมือค้างยืมอยู่ในขณะนี้';
-                } else {
-                    answer = `📦 รายการเครื่องมือที่กำลังถูกยืมออกในขณะนี้ (${borrows.length} รายการ):
-` +
-                        borrows.map(b => `• [${b.itemCode||''}] ${b.itemName} x${b.qty} — ยืมโดย: ${b.borrowerName || b.borrower || '-'} (กำหนดคืน: ${b.expectedReturnDate || '-'})`).join('\n');
-                }
-            } else if (qLower.includes('สรุป') || qLower.includes('ภาพรวม')) {
-                const lowCount = items.filter(i => i.stock <= i.min).length + tools.filter(t => t.stock <= t.min).length;
-                answer = `📊 สรุปภาพรวมคลังสินค้าปัจจุบัน:
-` +
-                    `• อะไหล่ทั้งหมด: ${items.length} รายการ
-` +
-                    `• เครื่องมือช่างทั้งหมด: ${tools.length} รายการ
-` +
-                    `• รายการใกล้หมด (ต่ำกว่า Min): ${lowCount} รายการ
-` +
-                    `• รายการเครื่องมือค้างยืม: ${(allData.activeBorrows||[]).length} รายการ`;
-            } else {
-                const matched = all.filter(p => p.code && (qLower.includes(p.code.toLowerCase()) || qLower.includes(p.name.toLowerCase())));
-                if (matched.length > 0) {
-                    answer = `🔎 ผลการตรวจสอบสินค้าตามคำถาม:
-` +
-                        matched.map(p => `• [${p.code}] ${p.name} | คงเหลือ: ${p.stock} ${p.unit} | หมวด: ${p.category||'-'} | ตำแหน่ง: ${p.location||'-'}`).join('\n');
-                } else {
-                    answer = `🔎 สรุปข้อมูลตามคำถาม "${question}":
-` +
-                        `• อะไหล่คงเหลือในระบบ: ${items.length} รายการ
-` +
-                        `• เครื่องมือช่างคงเหลือ: ${tools.length} รายการ
-` +
-                        `*(ระบุชื่อสินค้าหรือรหัส เช่น [IT-001] เพื่อดูรายละเอียดเจาะจง)*`;
-                }
-            }
-
-            chatArea.innerHTML += `
-                <div style="display:flex;gap:10px;align-items:flex-start">
-                    <div style="width:36px;height:36px;min-width:36px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="fas fa-robot" style="color:#fff;font-size:.85rem"></i></div>
-                    <div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);border-radius:0 14px 14px 14px;padding:12px 16px;max-width:85%;color:rgba(255,255,255,.85);font-size:.9rem;line-height:1.8;white-space:pre-wrap">${answer}</div>
-                </div>`;
-            chatArea.scrollTop = chatArea.scrollHeight;
-            renderAiRelatedItems(answer);
-        }, 600);
     }
 }
 
@@ -14862,17 +14690,6 @@ function analyzeOcrImage() {
             analyzeBtn.disabled = false;
             resultArea.innerHTML = `<div class="text-center py-4" style="color:#f87171"><i class="fas fa-exclamation-triangle" style="font-size:2rem"></i><div style="margin-top:8px">❌ ${escapeHtml(err.message)}</div></div>`;
         }).webAnalyzeInvoiceImage(ocrBase64Data, ocrMimeType);
-    } else {
-        setTimeout(function() {
-            analyzeBtn.disabled = false;
-            renderOcrResult({
-                poCode: 'PO-DEMO-001',
-                supplier: 'บริษัทตัวอย่าง จำกัด',
-                date: '2026-07-13',
-                items: [{ itemName: 'สายพานลำเลียง A-100', qty: 5 }, { itemName: 'ลูกปืนเพลา #6205', qty: 10 }],
-                remark: 'ทดสอบระบบ (Demo Mode)'
-            });
-        }, 1500);
     }
 }
 
