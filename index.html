@@ -4947,6 +4947,57 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             window._lineDashPwExpiry = Date.now() + 5 * 60 * 1000; // 5 นาที
         };
 
+        // ★ เพิ่ม: ป๊อปอัพยืนยันรหัสผ่าน Dashboard กลาง — ใช้ร่วมกันทุกจุดที่ต้องกรอกรหัสก่อนดู/แก้ไขการตั้งค่า
+        // (ช่องทาง LINE / AI Provider / ข้อความตอบกลับบอท ฯลฯ) เพื่อไม่ให้ป๊อปอัพปิดตัวเองทันทีที่กดยืนยัน
+        // (ของเดิมปิดเงียบๆ แล้วค่อยไปโชว์ error เล็กๆ ในหน้า ทำให้ดูเหมือน "นิ่งหาย") — ป๊อปอัพนี้จะค้าง
+        // แสดง spinner ไว้จนกว่าจะเช็ครหัสผ่านกับเซิร์ฟเวอร์จริงเสร็จ แล้วเด้งบอกถูก/ผิดให้เห็นชัดเจนทันที
+        window.promptAndVerifyDashboardPassword = function(promptText, onValid) {
+            const uid = currentUserProfile.uid;
+            Swal.fire({
+                title: 'ยืนยันตัวตน',
+                text: promptText,
+                input: 'password',
+                inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
+                showCancelButton: true,
+                confirmButtonText: 'ตกลง',
+                cancelButtonText: 'ยกเลิก',
+                background: '#1a2230',
+                color: '#e0e0e0',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !Swal.isLoading(),
+                preConfirm: (password) => {
+                    if (!password) { Swal.showValidationMessage('กรุณากรอกรหัสผ่าน'); return false; }
+                    return Promise.race([
+                        new Promise((resolve) => {
+                            try {
+                                const handleVerify = (ok) => resolve({ valid: !!ok, password });
+                                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                                    google.script.run.withSuccessHandler(handleVerify).withFailureHandler(() => resolve({ valid: false, networkError: true })).webVerifyDashboardPassword(uid, password);
+                                } else {
+                                    callGAS('webVerifyDashboardPassword', [uid, password], handleVerify, () => resolve({ valid: false, networkError: true }));
+                                }
+                            } catch (e) { resolve({ valid: false, networkError: true }); }
+                        }),
+                        new Promise((resolve) => setTimeout(() => resolve({ valid: false, networkError: true, timedOut: true }), 20000))
+                    ]);
+                }
+            }).then(function(result) {
+                if (!result.isConfirmed) return;
+                const v = result.value;
+                if (v && v.valid) {
+                    window.setCachedDashboardPassword(v.password);
+                    onValid(v.password);
+                    return;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: v && v.timedOut ? 'หมดเวลาเชื่อมต่อ' : (v && v.networkError ? 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' : 'รหัสผ่านไม่ถูกต้อง'),
+                    text: v && v.timedOut ? 'รอเกิน 20 วินาทีแล้วยังไม่ได้รับคำตอบจากเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง' : (v && v.networkError ? 'กรุณาลองใหม่อีกครั้ง' : 'กรุณาตรวจสอบรหัสผ่าน Dashboard อีกครั้ง'),
+                    confirmButtonColor: '#ef4444', background: '#1a2230', color: '#e0e0e0'
+                });
+            });
+        };
+
         function forceLogoutToScreen() {
             try {
                 if (currentUserProfile && currentUserProfile.name) {
@@ -5076,6 +5127,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const PROTECTED_SECTIONS = ['settings', 'archive', 'archiveMgmt'];
                 if (PROTECTED_SECTIONS.indexOf(sectionId) !== -1) {
                     const uid = currentUserProfile.uid;
+                    // ★ ถ้ายืนยันรหัสผ่าน Dashboard ไว้แล้วไม่เกิน 5 นาที ไม่ต้องถามซ้ำ เข้าหน้าได้เลย
+                    if (window.getCachedDashboardPassword()) { _doGoTo(sectionId); return; }
                     // ★ โชว์ป๊อปอัพทันที ไม่ต้องรอ network เช็คก่อนว่ามีรหัสผ่านหรือยัง (ของเดิมทำให้ป๊อปอัพช้า 3-4 วิ)
                     // ค่อยเช็คสถานะรหัสผ่านพร้อมกับตอนยืนยันรหัส (ทีเดียวจบ) แทน
                     Swal.fire({
@@ -5113,9 +5166,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                                 const hasPw = res && typeof res === 'object' ? !!res.hasPassword : false;
                                                 if (!hasPw) { resolve({ notSet: true }); return; }
                                                 if (typeof google !== 'undefined' && google.script && google.script.run) {
-                                                    google.script.run.withSuccessHandler((ok) => resolve({ valid: !!ok })).withFailureHandler(() => resolve({ valid: false, networkError: true })).webVerifyDashboardPassword(uid, password);
+                                                    google.script.run.withSuccessHandler((ok) => resolve({ valid: !!ok, password })).withFailureHandler(() => resolve({ valid: false, networkError: true })).webVerifyDashboardPassword(uid, password);
                                                 } else {
-                                                    callGAS('webVerifyDashboardPassword', [uid, password], (ok) => resolve({ valid: !!ok }), () => resolve({ valid: false, networkError: true }));
+                                                    callGAS('webVerifyDashboardPassword', [uid, password], (ok) => resolve({ valid: !!ok, password }), () => resolve({ valid: false, networkError: true }));
                                                 }
                                             } catch (e) { resolve({ valid: false, networkError: true }); }
                                         };
@@ -5144,7 +5197,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             }).then(function() { _doGoTo(sectionId); });
                             return;
                         }
-                        if (v && v.valid) { _doGoTo(sectionId); return; }
+                        if (v && v.valid) { window.setCachedDashboardPassword(v.password); _doGoTo(sectionId); return; }
                         Swal.fire({
                             icon: 'error',
                             title: v && v.timedOut ? 'หมดเวลาเชื่อมต่อ' : (v && v.networkError ? 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' : 'รหัสผ่านไม่ถูกต้อง'),
@@ -6458,16 +6511,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             if (_cachedPw1) { fetchAndRender(_cachedPw1); return; } // มีรหัสผ่านที่ยืนยันไว้ไม่เกิน 5 นาที ไม่ต้องถามซ้ำ
             if (silent) return; // โหมดเงียบ (เรียกหลังบันทึก) แต่ไม่มีรหัสผ่านแคชไว้ — ข้าม ไม่เด้งถามซ้ำโดยไม่จำเป็น
 
-            Swal.fire({
-                title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อดูการตั้งค่าช่องทาง LINE',
-                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
-                showCancelButton: true, confirmButtonText: 'ตกลง', cancelButtonText: 'ยกเลิก',
-                background: '#1a2230', color: '#e0e0e0'
-            }).then(result => {
-                if (!result.isConfirmed || !result.value) { wrap.innerHTML = '<div class="text-center py-3 text-muted small">ยกเลิกแล้ว — กดรีเฟรชหน้าเพื่อลองใหม่</div>'; return; }
-                window.setCachedDashboardPassword(result.value);
-                fetchAndRender(result.value);
-            });
+            window.promptAndVerifyDashboardPassword('กรอกรหัสผ่าน Dashboard เพื่อดูการตั้งค่าช่องทาง LINE', fetchAndRender);
         }
 
         function submitLineChannelSettings() {
@@ -6660,16 +6704,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             if (_cachedPw3) { fetchAndRender(_cachedPw3); return; }
             if (silent) return;
 
-            Swal.fire({
-                title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อดูข้อความตอบกลับของแต่ละบอท',
-                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
-                showCancelButton: true, confirmButtonText: 'ตกลง', cancelButtonText: 'ยกเลิก',
-                background: '#1a2230', color: '#e0e0e0'
-            }).then(result => {
-                if (!result.isConfirmed || !result.value) { wrap.innerHTML = '<div class="text-center py-3 text-muted small">ยกเลิกแล้ว — กดรีเฟรชหน้าเพื่อลองใหม่</div>'; return; }
-                window.setCachedDashboardPassword(result.value);
-                fetchAndRender(result.value);
-            });
+            window.promptAndVerifyDashboardPassword('กรอกรหัสผ่าน Dashboard เพื่อดูข้อความตอบกลับของแต่ละบอท', fetchAndRender);
         }
 
         function submitBotMsgTemplateSettings() {
@@ -6774,16 +6809,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const _cachedPw3 = window.getCachedDashboardPassword();
             if (_cachedPw3) { fetchAndRender(_cachedPw3); return; } // ใช้รหัสผ่านที่แคชไว้ไม่เกิน 5 นาที
             if (silent) return;
-            Swal.fire({
-                title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อดูการตั้งค่าผู้ให้บริการ AI',
-                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
-                showCancelButton: true, confirmButtonText: 'ตกลง', cancelButtonText: 'ยกเลิก',
-                background: '#1a2230', color: '#e0e0e0'
-            }).then(result => {
-                if (!result.isConfirmed || !result.value) { wrap.innerHTML = '<div class="text-center py-3 text-muted small">ยกเลิกแล้ว — กดรีเฟรชหน้าเพื่อลองใหม่</div>'; return; }
-                window.setCachedDashboardPassword(result.value);
-                fetchAndRender(result.value);
-            });
+            window.promptAndVerifyDashboardPassword('กรอกรหัสผ่าน Dashboard เพื่อดูการตั้งค่าผู้ให้บริการ AI', fetchAndRender);
         }
 
         function submitAIProviderSettings() {
