@@ -5678,9 +5678,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     
                     // PIN ถูกต้อง — สว่างแสงสีเขียวเปล่งออร่า
                     if (loginCard) { loginCard.classList.remove('glow-red'); loginCard.classList.add('glow-green'); }
-                    // เก็บรหัสผ่านที่ใช้ล็อกอินไว้ในหน่วยความจำของหน้านี้ (หายไปเมื่อรีเฟรชหน้า ไม่ได้เก็บถาวร)
-                    // ใช้กับฟีเจอร์ที่ต้องยืนยันรหัสผ่าน Dashboard ซ้ำ (เช่นตั้งค่าไลน์) จะได้ไม่ต้องถามซ้ำในเซสชันเดียวกัน
-                    if (!_needsSetup) window.setCachedDashboardPassword(pin);
+                    // ★ แก้บั๊ก: เดิมเก็บ PIN ตอนล็อกอินไว้เป็น "รหัสผ่าน Dashboard ที่ยืนยันแล้ว" ทำให้เข้าหน้า
+                    // ตั้งค่า/ช่องทาง LINE/AI Provider ได้เลยโดยไม่ต้องกรอกรหัสผ่าน Dashboard เอง (ทั้งที่ยังไม่เคย
+                    // ยืนยันจริง) — เอาบรรทัดนี้ออก ให้ทุกจุดที่ต้องยืนยันตัวตนบังคับกรอก+เช็คกับ webVerifyDashboardPassword
+                    // จริงเสมอ (ไม่ผูกกับตอนล็อกอิน)
                     if (loginPinInput) { loginPinInput.classList.remove('glow-red'); loginPinInput.classList.add('glow-green'); }
                     document.getElementById('loginError').classList.add('d-none');
                     webFailedAttempts[uid] = 0;
@@ -6441,14 +6442,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <div class="progress-bar ${st.barCls}" style="width:${st.barPct}%;"></div>
                     </div>
                     <div id="${cardId}_fields" data-was-configured="${isConfigured ? '1' : '0'}" class="${isConfigured ? 'fields-collapsed' : ''}">
-                        <div class="form-group">
-                            <label>Token${b.tokenMasked ? ' (ปัจจุบัน: ' + escapeHtml(b.tokenMasked) + ')' : ''}</label>
-                            <div style="font-size:11px;color:#6b7280;margin-bottom:4px">Long-lived Channel Access Token จาก LINE Developers Console — เก็บเป็นความลับ ไม่แสดงค่าจริงบนหน้านี้</div>
+                        <div style="margin-bottom:12px;padding:14px;border-radius:12px;background:#1c2130;border:1px solid #2a2f3d">
+                            <label style="display:block;font-size:.8rem;color:#e0e0e0;margin-bottom:2px">🔑 Token${b.tokenMasked ? ' (ปัจจุบัน: ' + escapeHtml(b.tokenMasked) + ')' : ''}</label>
+                            <div style="font-size:.7rem;color:rgba(255,255,255,.4);margin-bottom:6px">Long-lived Channel Access Token จาก LINE Developers Console — เก็บเป็นความลับ ไม่แสดงค่าจริงบนหน้านี้</div>
                             <input type="password" class="input-field" id="lineBotToken_${b.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน">
                         </div>
-                        ${b.id !== 1 ? `<div class="form-group">
-                            <label>Bot User ID</label>
-                            <div style="font-size:11px;color:#6b7280;margin-bottom:4px">ใช้แยกว่าข้อความตอบกลับมาจากบอทตัวไหน — ดูได้จาก LINE Developers Console</div>
+                        ${b.id !== 1 ? `<div style="margin-bottom:12px;padding:14px;border-radius:12px;background:#1c2130;border:1px solid #2a2f3d">
+                            <label style="display:block;font-size:.8rem;color:#e0e0e0;margin-bottom:2px">🆔 Bot User ID</label>
+                            <div style="font-size:.7rem;color:rgba(255,255,255,.4);margin-bottom:6px">ใช้แยกว่าข้อความตอบกลับมาจากบอทตัวไหน — ดูได้จาก LINE Developers Console</div>
                             <input type="text" class="input-field" id="lineBotUid_${b.id}" placeholder="Uxxxxxxxx..." value="${escapeHtml(b.botUserId || '')}">
                         </div>` : ''}
                     </div>
@@ -6784,12 +6785,16 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <div style="font-size:11px;color:${isConfigured ? '#4ade80' : '#f59e0b'};margin-bottom:8px">${isConfigured ? '🟢 API Key: ' + escapeHtml(p.keyMasked) : '⚪ ยังไม่ได้ตั้งค่า API Key — กดปุ่ม "ตั้งค่าตอนนี้" ด้านบนเพื่อกรอก'}</div>
                     <div id="${cardId}_fields" data-was-configured="${isConfigured ? '1' : '0'}" class="${isConfigured ? 'fields-collapsed' : ''}">
-                        <div class="mb-2"><label class="form-label small mb-1">API Key${p.keyMasked ? ' (ปัจจุบัน: ' + escapeHtml(p.keyMasked) + ')' : ' (ยังไม่ได้ตั้งค่า)'}</label>
-                            <div style="font-size:11px;color:#6b7280;margin-bottom:4px">API Key จากผู้ให้บริการ — เก็บเป็นความลับ ไม่แสดงค่าจริงบนหน้านี้</div>
-                            <input type="password" class="form-control form-control-sm" id="aiKey_${p.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน"></div>
-                        <div><label class="form-label small mb-1">โมเดล</label>
-                            <div style="font-size:11px;color:#6b7280;margin-bottom:4px">ชื่อรุ่นโมเดลที่จะเรียกใช้ เช่น gemini-2.0-flash</div>
-                            <input type="text" class="form-control form-control-sm" id="aiModel_${p.id}" value="${escapeHtml(p.model || '')}"></div>
+                        <div style="margin-bottom:12px;padding:14px;border-radius:12px;background:#1c2130;border:1px solid #2a2f3d">
+                            <label style="display:block;font-size:.8rem;color:#e0e0e0;margin-bottom:2px">🔑 API Key${p.keyMasked ? ' (ปัจจุบัน: ' + escapeHtml(p.keyMasked) + ')' : ' (ยังไม่ได้ตั้งค่า)'}</label>
+                            <div style="font-size:.7rem;color:rgba(255,255,255,.4);margin-bottom:6px">API Key จากผู้ให้บริการ — เก็บเป็นความลับ ไม่แสดงค่าจริงบนหน้านี้</div>
+                            <input type="password" class="form-control form-control-sm" id="aiKey_${p.id}" placeholder="เว้นว่างถ้าไม่เปลี่ยน">
+                        </div>
+                        <div style="margin-bottom:12px;padding:14px;border-radius:12px;background:#1c2130;border:1px solid #2a2f3d">
+                            <label style="display:block;font-size:.8rem;color:#e0e0e0;margin-bottom:2px">🤖 โมเดล</label>
+                            <div style="font-size:.7rem;color:rgba(255,255,255,.4);margin-bottom:6px">ชื่อรุ่นโมเดลที่จะเรียกใช้ เช่น gemini-2.0-flash</div>
+                            <input type="text" class="form-control form-control-sm" id="aiModel_${p.id}" value="${escapeHtml(p.model || '')}">
+                        </div>
                     </div>
                 </div>`;
             }).join('');
