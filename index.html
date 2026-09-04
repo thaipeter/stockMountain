@@ -2809,11 +2809,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <button type="button" class="btn btn-secondary active" id="itemsViewBtnCard" onclick="setInventoryViewMode('items','card')" title="มุมมองการ์ด (มีรูป หาง่าย)"><i class="fas fa-th-large"></i></button>
                                 <button type="button" class="btn btn-outline-secondary" id="itemsViewBtnTable" onclick="setInventoryViewMode('items','table')" title="มุมมองตาราง"><i class="fas fa-list"></i></button>
                             </div>
-                            <!-- ★ เพิ่ม: สลับมุมมองตาราง — "คงเหลือ" (ยอดปัจจุบัน) หรือ "รับเข้า/เบิกออก" (ยอดสะสมทั้งหมด) -->
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-secondary active" id="itemsViewBtnStock" onclick="setItemsViewMode('stock')" title="แสดงยอดคงเหลือปัจจุบัน">คงเหลือ</button>
-                                <button type="button" class="btn btn-outline-secondary" id="itemsViewBtnInOut" onclick="setItemsViewMode('inout')" title="แสดงยอดรับเข้า/เบิกออกสะสมทั้งหมด">รับเข้า/เบิกออก</button>
-                            </div>
                             <button class="btn btn-outline-success fw-bold shadow-sm bg-white" onclick="exportExcel('itemsTable', 'Inventory_Items')"><i class="fas fa-file-excel"></i> Export</button>
                             <button class="btn btn-theme fw-bold shadow-sm admin-only-element" onclick="openNewItemModal('Items')"><i class="fas fa-plus"></i> เพิ่มใหม่</button>
                         </div>
