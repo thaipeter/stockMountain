@@ -3795,15 +3795,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                      </div>
                                  </div>
 
-                                 <!-- ★ เพิ่ม: ข้อความตอบกลับ LINE — ปรับแต่งได้แยกทีละบอท -->
+                                 <!-- ข้อความตอบกลับ LINE แยกตามบอท (ต้อนรับ / เบิกสำเร็จ / รับเข้าสำเร็จ) -->
                                  <div class="settings-section">
-                                     <h6 class="settings-section-title"><i class="fas fa-comments me-2"></i>ข้อความตอบกลับ LINE</h6>
+                                     <h6 class="settings-section-title"><i class="fas fa-comment-alt me-2"></i>ข้อความตอบกลับ LINE (แยกตามบอท)</h6>
                                      <div class="settings-box">
-                                         <div style="font-size:.8rem;color:rgba(255,255,255,.5)" class="mb-3">ปรับแต่งข้อความที่บอทแต่ละตัวใช้ตอบกลับ — เว้นช่องว่างไว้ = ใช้ข้อความเริ่มต้น ไม่ต้องยืนยันตัวตนใหม่ทุกครั้งถ้ายืนยันไว้แล้วภายใน 5 นาที</div>
-                                         <div id="botMessagesWrap">
-                                             <button class="btn btn-warning fw-bold w-100" onclick="forcePromptBotMessages()"><i class="fas fa-lock me-1"></i> ยืนยันตัวตน / แก้ไข</button>
+                                         <div style="font-size:.8rem;color:rgba(255,255,255,.5)" class="mb-3">แก้ไขข้อความจริงที่ระบบใช้ตอบ/แจ้งเตือนอยู่ตอนนี้ — สลับแท็บเพื่อดูของแต่ละบอท และแท็บ "แจ้งเตือนอนุมัติ/ปฏิเสธ" สำหรับข้อความที่ส่งหาผู้ขอ/แอดมิน เว้นช่องว่างไว้เพื่อใช้ข้อความเริ่มต้นของระบบ</div>
+                                         <div id="botMsgTemplateFormsWrap">
+                                             <button class="btn btn-warning fw-bold w-100" onclick="forcePromptBotMsgTemplates()"><i class="fas fa-lock me-1"></i> ยืนยันตัวตน / แก้ไข</button>
                                          </div>
-                                         <button class="btn btn-warning fw-bold w-100 mt-2" id="botMessagesSaveBtn" style="display:none" onclick="submitBotMessages()"><i class="fas fa-save me-1"></i> บันทึกข้อความตอบกลับ</button>
+                                         <button class="btn btn-warning fw-bold w-100 mt-2" onclick="submitBotMsgTemplateSettings()"><i class="fas fa-save me-1"></i> บันทึกข้อความตอบกลับ</button>
                                      </div>
                                  </div>
 
@@ -6440,125 +6440,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             loadAIProviderForms();
         }
 
-        // ★ เพิ่ม: ปรับแต่งข้อความตอบกลับ LINE แยกทีละบอท
-        let _botMsgCatalog = [];
-        let _botMsgBotIds = [];
-        let _botMsgOverrides = {};
-        let _botMsgActiveTab = null;
-
-        function forcePromptBotMessages() {
-            window._lineDashPw = null; window._lineDashPwExpiry = 0;
-            loadBotMessages();
-        }
-
-        function loadBotMessages(silent) {
-            const wrap = document.getElementById('botMessagesWrap');
-            const saveBtn = document.getElementById('botMessagesSaveBtn');
-            if (!wrap) return;
-
-            const fetchAndRender = (pw) => {
-                const handleOk = (res) => {
-                    if (!res || !res.success) { wrap.innerHTML = `<div class="text-danger small py-2">${escapeHtml((res && res.error) || 'โหลดไม่สำเร็จ')}</div>`; return; }
-                    _botMsgCatalog = res.catalog || [];
-                    _botMsgBotIds = res.botIds || [1];
-                    _botMsgOverrides = res.overrides || {};
-                    _botMsgActiveTab = _botMsgBotIds[0];
-                    renderBotMessagesUI();
-                    if (saveBtn) saveBtn.style.display = '';
-                };
-                const handleFail = (err) => { wrap.innerHTML = `<div class="text-danger small py-2">${escapeHtml(String(err))}</div>`; };
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webGetBotMessageCatalog(currentUserProfile.uid, pw);
-                } else {
-                    callGAS('webGetBotMessageCatalog', [currentUserProfile.uid, pw], handleOk, handleFail);
-                }
-            };
-
-            const _cachedPw = window.getCachedDashboardPassword();
-            if (_cachedPw) { fetchAndRender(_cachedPw); return; }
-            if (silent) return;
-
-            Swal.fire({
-                title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อดู/แก้ไขข้อความตอบกลับ LINE',
-                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
-                showCancelButton: true, confirmButtonText: 'ตกลง', cancelButtonText: 'ยกเลิก',
-                background: '#1a2230', color: '#e0e0e0'
-            }).then(result => {
-                if (!result.isConfirmed || !result.value) { wrap.innerHTML = '<div class="text-center py-3 text-muted small">ยกเลิกแล้ว — กดรีเฟรชหน้าเพื่อลองใหม่</div>'; return; }
-                window.setCachedDashboardPassword(result.value);
-                fetchAndRender(result.value);
-            });
-        }
-
-        const _botLabelMap = { 1: 'หลัก', 2: 'สำรอง 1', 3: 'สำรอง 2' };
-
-        function renderBotMessagesUI() {
-            const wrap = document.getElementById('botMessagesWrap');
-            if (!wrap) return;
-            // เก็บค่าที่พิมพ์ไว้ในแท็บปัจจุบันก่อนสลับแท็บ กันข้อมูลหาย
-            _captureBotMessageInputs();
-
-            const tabsHtml = `<div class="d-flex gap-2 mb-3">` + _botMsgBotIds.map(id =>
-                `<button type="button" class="btn btn-sm ${id === _botMsgActiveTab ? 'btn-warning' : ''}" style="${id === _botMsgActiveTab ? '' : 'background:#232838;color:#a0aec0;border:1px solid #2a2f3d'};border-radius:8px" onclick="switchBotMsgTab(${id})">ไลน์${escapeHtml(_botLabelMap[id] || ('#' + id))}</button>`
-            ).join('') + `</div>`;
-
-            const perBotOverride = _botMsgOverrides[String(_botMsgActiveTab)] || {};
-            const listHtml = `<div style="max-height:420px;overflow-y:auto;padding-right:4px">` + _botMsgCatalog.map(m => {
-                const current = perBotOverride[m.key] || '';
-                return `<div class="mb-2 pb-2" style="border-bottom:1px solid #2a2f3d">
-                    <label class="form-label small mb-1" style="color:#a0aec0">${escapeHtml(m.label)}</label>
-                    <textarea class="form-control form-control-sm" rows="1" data-botmsg-key="${escapeHtml(m.key)}" placeholder="${escapeHtml(m.default)}" style="font-family:inherit">${escapeHtml(current)}</textarea>
-                </div>`;
-            }).join('') + `</div>`;
-
-            wrap.innerHTML = tabsHtml + listHtml;
-        }
-
-        function _captureBotMessageInputs() {
-            if (_botMsgActiveTab === null) return;
-            const wrap = document.getElementById('botMessagesWrap');
-            if (!wrap) return;
-            const perBot = _botMsgOverrides[String(_botMsgActiveTab)] || {};
-            wrap.querySelectorAll('[data-botmsg-key]').forEach(el => {
-                perBot[el.dataset.botmsgKey] = el.value;
-            });
-            _botMsgOverrides[String(_botMsgActiveTab)] = perBot;
-        }
-
-        function switchBotMsgTab(botId) {
-            _botMsgActiveTab = botId;
-            renderBotMessagesUI();
-        }
-
-        function submitBotMessages() {
-            _captureBotMessageInputs();
-            const doSave = (pw) => {
-                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
-                const handleOk = (res) => {
-                    if (!res || !res.success) { Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: (res && res.error) || 'ไม่ทราบสาเหตุ', background: '#1a2230', color: '#e0e0e0' }); return; }
-                    window.setCachedDashboardPassword(pw);
-                    Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: res.message || '', timer: 2500, showConfirmButton: false, background: '#1a2230', color: '#e0e0e0' });
-                };
-                const handleFail = (err) => Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err), background: '#1a2230', color: '#e0e0e0' });
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webSaveBotMessages(currentUserProfile.uid, pw, _botMsgOverrides);
-                } else {
-                    callGAS('webSaveBotMessages', [currentUserProfile.uid, pw, _botMsgOverrides], handleOk, handleFail);
-                }
-            };
-            const _cachedPw = window.getCachedDashboardPassword();
-            if (_cachedPw) { doSave(_cachedPw); return; }
-            Swal.fire({
-                title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อบันทึกข้อความตอบกลับ LINE',
-                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
-                showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก',
-                background: '#1a2230', color: '#e0e0e0'
-            }).then(result => {
-                if (!result.isConfirmed || !result.value) return;
-                doSave(result.value);
-            });
-        }
-
         function loadLineChannelForms(silent) {
             const wrap = document.getElementById('lineChannelFormsWrap');
             if (!wrap) return;
@@ -6620,6 +6501,218 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             if (_cachedPw2) { doSave(_cachedPw2); return; }
             Swal.fire({
                 title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อบันทึกการตั้งค่าช่องทาง LINE',
+                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
+                showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก',
+                background: '#1a2230', color: '#e0e0e0'
+            }).then(result => {
+                if (!result.isConfirmed || !result.value) return;
+                doSave(result.value);
+            });
+        }
+
+        /* ============================================================
+           ข้อความตอบกลับ LINE แยกตามบอท (ต้อนรับ / เบิกสำเร็จ / รับเข้าสำเร็จ)
+           รูปแบบเดียวกับ "ช่องทาง LINE OA" ด้านบน (ยืนยันรหัสผ่าน Dashboard เดียวกัน)
+        ============================================================ */
+        window._botMsgTemplateCache = null;
+
+        function forcePromptBotMsgTemplates() {
+            window._lineDashPw = null; window._lineDashPwExpiry = 0;
+            loadBotMsgTemplateForms();
+        }
+
+        // นิยามช่องข้อความทั้งหมดไว้ที่เดียว กันโค้ดซ้ำระหว่างส่วน render / preview / reset
+        // กลุ่มที่ 1: ข้อความแยกตามบอท (ต้อนรับ / เบิก / รับเข้า) — บอทไหนตอบ ใช้ข้อความของบอทนั้น
+        const BOT_MSG_FIELDS = [
+            { key: 'welcome', elPrefix: 'botMsgWelcome', icon: '👋', label: 'ข้อความต้อนรับ', hint: 'ส่งตอนมีคนแอดไลน์บอทครั้งแรก' },
+            { key: 'withdrawSuccess', elPrefix: 'botMsgWithdraw', icon: '📦', label: 'ข้อความเบิกสำเร็จ', hint: 'ส่งหลังทำรายการเบิกสำเร็จ — ใช้ {item} {qty} {unit} ได้' },
+            { key: 'receiveSuccess', elPrefix: 'botMsgReceive', icon: '📥', label: 'ข้อความรับเข้าสำเร็จ', hint: 'ส่งหลังทำรายการรับเข้าสต็อกสำเร็จ — ใช้ {item} {qty} {unit} ได้' },
+        ];
+        // กลุ่มที่ 2: ข้อความแจ้งเตือนตอนอนุมัติ/ปฏิเสธคำขอ — ใช้ค่าเดียวทั้งระบบ ไม่ผูกกับบอทตัวใดตัวหนึ่ง
+        // (เพราะแจ้งไปหาแอดมินหลายคน/ผู้ขอ ไม่ได้ตอบกลับจากบอทตัวที่คุยด้วยโดยตรงเสมอไป)
+        const GLOBAL_MSG_FIELDS = [
+            { key: 'requesterApproved', elPrefix: 'gMsgReqApprove', icon: '✅', label: 'แจ้งผู้ขอ: คำขออนุมัติแล้ว', hint: 'ส่งถึงคนที่ขอเบิก/ยืม เมื่อคำขอได้รับการอนุมัติ (ทั้งอนุมัติผ่านไลน์และหน้าเว็บ) — ใช้ {type} {item} {qty} ได้' },
+            { key: 'requesterRejected', elPrefix: 'gMsgReqReject', icon: '❌', label: 'แจ้งผู้ขอ: คำขอถูกปฏิเสธ', hint: 'ส่งถึงคนที่ขอเบิก/ยืม เมื่อคำขอถูกปฏิเสธ — ใช้ {type} {item} {qty} ได้' },
+            { key: 'adminApprovedLine', elPrefix: 'gMsgAdmApproveLine', icon: '📲', label: 'แจ้งแอดมิน: อนุมัติผ่านไลน์', hint: 'ส่งถึงแอดมินทุกคน เมื่อมีการกดปุ่มอนุมัติในไลน์ — ใช้ {type} {item} {qty} {requester} {admin} ได้' },
+            { key: 'adminRejectedLine', elPrefix: 'gMsgAdmRejectLine', icon: '📲', label: 'แจ้งแอดมิน: ปฏิเสธผ่านไลน์', hint: 'ส่งถึงแอดมินทุกคน เมื่อมีการกดปุ่มปฏิเสธในไลน์ — ใช้ {type} {item} {qty} {admin} ได้' },
+            { key: 'adminApprovedWeb', elPrefix: 'gMsgAdmApproveWeb', icon: '🖥️', label: 'แจ้งแอดมิน: อนุมัติผ่านหน้าเว็บ', hint: 'ส่งถึงแอดมินทุกคน เมื่ออนุมัติจากแดชบอร์ดเว็บ — ใช้ {type} {item} {qty} {admin} ได้' },
+            { key: 'adminRejectedWeb', elPrefix: 'gMsgAdmRejectWeb', icon: '🖥️', label: 'แจ้งแอดมิน: ปฏิเสธผ่านหน้าเว็บ', hint: 'ส่งถึงแอดมินทุกคน เมื่อปฏิเสธจากแดชบอร์ดเว็บ — ใช้ {type} {item} {qty} {admin} ได้' },
+        ];
+        // ตัวอย่างค่าไว้แสดงในพรีวิว (ไม่ใช่ค่าจริง แค่ให้เห็นภาพว่าตัวแปรจะถูกแทนที่ตรงไหน)
+        const BOT_MSG_PREVIEW_VARS = { item: 'สายพานลำเลียง B-12', qty: 2, unit: 'เส้น', type: 'เบิก', requester: 'สมชาย ใจดี', admin: 'คนสนั่นท์ เพ็ญพูล' };
+
+        function _applyBotMsgVars(text) {
+            let out = String(text || '');
+            Object.keys(BOT_MSG_PREVIEW_VARS).forEach(k => { out = out.split('{' + k + '}').join(String(BOT_MSG_PREVIEW_VARS[k])); });
+            return out;
+        }
+
+        function switchBotMsgTab(groupId) {
+            const ids = (window._botMsgTemplateCache.bots || []).map(b => b.id).concat(['global']);
+            ids.forEach(id => {
+                const pane = document.getElementById(`botMsgPane_${id}`);
+                const tab = document.getElementById(`botMsgTab_${id}`);
+                if (pane) pane.style.display = (id === groupId) ? 'block' : 'none';
+                if (tab) {
+                    tab.style.background = (id === groupId) ? '#f59e0b' : '#232838';
+                    tab.style.color = (id === groupId) ? '#000' : '#a0aec0';
+                }
+            });
+        }
+
+        function updateBotMsgPreview(groupId, fieldKey, elPrefix) {
+            const el = document.getElementById(`${elPrefix}_${groupId}`);
+            const previewEl = document.getElementById(`${elPrefix}_${groupId}_preview`);
+            const badgeEl = document.getElementById(`${elPrefix}_${groupId}_badge`);
+            if (!el || !previewEl) return;
+            const defaults = (window._botMsgTemplateCache && window._botMsgTemplateCache.defaults) || {};
+            const isCustom = !!el.value.trim();
+            const raw = el.value.trim() || defaults[fieldKey] || '';
+            previewEl.innerHTML = escapeHtml(_applyBotMsgVars(raw)).replace(/\n/g, '<br>') || '<span style="opacity:.4">(ไม่มีข้อความ)</span>';
+            if (badgeEl) {
+                badgeEl.innerHTML = isCustom
+                    ? '🟢 ข้อความจริงที่ใช้งานอยู่ตอนนี้ (ตั้งเอง)'
+                    : '⚪ ยังไม่ได้ตั้งเอง — ระบบใช้ข้อความเริ่มต้นอยู่ตอนนี้จริง (ตามพรีวิวด้านล่าง)';
+                badgeEl.style.color = isCustom ? '#4ade80' : '#9ca3af';
+            }
+        }
+
+        function resetBotMsgField(groupId, fieldKey, elPrefix) {
+            const el = document.getElementById(`${elPrefix}_${groupId}`);
+            if (!el) return;
+            el.value = '';
+            updateBotMsgPreview(groupId, fieldKey, elPrefix);
+        }
+
+        // ใช้ render field-block เดียวกันทั้งกลุ่ม "แยกตามบอท" และกลุ่ม "แจ้งเตือนอนุมัติ/ปฏิเสธ" (ไม่แยกโค้ดซ้ำ)
+        function _renderMsgFieldBlock(groupId, f, currentVal, defaults) {
+            currentVal = currentVal || '';
+            const isCustom = !!currentVal.trim();
+            const previewText = escapeHtml(_applyBotMsgVars(currentVal.trim() || defaults[f.key] || ''));
+            const badgeText = isCustom
+                ? '🟢 ข้อความจริงที่ใช้งานอยู่ตอนนี้ (ตั้งเอง)'
+                : '⚪ ยังไม่ได้ตั้งเอง — ระบบใช้ข้อความเริ่มต้นอยู่ตอนนี้จริง (ตามพรีวิวด้านล่าง)';
+            const badgeColor = isCustom ? '#4ade80' : '#9ca3af';
+            const idBase = `${f.elPrefix}_${groupId}`;
+            const gArg = typeof groupId === 'string' ? `'${groupId}'` : groupId;
+            return `
+                <div class="form-group" style="margin-bottom:16px;padding:14px;border-radius:12px;background:#1c2130;border:1px solid #2a2f3d">
+                    <div class="d-flex justify-content-between align-items-start mb-1" style="gap:8px">
+                        <label style="margin-bottom:0"><span style="margin-right:4px">${f.icon}</span>${f.label}</label>
+                        <button type="button" onclick="resetBotMsgField(${gArg}, '${f.key}', '${f.elPrefix}')"
+                            style="background:none;border:none;color:#6b7280;font-size:.72rem;white-space:nowrap;cursor:pointer;text-decoration:underline">
+                            ใช้ค่าเริ่มต้น
+                        </button>
+                    </div>
+                    <div style="font-size:.7rem;color:rgba(255,255,255,.4);margin-bottom:6px">${f.hint}</div>
+                    <div id="${idBase}_badge" style="font-size:.72rem;font-weight:600;margin-bottom:8px;color:${badgeColor}">${badgeText}</div>
+                    <textarea class="input-field" rows="3" id="${idBase}"
+                        placeholder="${escapeHtml(defaults[f.key] || '')}"
+                        oninput="updateBotMsgPreview(${gArg}, '${f.key}', '${f.elPrefix}')">${escapeHtml(currentVal)}</textarea>
+                    <div style="margin-top:8px;font-size:.72rem;color:rgba(255,255,255,.35)">ตัวอย่างที่จะถูกส่งจริง:</div>
+                    <div style="margin-top:4px;padding:10px 12px;border-radius:14px 14px 14px 4px;background:#06c755;color:#fff;font-size:.82rem;line-height:1.5;max-width:85%;white-space:pre-wrap"
+                        id="${idBase}_preview">${previewText.replace(/\n/g, '<br>') || '<span style="opacity:.6">(ไม่มีข้อความ)</span>'}</div>
+                </div>`;
+        }
+
+        function renderBotMsgTemplateCards() {
+            const wrap = document.getElementById('botMsgTemplateFormsWrap');
+            if (!wrap || !window._botMsgTemplateCache) return;
+            const bots = window._botMsgTemplateCache.bots || [];
+            const defaults = window._botMsgTemplateCache.defaults || {};
+            const globalData = window._botMsgTemplateCache.global || {};
+
+            const groups = bots.map(b => ({ id: b.id, tabLabel: `💬 ไลน์${escapeHtml(b.label)}`, fields: BOT_MSG_FIELDS, data: b }))
+                .concat([{ id: 'global', tabLabel: '🔔 แจ้งเตือนอนุมัติ/ปฏิเสธ', fields: GLOBAL_MSG_FIELDS, data: globalData }]);
+
+            const tabsHtml = groups.map((g, idx) => `
+                <button type="button" id="botMsgTab_${g.id}" onclick="switchBotMsgTab(${typeof g.id === 'string' ? `'${g.id}'` : g.id})"
+                    style="flex:1;min-width:110px;padding:10px 6px;border:none;border-radius:10px;font-weight:700;font-size:.78rem;cursor:pointer;transition:.15s;
+                    background:${idx === 0 ? '#f59e0b' : '#232838'};color:${idx === 0 ? '#000' : '#a0aec0'}">
+                    ${g.tabLabel}
+                </button>`).join('');
+
+            const panesHtml = groups.map((g, idx) => `
+                <div id="botMsgPane_${g.id}" style="display:${idx === 0 ? 'block' : 'none'}">
+                    ${g.fields.map(f => _renderMsgFieldBlock(g.id, f, g.data[f.key], defaults)).join('')}
+                </div>`).join('');
+
+            wrap.innerHTML = `
+                <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">${tabsHtml}</div>
+                ${panesHtml}
+            `;
+        }
+
+        function loadBotMsgTemplateForms(silent) {
+            const wrap = document.getElementById('botMsgTemplateFormsWrap');
+            if (!wrap) return;
+
+            const fetchAndRender = (pw) => {
+                const handleOk = (res) => {
+                    if (!res || !res.success) { wrap.innerHTML = `<div class="text-danger small py-2">${escapeHtml((res && res.error) || 'โหลดไม่สำเร็จ')}</div>`; return; }
+                    window._botMsgTemplateCache = res;
+                    renderBotMsgTemplateCards();
+                };
+                const handleFail = (err) => { wrap.innerHTML = `<div class="text-danger small py-2">${escapeHtml(String(err))}</div>`; };
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webGetBotMessageTemplates(currentUserProfile.uid, pw);
+                } else {
+                    callGAS('webGetBotMessageTemplates', [currentUserProfile.uid, pw], handleOk, handleFail);
+                }
+            };
+
+            const _cachedPw3 = window.getCachedDashboardPassword();
+            if (_cachedPw3) { fetchAndRender(_cachedPw3); return; }
+            if (silent) return;
+
+            Swal.fire({
+                title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อดูข้อความตอบกลับของแต่ละบอท',
+                input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
+                showCancelButton: true, confirmButtonText: 'ตกลง', cancelButtonText: 'ยกเลิก',
+                background: '#1a2230', color: '#e0e0e0'
+            }).then(result => {
+                if (!result.isConfirmed || !result.value) { wrap.innerHTML = '<div class="text-center py-3 text-muted small">ยกเลิกแล้ว — กดรีเฟรชหน้าเพื่อลองใหม่</div>'; return; }
+                window.setCachedDashboardPassword(result.value);
+                fetchAndRender(result.value);
+            });
+        }
+
+        function submitBotMsgTemplateSettings() {
+            const bots = window._botMsgTemplateCache && window._botMsgTemplateCache.bots ? window._botMsgTemplateCache.bots : [{ id: 1 }, { id: 2 }, { id: 3 }];
+            const groups = bots.map(b => ({ id: b.id, fields: BOT_MSG_FIELDS }))
+                .concat([{ id: 'global', fields: GLOBAL_MSG_FIELDS }]);
+
+            const doSaveOne = (pw, idx, doneCb) => {
+                if (idx >= groups.length) { doneCb(); return; }
+                const g = groups[idx];
+                const firstEl = document.getElementById(`${g.fields[0].elPrefix}_${g.id}`);
+                if (!firstEl) { doSaveOne(pw, idx + 1, doneCb); return; } // ยังไม่ได้โหลดฟอร์มของกลุ่มนี้ (แท็บยังไม่เคยถูกเปิด) ข้ามไป
+                const templates = {};
+                g.fields.forEach(f => {
+                    const el = document.getElementById(`${f.elPrefix}_${g.id}`);
+                    templates[f.key] = el ? el.value.trim() : '';
+                });
+                const handleOk = () => doSaveOne(pw, idx + 1, doneCb);
+                const handleFail = (err) => { Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: String(err), background: '#1a2230', color: '#e0e0e0' }); };
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.withSuccessHandler(handleOk).withFailureHandler(handleFail).webSaveBotMessageTemplates(currentUserProfile.uid, pw, g.id, templates);
+                } else {
+                    callGAS('webSaveBotMessageTemplates', [currentUserProfile.uid, pw, g.id, templates], handleOk, handleFail);
+                }
+            };
+
+            const doSave = (pw) => {
+                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
+                doSaveOne(pw, 0, () => {
+                    window.setCachedDashboardPassword(pw);
+                    Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: 'บันทึกข้อความตอบกลับของทุกบอทเรียบร้อยแล้ว', timer: 2500, showConfirmButton: false, background: '#1a2230', color: '#e0e0e0' });
+                    loadBotMsgTemplateForms(true);
+                });
+            };
+            const _cachedPw4 = window.getCachedDashboardPassword();
+            if (_cachedPw4) { doSave(_cachedPw4); return; }
+            Swal.fire({
+                title: 'ยืนยันตัวตน', text: 'กรอกรหัสผ่าน Dashboard เพื่อบันทึกข้อความตอบกลับ',
                 input: 'password', inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
                 showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก',
                 background: '#1a2230', color: '#e0e0e0'
