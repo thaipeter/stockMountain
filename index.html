@@ -6397,7 +6397,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         function loadLineQuotaStatus(forceRefresh) {
             const handleOk = (res) => {
                 window._lineQuotaCache = (res && res.success) ? res.bots : null;
-                if (!window._lineChannelDataCache) { loadLineChannelForms(); return; } // ยังไม่เคยโหลดฟอร์ม (ยังไม่ได้กรอกรหัสผ่าน) — เปิด prompt ให้กรอกก่อน
+                // ★ แก้บั๊ก: เดิมเรียก loadLineChannelForms() ตรงๆ (ไม่ใส่ silent) ทำให้ถ้ายังไม่เคย
+                // กรอกรหัสผ่าน Dashboard มาก่อนในเซสชันนี้ ป๊อปอัพ "ยืนยันตัวตน" จะเด้งขึ้นมาเอง
+                // ตั้งแต่หน้าโหลดเสร็จ (มาจาก auto-check โควตาครั้งเดียวต่อ session ที่ทำงานเงียบๆ
+                // อยู่เบื้องหลัง ไม่ใช่การกระทำที่ผู้ใช้ตั้งใจกดเข้าไปเอง) — เปลี่ยนเป็นโหมด silent
+                // แทน: ถ้ามีรหัสผ่านแคชไว้อยู่แล้วก็โหลดการ์ดให้เลย แต่ถ้าไม่มีก็แค่ข้ามไปเงียบๆ
+                // รอให้ผู้ใช้กด "ยืนยันตัวตน / แก้ไข" เองค่อยถามรหัสผ่าน
+                if (!window._lineChannelDataCache) { loadLineChannelForms(true); return; }
                 renderLineChannelCards(); // อัปเดตโควตาในการ์ดที่แสดงอยู่
             };
             if (typeof google !== 'undefined' && google.script && google.script.run) {
