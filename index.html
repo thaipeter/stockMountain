@@ -3027,6 +3027,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <ul class="nav nav-tabs px-4 pt-3 border-bottom-0" style="background:transparent!important;" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabHistoryTx" type="button"><i class="fas fa-list-alt text-primary me-1"></i> ประวัติเข้า-ออก/ยืม/ซ่อม</button></li>
                             <li class="nav-item admin-only-element"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAuditLog" type="button" onclick="loadAuditFromServer(true)"><i class="fas fa-shield-alt text-danger me-1"></i> System Audit Log</button></li>
+                            <li class="nav-item admin-only-element"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAuditArchive" type="button" onclick="loadAuditArchiveFromServer()"><i class="fas fa-archive text-secondary me-1"></i> คลัง Log ย้อนหลัง</button></li>
                         </ul>
                         <div class="tab-content border-top">
                             <div class="tab-pane fade show active p-4" id="tabHistoryTx">
@@ -3049,7 +3050,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         <small class="text-muted">บันทึกทุกกิจกรรมในระบบ — ล็อกอิน, เพิ่ม/แก้ไขข้อมูล, เปลี่ยนสิทธิ์, ตั้งค่า</small>
                                     </div>
                                     <div class="d-flex gap-2">
-                                        <button class="btn btn-outline-danger btn-sm shadow-sm fw-bold bg-white admin-only-element" onclick="clearAuditLog()"><i class="fas fa-trash-alt me-1"></i> ล้าง Log</button>
+                                        <button class="btn btn-outline-danger btn-sm shadow-sm fw-bold bg-white admin-only-element" onclick="clearAuditLog()"><i class="fas fa-archive me-1"></i> เก็บเข้าคลัง (ล้างหน้าหลัก)</button>
                                         <button class="btn btn-outline-success btn-sm shadow-sm fw-bold bg-white" onclick="exportAuditLog()"><i class="fas fa-file-excel me-1"></i> Export</button>
                                     </div>
                                 </div>
@@ -3085,6 +3086,26 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div id="auditLogCardList" style="display:flex;flex-direction:column;gap:8px;max-height:600px;overflow-y:auto"></div>
                                 <div class="text-muted small mt-3 text-center">
                                     <i class="fas fa-info-circle me-1"></i> แสดง <span id="auditShownCount">0</span> รายการ จากทั้งหมด <span id="auditTotalShown">0</span> รายการ (เก็บสูงสุด 500 รายการล่าสุดต่ออุปกรณ์)
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade p-4" id="tabAuditArchive">
+                                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                                    <div>
+                                        <h5 class="fw-bold mb-1"><i class="fas fa-archive text-secondary me-2"></i>คลัง Log ย้อนหลัง (Archive)</h5>
+                                        <small class="text-muted">รายการที่ถูกย้ายออกจาก System Audit Log ด้านบน — ไม่ว่าจะจากการที่ Log เต็ม (เกิน 2,000 รายการ) หรือจากการกด "ล้าง Log" — จะถูกเก็บไว้ที่นี่แทนการลบทิ้งถาวร เพื่อให้ยังใช้เป็นหลักฐานย้อนหลังได้เสมอ</small>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-primary btn-sm shadow-sm fw-bold bg-white" onclick="loadAuditArchiveFromServer()"><i class="fas fa-sync-alt me-1"></i> รีเฟรช</button>
+                                        <button class="btn btn-outline-success btn-sm shadow-sm fw-bold bg-white" onclick="exportAuditArchive()"><i class="fas fa-file-excel me-1"></i> Export</button>
+                                    </div>
+                                </div>
+                                <div class="filter-group bg-light p-3 rounded-3 mb-4 shadow-sm border-0 d-flex flex-wrap gap-3">
+                                    <div class="search-box flex-grow-1"><i class="fas fa-search text-secondary"></i><input type="text" class="form-control border-0 shadow-sm" id="auditArchiveSearch" placeholder="ค้นหาชื่อผู้ใช้, รายละเอียดกิจกรรม..." onkeyup="filterAuditArchive()"></div>
+                                </div>
+                                <div id="auditArchiveCardList" style="display:flex;flex-direction:column;gap:8px;max-height:600px;overflow-y:auto"></div>
+                                <div class="text-muted small mt-3 text-center">
+                                    <i class="fas fa-info-circle me-1"></i> แสดง <span id="auditArchiveShownCount">0</span> รายการ จากทั้งหมด <span id="auditArchiveTotalShown">0</span> รายการ (เฉพาะ Admin เท่านั้นที่ดูได้)
                                 </div>
                             </div>
 
@@ -12272,8 +12293,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         function clearAuditLog() {
             if (currentUserProfile.role !== 'admin') return Swal.fire({icon:'error', title:'ปฏิเสธ', text:'เฉพาะ Admin เท่านั้น'});
             Swal.fire({
-                title: 'ล้าง Audit Log?',
-                text: 'บันทึกกิจกรรมทั้งหมดจะถูกลบออกจาก Google Sheet ไม่สามารถย้อนกลับได้ กรุณากรอกรหัสผ่าน Dashboard เพื่อยืนยัน',
+                title: 'เก็บ Audit Log เข้าคลัง?',
+                text: 'รายการทั้งหมดในหน้า System Audit Log จะถูกย้ายไปเก็บที่ "คลัง Log ย้อนหลัง" แทน (ไม่ได้ลบทิ้งถาวร ยังตรวจสอบย้อนหลังได้) หน้าหลักจะว่างเพื่อเริ่มบันทึกใหม่ กรุณากรอกรหัสผ่าน Dashboard เพื่อยืนยัน',
                 icon: 'warning',
                 input: 'password',
                 inputPlaceholder: 'กรอกรหัสผ่าน Dashboard',
@@ -12292,7 +12313,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         if (res && !res.success) return Swal.fire({icon:'error', title:'ข้อผิดพลาด', text: res.error});
                         _auditCache = [];
                         loadAuditFromServer(true);
-                        Swal.fire({ icon:'success', title:'ล้างแล้ว', timer:1500, showConfirmButton:false });
+                        Swal.fire({ icon:'success', title:'เก็บเข้าคลังแล้ว', text:'ดูรายการเดิมได้ที่แท็บ "คลัง Log ย้อนหลัง"', timer:2000, showConfirmButton:false });
                     };
                     const handleClearFailure = function(err) {
                         document.getElementById('loading').style.display = 'none';
@@ -12330,7 +12351,120 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'AuditLog');
             XLSX.writeFile(wb, `System_AuditLog_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
-    
+
+        /* ============================================================
+           AUDIT LOG ARCHIVE (คลัง Log ย้อนหลัง)
+           รายการที่ถูกย้ายออกจาก AuditLog หลัก (ตัดเกิน 2000 แถว หรือ
+           กด "เก็บเข้าคลัง") จะยังคงอยู่ที่นี่ — เฉพาะ Admin ดูได้
+        ============================================================ */
+        let _auditArchiveCache = [];
+
+        function loadAuditArchiveFromServer() {
+            const cardListLoading = document.getElementById('auditArchiveCardList');
+            if (cardListLoading) {
+                cardListLoading.innerHTML = `<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>กำลังโหลดคลัง Log...</div>`;
+            }
+
+            const handleSuccess = function(res) {
+                if (res && res.success) {
+                    _auditArchiveCache = res.logs || [];
+                } else {
+                    _auditArchiveCache = [];
+                    if (res && res.error) {
+                        Swal.fire({icon:'error', title:'ไม่สามารถโหลดคลัง Log ได้', text: res.error});
+                    }
+                }
+                filterAuditArchive();
+            };
+            const handleFailure = function(err) {
+                console.warn('Audit archive load error:', err);
+                _auditArchiveCache = [];
+                filterAuditArchive();
+            };
+
+            if (typeof google !== 'undefined' && google.script && google.script.run && google.script.run.webGetAuditArchive) {
+                google.script.run
+                    .withSuccessHandler(handleSuccess)
+                    .withFailureHandler(handleFailure)
+                    .webGetAuditArchive(currentUserProfile.uid, 1000);
+            } else if (typeof webPost === 'function') {
+                webPost('webGetAuditArchive', [currentUserProfile.uid, 1000])
+                    .then(handleSuccess)
+                    .catch(handleFailure);
+            } else {
+                filterAuditArchive();
+            }
+        }
+
+        function renderAuditArchive(logs) {
+            const cardList = document.getElementById('auditArchiveCardList');
+            if (!cardList) return;
+            cardList.innerHTML = '';
+            if (!logs || logs.length === 0) {
+                cardList.innerHTML = `<div class="text-center py-5 text-muted">
+                    <i class="fas fa-archive fs-3 d-block mb-2 opacity-25"></i>
+                    ยังไม่มีรายการในคลัง Log ย้อนหลัง<br>
+                    <small>รายการจะถูกย้ายมาที่นี่เมื่อ Log หลักเต็ม หรือเมื่อมีการกด "เก็บเข้าคลัง"</small>
+                </div>`;
+                return;
+            }
+            logs.forEach(log => {
+                const meta = AUDIT_TYPE_META[log.type] || { label: log.type, badge: 'bg-secondary bg-opacity-10 text-secondary', icon: 'fa-circle' };
+                const isSuccess = log.status === 'SUCCESS';
+                const statusColor = isSuccess ? '#22c55e' : '#ef4444';
+                const statusBg = isSuccess ? '#1e3a2f' : '#3a1e1e';
+                const statusLabel = isSuccess ? 'สำเร็จ' : 'ล้มเหลว';
+                const card = document.createElement('div');
+                card.className = 'p-3 rounded-3 shadow-sm';
+                card.style.cssText = 'background:#1a1a1a;border:1px solid #2a2a2a';
+                card.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="${meta.badge}" style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px"><i class="fas ${meta.icon} me-1"></i>${meta.label}</span>
+                            <span style="color:#9ca3af;font-size:11px"><i class="fas fa-clock me-1"></i>${escapeHtml(log.time)}</span>
+                        </div>
+                        <span style="background:${statusBg};color:${statusColor};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">${statusLabel}</span>
+                    </div>
+                    <p style="color:#e0e0e0;font-size:13px;margin:0 0 8px">${escapeHtml(log.detail)}</p>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size:11px;color:#6b7280">
+                        <span><i class="fas fa-user-circle me-1"></i>${escapeHtml(log.user)}</span>
+                        <span><i class="fas fa-archive me-1"></i>เก็บเข้าคลังเมื่อ ${escapeHtml(log.archivedAt || '-')}</span>
+                    </div>`;
+                cardList.appendChild(card);
+            });
+        }
+
+        function filterAuditArchive() {
+            const searchText = (document.getElementById('auditArchiveSearch')?.value || '').toLowerCase().trim();
+            const all = _auditArchiveCache;
+            const filtered = !searchText ? all : all.filter(log => {
+                const hay = `${log.user} ${log.detail} ${log.type} ${log.role}`.toLowerCase();
+                return hay.includes(searchText);
+            });
+            renderAuditArchive(filtered);
+            const shown = document.getElementById('auditArchiveShownCount'); if(shown) shown.innerText = filtered.length;
+            const tot   = document.getElementById('auditArchiveTotalShown'); if(tot)   tot.innerText   = all.length;
+        }
+
+        function exportAuditArchive() {
+            const all = _auditArchiveCache;
+            if (!all.length) return Swal.fire({ icon:'warning', title:'ไม่มีข้อมูล', text:'ยังไม่มีรายการในคลัง Log ย้อนหลัง' });
+            const rows = all.map(l => ({
+                'วันเวลา':          l.time,
+                'ประเภท':           (AUDIT_TYPE_META[l.type]||{label:l.type}).label,
+                'ผู้ดำเนินการ':     l.user,
+                'UID':              l.userId,
+                'สิทธิ์':           l.role,
+                'รายละเอียด':       l.detail,
+                'Device':           l.device || 'Web',
+                'สถานะ':            l.status,
+                'เก็บเข้าคลังเมื่อ': l.archivedAt
+            }));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'AuditLog_Archive');
+            XLSX.writeFile(wb, `System_AuditLog_Archive_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
         /* ══════════════════════════════════
            NOTES SYSTEM — เก็บใน Google Sheet
         ══════════════════════════════════ */
