@@ -1719,9 +1719,11 @@ function doLogin() {
   const btn = document.getElementById('loginBtn');
   btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...';
 
-  callGAS('webVerifyUserPin', [uid, pin], isValid => {
+  callGAS('webQrLoginCheck', [uid, pin], res => {
     btn.textContent = 'เข้าสู่ระบบ';
+    const isValid = res && res.valid;
     if (isValid) {
+      if (res.token) setSessionToken(res.token);
       failedAttemptsMap[uid] = 0;
       loginSuccess(uid);
     }
@@ -3482,6 +3484,13 @@ document.addEventListener('DOMContentLoaded', () => { _renderOfflineBanner(); if
 
 // เรียกใช้แทน callGAS ตรงๆ เฉพาะจุดที่เป็นการ "ส่งคำขอ/ยืนยันรายการ" ที่ห้ามให้ข้อมูลหายตอนเน็ตหลุด
 // ถ้าออนไลน์อยู่ ทำงานเหมือน callGAS ทุกประการ ถ้าออฟไลน์ จะเก็บลงคิวแทนการยิง error ทันที
+// ★ เพิ่ม: เก็บ session token ที่ได้ตอนล็อกอิน (ดู webQrLoginCheck ฝั่ง backend) ไว้แนบไปกับทุกคำขอ
+// ที่ยิงผ่าน fetch (ช่องทาง 2 ด้านล่าง) — backend เพิ่งเพิ่มระบบตรวจ token นี้เข้ามา ถ้าไม่แนบไปด้วย
+// ทุกฟังก์ชันที่ไม่ได้อยู่ใน PUBLIC_FNS (เช่น webBatchTransaction ตอนกดส่งคำขอ) จะโดนปฏิเสธด้วย
+// "เซสชันหมดอายุหรือไม่ถูกต้อง" เสมอ ไม่ว่าจะล็อกอินถูกแค่ไหนก็ตาม
+function getSessionToken() { try { return localStorage.getItem('qr_sess_token') || ''; } catch (e) { return ''; } }
+function setSessionToken(t) { try { if (t) localStorage.setItem('qr_sess_token', t); } catch (e) {} }
+
 function callGASQueued(fn, args, onOk, onFail) {
   if (!navigator.onLine) {
     const queued = _offlineQueueRead();
@@ -3525,7 +3534,7 @@ function callGAS(fn, args, onOk, onFail) {
     }, 55000);
     fetch(GAS_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ fn, args: args || [] }), signal: controller.signal
+      body: JSON.stringify({ fn, args: args || [], token: getSessionToken() }), signal: controller.signal
     })
     .then(r => r.json())
     .then(res => {
