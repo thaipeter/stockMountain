@@ -1928,6 +1928,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         </div>
                         <!-- Filter -->
                         <div class="d-flex flex-column gap-2 align-items-end" style="flex-shrink:0">
+                            <button type="button" id="rhPrintAllBtn" class="btn btn-sm fw-bold admin-only-element" style="background:#232838;color:#e0e0e0;border:1px solid #2a2f3d;border-radius:8px;white-space:nowrap" onclick="printAllReceiptsForItem()" title="พิมพ์ใบเบิกทั้งหมดของสินค้านี้ (เฉพาะ Admin)"><i class="fas fa-file-invoice me-1"></i> ทั้งหมด</button>
                             <select id="rhTypeFilter" class="form-select form-select-sm" style="background:transparent;color:#e0e0e0;border:1px solid #2a2f3d;border-radius:8px;min-width:140px" onchange="renderItemHistory()">
                                 <option value="">📋 ทั้งหมด</option>
                                 <option value="in">📥 รับเข้า</option>
@@ -8578,6 +8579,37 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const modal = document.getElementById('receiveHistoryModal');
             modal._rhVisibleCount = (modal._rhVisibleCount || RH_PAGE_SIZE) + RH_PAGE_SIZE;
             _rhRenderTimeline();
+        }
+
+        // 🆕 พิมพ์ใบเบิกทั้งหมดของสินค้าที่กำลังดูประวัติอยู่ (เฉพาะ Admin)
+        // พาไปหน้า "พิมพ์ใบเบิก (หลักฐาน)" ที่มีอยู่แล้ว พร้อมกรองเฉพาะรหัสสินค้านี้และติ๊กเลือกให้ครบทุกแถวอัตโนมัติ
+        function printAllReceiptsForItem() {
+            if (currentUserProfile.role !== 'admin') {
+                Swal.fire({ icon: 'warning', title: 'เฉพาะ Admin เท่านั้น', text: 'ฟีเจอร์นี้ใช้ได้เฉพาะผู้ดูแลระบบ', timer: 2000, showConfirmButton: false });
+                return;
+            }
+            const modal = document.getElementById('receiveHistoryModal');
+            const itemCode = modal && modal._itemCode;
+            if (!itemCode) return;
+
+            const historyModalInstance = bootstrap.Modal.getInstance(modal);
+            if (historyModalInstance) historyModalInstance.hide();
+
+            goTo('receiptPrint');
+
+            // ตั้งค่าตัวกรองของหน้าพิมพ์ใบเบิก ให้เหลือเฉพาะรหัสสินค้านี้ (ล้างตัวกรองอื่นๆ ก่อน)
+            const typeFilterEl = document.getElementById('rcpTypeFilter');
+            const searchEl = document.getElementById('rcpSearch');
+            const startDateEl = document.getElementById('rcpStartDate');
+            const endDateEl = document.getElementById('rcpEndDate');
+            if (typeFilterEl) typeFilterEl.value = '';
+            if (searchEl) searchEl.value = itemCode;
+            if (startDateEl) startDateEl.value = '';
+            if (endDateEl) endDateEl.value = '';
+
+            rcpSelectedKeys = new Set();
+            filterReceiptPrintTable();
+            toggleSelectAllReceipts(true); // เลือกทุกแถวที่กรองได้ (คือทุกใบเบิก/ยืมของสินค้านี้) ให้อัตโนมัติ
         }
         function filterUsersTable() {
             try {
