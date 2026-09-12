@@ -8595,21 +8595,72 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const historyModalInstance = bootstrap.Modal.getInstance(modal);
             if (historyModalInstance) historyModalInstance.hide();
 
+            // ★ allData.history ที่หน้าพิมพ์ใบเบิกใช้กรอง มีแค่ 500 รายการล่าสุด (ไม่รวมเดือนที่ถูกปิด/Archive ไปแล้ว)
+            // ต้องดึงประวัติแบบเต็มของสินค้านี้ก่อน (เหมือนที่ป๊อปอัพประวัติทำ) แล้ว "รวม" เข้ากับ allData.history
+            // (ไม่ทับของเดิม แค่เติมรายการที่ขาดหายไปเข้าไป) ก่อนค่อยไปกรองในหน้าพิมพ์ใบเบิกตามปกติ
             goTo('receiptPrint');
+            _rcpPrepareFullHistoryThenFilter(itemCode);
+        }
 
-            // ตั้งค่าตัวกรองของหน้าพิมพ์ใบเบิก ให้เหลือเฉพาะรหัสสินค้านี้ (ล้างตัวกรองอื่นๆ ก่อน)
-            const typeFilterEl = document.getElementById('rcpTypeFilter');
+        function _rcpRowUniqueKey(log) {
+            return [String(log.code || '').trim(), String(log.time || '').trim(), String(log.user || '').trim(), String(log.amount || '').trim(), String(log.action || '').trim()].join('|||');
+        }
+
+        function _rcpPrepareFullHistoryThenFilter(itemCode) {
             const searchEl = document.getElementById('rcpSearch');
+            const typeFilterEl = document.getElementById('rcpTypeFilter');
             const startDateEl = document.getElementById('rcpStartDate');
             const endDateEl = document.getElementById('rcpEndDate');
             if (typeFilterEl) typeFilterEl.value = '';
             if (searchEl) searchEl.value = itemCode;
             if (startDateEl) startDateEl.value = '';
             if (endDateEl) endDateEl.value = '';
-
             rcpSelectedKeys = new Set();
-            filterReceiptPrintTable();
-            toggleSelectAllReceipts(true); // เลือกทุกแถวที่กรองได้ (คือทุกใบเบิก/ยืมของสินค้านี้) ให้อัตโนมัติ
+
+            const tbody = document.querySelector('#receiptPrintTable tbody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm mb-2" style="color:#f59e0b"></div><div>กำลังดึงประวัติทั้งหมดของสินค้านี้ (รวมข้อมูลที่ Archive ไว้)...</div></td></tr>';
+
+            const finishWithCurrentCache = function(errMsg) {
+                filterReceiptPrintTable();
+                toggleSelectAllReceipts(true);
+                if (errMsg) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'ดึงประวัติเต็มไม่สำเร็จ',
+                        html: 'แสดงได้แค่ข้อมูลที่มีอยู่แล้วในเครื่อง (อาจไม่ครบทุกเดือน)<br><small class="text-muted">' + escapeHtml(String(errMsg)) + '</small>',
+                        confirmButtonText: 'รับทราบ'
+                    });
+                }
+            };
+
+            try {
+                if (typeof google === 'undefined' || !google.script || !google.script.run) { finishWithCurrentCache('ไม่พบการเชื่อมต่อ backend (google.script.run ไม่ถูกตั้งค่า)'); return; }
+                google.script.run
+                    .withSuccessHandler(function(res) {
+                        if (res && res.success && Array.isArray(res.history)) {
+                            if (!Array.isArray(allData.history)) allData.history = [];
+                            const existingKeys = new Set((allData.history || []).map(_rcpRowUniqueKey));
+                            res.history.forEach(function(h) {
+                                const key = _rcpRowUniqueKey(h);
+                                if (!existingKeys.has(key)) {
+                                    existingKeys.add(key);
+                                    allData.history.push(h);
+                                }
+                            });
+                            finishWithCurrentCache();
+                        } else {
+                            finishWithCurrentCache((res && res.error) ? res.error : 'เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง');
+                        }
+                    })
+                    .withFailureHandler(function(err) {
+                        console.warn('_rcpPrepareFullHistoryThenFilter error:', err);
+                        finishWithCurrentCache(err);
+                    })
+                    .webGetFullItemHistory(itemCode);
+            } catch (e) {
+                console.warn('_rcpPrepareFullHistoryThenFilter error:', e);
+                finishWithCurrentCache(e && e.message ? e.message : e);
+            }
         }
         function filterUsersTable() {
             try {
