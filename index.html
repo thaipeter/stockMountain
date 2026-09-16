@@ -4617,12 +4617,35 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             
             function callGAS(fn, args, onOk, onFail, timeoutMs, _attempt) {
                 _attempt = _attempt || 1;
-                const MAX_ATTEMPTS = 3; // ★ เพิ่ม: ลองใหม่อัตโนมัติสูงสุด 3 ครั้ง เผื่อ Apps Script ส่งผลลัพธ์กลับมาไม่สำเร็จ
+                // ★★ สำคัญมาก: ลองใหม่อัตโนมัติได้ "เฉพาะคำสั่งอ่านข้อมูล" เท่านั้น ★★
                 // (ปัญหาที่รู้จักกันของ Web App บน Apps Script: บางครั้ง server ทำงานเสร็จสมบูรณ์จริง แต่ขั้นตอน
                 // ส่งผลลัพธ์กลับผ่าน redirect ของ Google หลุดกลางทาง ทำให้ฝั่งเบราว์เซอร์เห็นเป็น network error/timeout
-                // ทั้งที่ execution log ฝั่ง Apps Script ขึ้นว่า "เสร็จสมบูรณ์" ทุกครั้ง — การลองซ้ำอัตโนมัติแก้ปัญหานี้ได้
-                // โดยไม่ต้องให้ผู้ใช้กด refresh เองซ้ำๆ) — จะลองใหม่เฉพาะตอน "เชื่อมต่อ/รับคำตอบไม่สำเร็จ" เท่านั้น
-                // ไม่ลองใหม่ถ้า server ตอบกลับมาแล้วว่า success:false (เป็น error ทางตรรกะ เช่น รหัสผ่านผิด ไม่ใช่ปัญหาเชื่อมต่อ)
+                // ทั้งที่ execution log ฝั่ง Apps Script ขึ้นว่า "เสร็จสมบูรณ์" ทุกครั้ง)
+                //
+                // 🐛 บั๊กร้ายแรงที่เคยเกิด: เดิมโค้ดนี้ลองซ้ำ "ทุกฟังก์ชัน" รวมถึงคำสั่งที่เขียนข้อมูลด้วย
+                // เช่น webAddPendingPO (บันทึก PO) — พอ server บันทึกสำเร็จแล้วแต่ผลลัพธ์ส่งกลับไม่ถึงเบราว์เซอร์
+                // โค้ดเข้าใจผิดว่าล้มเหลว แล้วยิงซ้ำอีก → บันทึกซ้ำอีกรอบ → ครบ 3 ครั้งได้ข้อมูลซ้ำ 3 แถว
+                // (ผู้ใช้กดบันทึก PO ครั้งเดียว แต่ได้ PO ซ้ำ 3 รายการในระบบ)
+                //
+                // แก้โดย: อนุญาตให้ลองซ้ำเฉพาะฟังก์ชันที่ "อ่านอย่างเดียว" (idempotent — เรียกซ้ำกี่ครั้งก็ไม่เปลี่ยน
+                // ข้อมูลในระบบ) ส่วนคำสั่งที่เขียน/แก้/ลบข้อมูลทั้งหมด จะไม่ลองซ้ำเด็ดขาด ถ้าล้มเหลวให้แจ้ง error
+                // ให้ผู้ใช้ตัดสินใจกดเองว่าจะลองใหม่ไหม (ปลอดภัยกว่าการเสี่ยงบันทึกซ้ำโดยที่ผู้ใช้ไม่รู้ตัว)
+                const READ_ONLY_FNS = [
+                    'getInventoryData', 'webGetStockLevels', 'getLoginUsers', 'webGetNotes',
+                    'getUserHistory', 'webGetNextCode', 'webGetStockTakeProgress', 'webGetStockTakeReport',
+                    'webGetStockTakeDiffs', 'webGetItemRecentWithdraws', 'webGetMyRetroWithdraws',
+                    'webGetMyPendingRetroWithdraws', 'webGetPendingWebRequests', 'webGetMyPendingRequests',
+                    'webGetPendingRequests', 'webGetPendingApprovals', 'getPendingWebRequests',
+                    'getPendingRequests', 'getPendingApprovals', 'webGetMyRecentDecisions',
+                    'webGetPrintLogs', 'webGetReceiptData', 'webGetReceiptDataBatch',
+                    'webGetArchiveList', 'webListBackupFiles', 'webHasDashboardPassword',
+                    'webGetLineChannelSettings', 'webGetBotMessageTemplates', 'webGetLineQuotaStatus',
+                    'webGetAIProviderSettings', 'webGetActiveAIProviderLabel', 'webGetFullItemHistory',
+                    'webGetDriveStorageInfo', 'webGetSystemHealth', 'webGetAuditLogs', 'webGetAuditArchive',
+                    'webGetBackupData', 'webGetBackupSheetList', 'webGetBackupSheetData',
+                    'webGetQRPending', 'webCheckRegStatus'
+                ];
+                const MAX_ATTEMPTS = READ_ONLY_FNS.indexOf(fn) !== -1 ? 3 : 1; // เขียนข้อมูล = ยิงครั้งเดียว ห้ามซ้ำ
                 if (window.GAS_URL) {
                     const controller = new AbortController();
                     // ★ แก้บั๊ก: เดิม timeout ตายตัว 30 วิ สำหรับทุกฟังก์ชัน รวมถึง webAskAiAssistant (AI Command
@@ -9058,12 +9081,29 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }
         }
 
+        let _isSavingPO = false; // ★ กันกดบันทึกซ้ำระหว่างที่คำขอก่อนหน้ายังไม่เสร็จ (ตัวการทำให้ PO ซ้ำหลายรายการ)
+
         function sendPOData(poData) {
+            if (_isSavingPO) return; // กำลังบันทึกอยู่ ไม่รับคำสั่งซ้ำ
+            _isSavingPO = true;
             document.getElementById('loading').style.display = 'flex'; 
             addPOModal.hide();
             
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(function(res) {
+                google.script.run
+                .withFailureHandler(function(err) {
+                    // ★ เดิมไม่มี failure handler เลย ถ้าบันทึกล้มเหลว/หมดเวลา หน้าจอจะค้างที่ loading ตลอดไป
+                    // โดยไม่มีอะไรแจ้งผู้ใช้ (อาการ "บันทึกนานมาก") — เพิ่มให้ปิด loading แล้วแจ้งเตือนชัดเจน
+                    _isSavingPO = false;
+                    document.getElementById('loading').style.display = 'none';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'บันทึก PO ไม่สำเร็จ',
+                        html: 'กรุณาตรวจสอบในรายการ PO ก่อนว่าบันทึกเข้าไปแล้วหรือยัง <b>ก่อนกดบันทึกซ้ำ</b> เพื่อไม่ให้เกิดรายการซ้ำ<br><small class="text-muted">' + escapeHtml(String(err && err.message ? err.message : err)) + '</small>'
+                    });
+                })
+                .withSuccessHandler(function(res) {
+                    _isSavingPO = false;
                     document.getElementById('loading').style.display = 'none';
                     if (!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                     else { 
