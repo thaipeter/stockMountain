@@ -10869,6 +10869,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             box-sizing: border-box;
                             padding: ${margin}px;
                             border: 1px dashed #cbd5e1;
+                            overflow: hidden;
                             ${orientation === 'landscape' ? 'flex-direction: row; align-items: center; justify-content: space-around;' : 'flex-direction: column; align-items: center; justify-content: center;'}
                             text-align: ${orientation === 'landscape' ? 'left' : 'center'};
                         }
@@ -10905,14 +10906,24 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             const MIN_SCALE = 0.55;
                             let scale = 1;
                             let guard = 0;
+                            function isOverflowing() {
+                                return isLandscape ? card.scrollWidth > card.clientWidth + 1 : card.scrollHeight > card.clientHeight + 1;
+                            }
                             while (guard < 30) {
-                                const overflowing = isLandscape
-                                    ? card.scrollWidth > card.clientWidth + 1
-                                    : card.scrollHeight > card.clientHeight + 1;
-                                if (!overflowing || scale <= MIN_SCALE) break;
+                                if (!isOverflowing() || scale <= MIN_SCALE) break;
                                 scale = Math.max(MIN_SCALE, scale * 0.94);
                                 els.forEach((el, i) => { el.style.fontSize = (baseSizes[i] * scale) + 'px'; });
                                 guard++;
+                            }
+                            // ★ เพิ่ม: ย่อสุดแล้วยังไม่พอ (ชื่อยาวมากจริงๆ) → ตัดข้อมูลที่สำคัญน้อยสุดออกทีละบรรทัด
+                            // (หมวดหมู่/ตำแหน่ง — เอาอันที่ต่อท้ายสุดออกก่อน) เก็บชื่อ+รหัสไว้เป็นอันดับแรกเสมอ
+                            // แทนที่จะปล่อยให้ overflow:hidden ตัดขาดกลางบรรทัดแบบไม่สวย หรือ (บั๊กเดิม) ล้นไปทับใบถัดไป
+                            if (isOverflowing()) {
+                                const metas = Array.from(card.querySelectorAll('.item-meta')).reverse();
+                                for (const meta of metas) {
+                                    if (!isOverflowing()) break;
+                                    meta.style.display = 'none';
+                                }
                             }
                         }
 
@@ -11939,6 +11950,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             padding: ${margin}px; 
                             box-sizing: border-box; 
                             display: flex; 
+                            overflow: hidden;
                             ${orientation === 'landscape' ? 'flex-direction: row; align-items: center; justify-content: space-around;' : 'flex-direction: column; align-items: center; justify-content: center;'}
                             text-align: ${orientation === 'landscape' ? 'left' : 'center'};
                         }
@@ -11982,14 +11994,24 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             const MIN_SCALE = 0.55;
                             let scale = 1;
                             let guard = 0;
+                            function isOverflowing() {
+                                return isLandscape ? card.scrollWidth > card.clientWidth + 1 : card.scrollHeight > card.clientHeight + 1;
+                            }
                             while (guard < 30) {
-                                const overflowing = isLandscape
-                                    ? card.scrollWidth > card.clientWidth + 1
-                                    : card.scrollHeight > card.clientHeight + 1;
-                                if (!overflowing || scale <= MIN_SCALE) break;
+                                if (!isOverflowing() || scale <= MIN_SCALE) break;
                                 scale = Math.max(MIN_SCALE, scale * 0.94);
                                 els.forEach((el, i) => { el.style.fontSize = (baseSizes[i] * scale) + 'px'; });
                                 guard++;
+                            }
+                            // ★ เพิ่ม: ย่อสุดแล้วยังไม่พอ (ชื่อยาวมากจริงๆ) → ตัดข้อมูลที่สำคัญน้อยสุดออกทีละบรรทัด
+                            // (หมวดหมู่/ตำแหน่ง — เอาอันที่ต่อท้ายสุดออกก่อน) เก็บชื่อ+รหัสไว้เป็นอันดับแรกเสมอ
+                            // แทนที่จะปล่อยให้ overflow:hidden ตัดขาดกลางบรรทัดแบบไม่สวย หรือ (บั๊กเดิม) ล้นไปทับใบถัดไป
+                            if (isOverflowing()) {
+                                const metas = Array.from(card.querySelectorAll('.item-meta')).reverse();
+                                for (const meta of metas) {
+                                    if (!isOverflowing()) break;
+                                    meta.style.display = 'none';
+                                }
                             }
                         }
                         window.onload = function() {
