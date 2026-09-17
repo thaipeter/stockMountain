@@ -1207,7 +1207,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
 
 <script>
-// 🖼️ Client-side Image Compression Helper (ย่อขนาดรูปภาพก่อนส่งไป GAS ป้องกัน Timeout/Payload Error)
+// 🖼️ Client-side Image Compression Helper (ย่อขนาดรูปภาพก่อนส่งไป ป้องกัน Timeout/Payload Error)
 function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.7) {
     return new Promise((resolve, reject) => {
         if (!file || !file.type || !file.type.startsWith('image/')) { resolve(file); return; }
@@ -4615,21 +4615,41 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             const isExternal = (window.location.hostname !== 'script.google.com' && !window.location.hostname.endsWith('.googleusercontent.com'));
             window.GAS_URL = (typeof GAS_URL !== 'undefined' && GAS_URL && GAS_URL.indexOf('วาง_URL') === -1) ? GAS_URL : '';
             
-            function callGAS(fn, args, onOk, onFail, timeoutMs, _attempt) {
+        // ★ ตัวจัดการข้อผิดพลาดกลาง สำหรับทุกการเรียก backend ที่เดิมไม่มี failure handler เลย
+        // ปัญหาเดิม: หลายจุดในระบบ (บันทึก PO, แก้ไขสินค้า, ปรับยอด, แจ้งชำรุด, เปลี่ยนสิทธิ์ผู้ใช้ ฯลฯ)
+        // เรียก backend แล้วเปิด loading overlay ค้างไว้ แต่ใส่แค่ withSuccessHandler ไม่มี withFailureHandler
+        // ถ้าคำขอล้มเหลว/หมดเวลา จะไม่มีอะไรมาปิด loading เลย → หน้าจอหมุนค้างตลอดไป ผู้ใช้ไม่รู้ว่าเกิดอะไรขึ้น
+        // (อาการ "บันทึกนานมาก" / "ค้าง") และมักกดซ้ำจนเกิดข้อมูลซ้ำในระบบตามมา
+        function _gasGenericFail(err) {
+            try {
+                const el = document.getElementById('loading');
+                if (el) el.style.display = 'none';
+            } catch (e) {}
+            const msg = (err && err.message) ? err.message : String(err || 'ไม่ทราบสาเหตุ');
+            try {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ทำรายการไม่สำเร็จ',
+                    html: 'กรุณาตรวจสอบก่อนว่ารายการถูกบันทึกเข้าระบบไปแล้วหรือยัง <b>ก่อนกดซ้ำ</b> เพื่อไม่ให้เกิดรายการซ้ำ<br><small class="text-muted">' + escapeHtml(msg) + '</small>',
+                    confirmButtonText: 'รับทราบ'
+                });
+            } catch (e) {
+                alert('ทำรายการไม่สำเร็จ: ' + msg);
+            }
+        }
+        window._gasGenericFail = _gasGenericFail; // เปิดให้เรียกได้จากทุกจุดในไฟล์ (ฟังก์ชันนี้อยู่ใน IIFE)
+
+            function callGAS(fn, args, onOk, onFail, timeoutMs, _attempt, _requestId) {
                 _attempt = _attempt || 1;
-                // ★★ สำคัญมาก: ลองใหม่อัตโนมัติได้ "เฉพาะคำสั่งอ่านข้อมูล" เท่านั้น ★★
-                // (ปัญหาที่รู้จักกันของ Web App บน Apps Script: บางครั้ง server ทำงานเสร็จสมบูรณ์จริง แต่ขั้นตอน
-                // ส่งผลลัพธ์กลับผ่าน redirect ของ Google หลุดกลางทาง ทำให้ฝั่งเบราว์เซอร์เห็นเป็น network error/timeout
-                // ทั้งที่ execution log ฝั่ง Apps Script ขึ้นว่า "เสร็จสมบูรณ์" ทุกครั้ง)
-                //
-                // 🐛 บั๊กร้ายแรงที่เคยเกิด: เดิมโค้ดนี้ลองซ้ำ "ทุกฟังก์ชัน" รวมถึงคำสั่งที่เขียนข้อมูลด้วย
-                // เช่น webAddPendingPO (บันทึก PO) — พอ server บันทึกสำเร็จแล้วแต่ผลลัพธ์ส่งกลับไม่ถึงเบราว์เซอร์
-                // โค้ดเข้าใจผิดว่าล้มเหลว แล้วยิงซ้ำอีก → บันทึกซ้ำอีกรอบ → ครบ 3 ครั้งได้ข้อมูลซ้ำ 3 แถว
-                // (ผู้ใช้กดบันทึก PO ครั้งเดียว แต่ได้ PO ซ้ำ 3 รายการในระบบ)
-                //
-                // แก้โดย: อนุญาตให้ลองซ้ำเฉพาะฟังก์ชันที่ "อ่านอย่างเดียว" (idempotent — เรียกซ้ำกี่ครั้งก็ไม่เปลี่ยน
-                // ข้อมูลในระบบ) ส่วนคำสั่งที่เขียน/แก้/ลบข้อมูลทั้งหมด จะไม่ลองซ้ำเด็ดขาด ถ้าล้มเหลวให้แจ้ง error
-                // ให้ผู้ใช้ตัดสินใจกดเองว่าจะลองใหม่ไหม (ปลอดภัยกว่าการเสี่ยงบันทึกซ้ำโดยที่ผู้ใช้ไม่รู้ตัว)
+                // ★ requestId: สุ่มขึ้นครั้งเดียวตอนเริ่มคำสั่งนี้ (ไม่สุ่มใหม่ทุก retry) แล้วส่งไปกับทุกครั้งที่ยิงซ้ำ
+                // backend จะใช้ค่านี้จำผลลัพธ์ไว้ (ดู "IDEMPOTENCY GUARD" ใน doPost ฝั่ง .gs) ถ้า requestId เดิม
+                // เข้ามาซ้ำ (เพราะ retry) และ server เคยทำสำเร็จไปแล้ว จะได้ผลลัพธ์เดิมกลับมา ไม่ทำงานซ้ำอีกรอบ
+                // ทำให้ตอนนี้ retry อัตโนมัติปลอดภัยสำหรับ "ทุกฟังก์ชัน" รวมถึงคำสั่งบันทึกข้อมูลด้วย
+                // (เดิมจำกัดให้ retry ได้แค่ฟังก์ชันอ่านข้อมูลเท่านั้น เพราะกลัวบันทึกซ้ำตอน retry)
+                // ★ ปรับเพื่อประสิทธิภาพ: สร้าง/ส่ง requestId เฉพาะ "คำสั่งเขียนข้อมูล" เท่านั้น
+                // คำสั่งอ่านข้อมูล (เช่น getInventoryData ที่ payload ใหญ่) ไม่มีความเสี่ยงเรื่องบันทึกซ้ำอยู่แล้ว
+                // (เรียกซ้ำกี่ครั้งก็ไม่เปลี่ยนข้อมูล) จึงข้ามระบบกันซ้ำไปเลย ฝั่ง backend จะไม่เสียเวลา
+                // stringify/cache ข้อมูลก้อนใหญ่โดยไม่จำเป็น — ผลคือคำสั่งอ่านข้อมูลไม่ช้าขึ้นแม้แต่นิดเดียว
                 const READ_ONLY_FNS = [
                     'getInventoryData', 'webGetStockLevels', 'getLoginUsers', 'webGetNotes',
                     'getUserHistory', 'webGetNextCode', 'webGetStockTakeProgress', 'webGetStockTakeReport',
@@ -4643,9 +4663,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     'webGetAIProviderSettings', 'webGetActiveAIProviderLabel', 'webGetFullItemHistory',
                     'webGetDriveStorageInfo', 'webGetSystemHealth', 'webGetAuditLogs', 'webGetAuditArchive',
                     'webGetBackupData', 'webGetBackupSheetList', 'webGetBackupSheetData',
-                    'webGetQRPending', 'webCheckRegStatus'
+                    'webGetQRPending', 'webCheckRegStatus', 'webVerifyUserPin', 'webVerifyDashboardPassword',
+                    'webLoginCheck', 'webQrLoginCheck'
                 ];
-                const MAX_ATTEMPTS = READ_ONLY_FNS.indexOf(fn) !== -1 ? 3 : 1; // เขียนข้อมูล = ยิงครั้งเดียว ห้ามซ้ำ
+                const isReadOnly = READ_ONLY_FNS.indexOf(fn) !== -1;
+                const requestId = isReadOnly ? '' : (_requestId || (Date.now().toString(36) + '_' + Math.random().toString(36).slice(2)));
+                const MAX_ATTEMPTS = 3;
                 if (window.GAS_URL) {
                     const controller = new AbortController();
                     // ★ แก้บั๊ก: เดิม timeout ตายตัว 30 วิ สำหรับทุกฟังก์ชัน รวมถึง webAskAiAssistant (AI Command
@@ -4660,9 +4683,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     fetch(window.GAS_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain' },
-                        // ★ เพิ่ม: แนบ session token ทุก request — backend (doPost) จะปฏิเสธถ้าไม่มี/หมดอายุ
-                        // ป้องกันไม่ให้ผู้ใช้ทั่วไปปลอม userId ของแอดมินแล้วเรียกฟังก์ชันเสี่ยงสูงตรงๆ
-                        body: JSON.stringify({ fn, args: args || [], token: getSessionToken() }),
+                        // ★ เพิ่ม: แนบ session token + requestId ทุก request
+                        // token — backend (doPost) จะปฏิเสธถ้าไม่มี/หมดอายุ ป้องกันไม่ให้ผู้ใช้ทั่วไปปลอม userId
+                        // ของแอดมินแล้วเรียกฟังก์ชันเสี่ยงสูงตรงๆ
+                        // requestId — ใช้กันบันทึกซ้ำตอน retry (ดูคำอธิบายด้านบน)
+                        body: JSON.stringify({ fn, args: args || [], token: getSessionToken(), requestId }),
                         signal: controller.signal
                     })
                     .then(r => r.json())
@@ -4675,7 +4700,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         clearTimeout(timer);
                         if (_attempt < MAX_ATTEMPTS) {
                             // ปัญหาการเชื่อมต่อ/รับผลลัพธ์ล้มเหลว (ไม่ใช่ server ปฏิเสธคำขอ) — ลองใหม่หลังหน่วงสั้นๆ
-                            setTimeout(() => callGAS(fn, args, onOk, onFail, timeoutMs, _attempt + 1), 600 * _attempt);
+                            // ส่ง requestId เดิมไปด้วยเสมอ (ไม่ใช่ requestId ใหม่) เพื่อให้ idempotency guard ทำงานถูก
+                            setTimeout(() => callGAS(fn, args, onOk, onFail, timeoutMs, _attempt + 1, requestId), 600 * _attempt);
                             return;
                         }
                         // ★ เผื่อ browser บางตัวไม่ส่ง reason ที่เราตั้งไว้กลับมาใน e.message (ยังคงเจอ "signal is
@@ -5884,7 +5910,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             
             document.getElementById('loading').style.display = 'flex';
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(function(res) {
+                google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                     document.getElementById('loading').style.display = 'none';
                     if(res && res.success) { 
                         Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'เปลี่ยนรหัสผ่านส่วนตัวของคุณสำเร็จ!', timer: 2000, showConfirmButton: false}); 
@@ -9292,7 +9319,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             
             // เรียก Backend
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(function(res) {
+                google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                     document.getElementById('loading').style.display = 'none';
                     if (!res.success) {
                         Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
@@ -9347,7 +9375,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (result.isConfirmed) {
                     document.getElementById('loading').style.display = 'flex';
                     if (typeof google !== 'undefined' && google.script && google.script.run) {
-                        google.script.run.withSuccessHandler(function(res) {
+                        google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                             document.getElementById('loading').style.display = 'none';
                             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                             else {
@@ -9938,7 +9967,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             });
 
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(function(res) {
+                google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                     document.getElementById('loading').style.display = 'none';
                     if (!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error});
                     else {
@@ -10320,7 +10350,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             document.getElementById('loading').style.display = 'flex'; editItemModal.hide();
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 if(google.script.run.webEditItem) {
-                    google.script.run.withSuccessHandler(function(res) {
+                    google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                         document.getElementById('loading').style.display = 'none';
                         if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                         else {
@@ -10350,7 +10381,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const adjustQty = type === 'add' ? qty : -qty;
             document.getElementById('loading').style.display = 'flex'; adjustModal.hide();
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(function(result) {
+                google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(result) {
                     document.getElementById('loading').style.display = 'flex'; adjustModal.hide();
                     document.getElementById('loading').style.display = 'none';
                     if (result && !result.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: result.error}); 
@@ -10380,7 +10412,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const payload = { mode: 'แจ้งชำรุด', code: code, qty: qty, user: user + ' [ชำรุด: '+ remark +']', userId: currentUserProfile.uid, remark: 'ชำรุด: ' + remark };
             document.getElementById('loading').style.display = 'flex'; damageModal.hide();
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(function(res) {
+                google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                     document.getElementById('loading').style.display = 'none';
                     if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                     else { 
@@ -10406,7 +10439,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const payload = { mode: 'ซ่อมแซมแล้ว', code: code, qty: qty, user: user + ' (ซ่อมแซมแล้ว)', userId: currentUserProfile.uid, remark: 'ซ่อมแซม: ' + remark };
             document.getElementById('loading').style.display = 'flex'; repairModal.hide();
             if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(function(res) {
+                google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                     document.getElementById('loading').style.display = 'none';
                     if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                     else { 
@@ -10429,7 +10463,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (result.isConfirmed) {
                     document.getElementById('loading').style.display = 'flex';
                     if (typeof google !== 'undefined' && google.script && google.script.run) {
-                        google.script.run.withSuccessHandler(function(res) {
+                        google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                             document.getElementById('loading').style.display = 'none';
                             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                             else { writeAudit('USER_MGMT', `เปลี่ยนสิทธิ์ผู้ใช้ [${userId}] เป็น: ${newRole}`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'เปลี่ยนสิทธิ์สำเร็จ!', timer: 2000, showConfirmButton: false}); let u = allData.users.find(u => u.userId === userId); if(u) u.role = newRole; onDataLoaded(allData); }
@@ -10586,7 +10621,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (result.isConfirmed) {
                     document.getElementById('loading').style.display = 'flex';
                     if (typeof google !== 'undefined' && google.script && google.script.run) {
-                        google.script.run.withSuccessHandler(function(res) {
+                        google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                             document.getElementById('loading').style.display = 'none';
                             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                             else { Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'ล้างประวัติLogs เรียบร้อย!', timer: 2000, showConfirmButton: false}); allData.history = []; onDataLoaded(allData); }
@@ -10670,7 +10706,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     const pin = vals[1];
                     document.getElementById('loading').style.display = 'flex';
                     if (typeof google !== 'undefined' && google.script && google.script.run && google.script.run.webFactoryReset) {
-                        google.script.run.withSuccessHandler(function(res) {
+                        google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                             document.getElementById('loading').style.display = 'none';
                             if(!res.success) Swal.fire({icon: 'error', title: 'ข้อผิดพลาด', text: res.error}); 
                             else { Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'ล้างฐานข้อมูลสำเร็จ ระบบจะเริ่มใหม่หมด!', timer: 2000, showConfirmButton: false}).then(() => location.reload()); }
@@ -13225,7 +13262,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         function loadQRPending() {
             if (!currentUserProfile || currentUserProfile.role !== 'admin') return;
             if (typeof google === 'undefined' || !google.script || !google.script.run) return;
-            google.script.run.withSuccessHandler(function(rows) {
+            google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(rows) {
                 rows = rows || [];
                 // อัปเดตแท็บ "อนุมัติผู้ใช้" ในหน้ารออนุมัติแบบสด ๆ ถ้าเปิดอยู่
                 if (typeof renderPendingUserApprovals === 'function') renderPendingUserApprovals(rows);
@@ -13277,7 +13315,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }).then(r => {
                 if (!r.isConfirmed) return;
                 document.getElementById('loading').style.display = 'flex';
-                google.script.run.withSuccessHandler(function(res) {
+                google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                     document.getElementById('loading').style.display = 'none';
                     if (!res || !res.success) {
                         Swal.fire({icon:'error', title:'ผิดพลาด', text: res ? res.error : 'เกิดข้อผิดพลาด'});
@@ -13300,7 +13339,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }).then(r => {
                 if (!r.isConfirmed) return;
                 document.getElementById('loading').style.display = 'flex';
-                google.script.run.withSuccessHandler(function(res) {
+                google.script.run
+                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(res) {
                     document.getElementById('loading').style.display = 'none';
                     if (!res || !res.success) {
                         Swal.fire({icon:'error', title:'ผิดพลาด', text: res ? res.error : 'เกิดข้อผิดพลาด'});
@@ -13456,6 +13496,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         function loadStockTakeDiffs() {
             if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webGetStockTakeDiffs === 'function') {
                 google.script.run
+                    .withFailureHandler(window._gasGenericFail)
                     .withSuccessHandler(function(res) {
                         if (!res || !res.success) return;
                         stMgmtState.diffs = res.diffs || [];
