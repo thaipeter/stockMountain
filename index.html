@@ -2891,25 +2891,33 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     <div class="col-12 col-md-6">
                                         <div class="card shadow-sm border p-4 bg-light">
                                             <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-pager me-2"></i> ขนาดสติกเกอร์ & ระยะขอบ</h5>
-                                            <div class="row g-3 mb-3">
-                                                <div class="col-6">
-                                                    <label class="form-label fw-bold text-muted small">ความกว้างสติกเกอร์ (มม. - mm)</label>
-                                                    <input type="number" class="form-control" id="globalQrWidthMm" value="50" min="10" max="300" onchange="saveGlobalQRSettings()">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <label class="form-label fw-bold text-muted small mb-0">ความกว้างสติกเกอร์</label>
+                                                    <span class="badge bg-primary" id="globalQrWidthMmBadge">50 มม.</span>
                                                 </div>
-                                                <div class="col-6">
-                                                    <label class="form-label fw-bold text-muted small">ความสูงสติกเกอร์ (มม. - mm)</label>
-                                                    <input type="number" class="form-control" id="globalQrHeightMm" value="80" min="10" max="300" onchange="saveGlobalQRSettings()">
-                                                </div>
+                                                <input type="range" class="form-range" id="globalQrWidthMm" value="50" min="10" max="300" step="1" oninput="_qrSliderLive('globalQrWidthMm','globalQrWidthMmBadge',' มม.')" onchange="saveGlobalQRSettings()">
                                             </div>
-                                            <div class="row g-3 mb-3">
-                                                <div class="col-6">
-                                                    <label class="form-label fw-bold text-muted small">ขนาด QR Code (px)</label>
-                                                    <input type="number" class="form-control" id="globalQrSize" value="120" min="40" max="800" onchange="saveGlobalQRSettings()">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <label class="form-label fw-bold text-muted small mb-0">ความสูงสติกเกอร์</label>
+                                                    <span class="badge bg-primary" id="globalQrHeightMmBadge">80 มม.</span>
                                                 </div>
-                                                <div class="col-6">
-                                                    <label class="form-label fw-bold text-muted small">ระยะขอบป้าย (Margin px)</label>
-                                                    <input type="number" class="form-control" id="globalQrMargin" value="10" min="0" max="150" onchange="saveGlobalQRSettings()">
+                                                <input type="range" class="form-range" id="globalQrHeightMm" value="80" min="10" max="300" step="1" oninput="_qrSliderLive('globalQrHeightMm','globalQrHeightMmBadge',' มม.')" onchange="saveGlobalQRSettings()">
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <label class="form-label fw-bold text-muted small mb-0">ขนาด QR Code</label>
+                                                    <span class="badge bg-primary" id="globalQrSizeBadge">120 px</span>
                                                 </div>
+                                                <input type="range" class="form-range" id="globalQrSize" value="120" min="40" max="800" step="5" oninput="_qrSliderLive('globalQrSize','globalQrSizeBadge',' px')" onchange="saveGlobalQRSettings()">
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <label class="form-label fw-bold text-muted small mb-0">ระยะขอบป้าย (Margin)</label>
+                                                    <span class="badge bg-primary" id="globalQrMarginBadge">10 px</span>
+                                                </div>
+                                                <input type="range" class="form-range" id="globalQrMargin" value="10" min="0" max="150" step="1" oninput="_qrSliderLive('globalQrMargin','globalQrMarginBadge',' px')" onchange="saveGlobalQRSettings()">
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label fw-bold text-muted small">ทิศทางการจัดวาง (Layout Orientation)</label>
@@ -2921,7 +2929,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         </div>
                                     </div>
                                     <div class="col-12 col-md-6">
-                                        <div class="card shadow-sm border p-4 bg-light">
+                                        <div class="card shadow-sm border p-4 bg-light mb-3">
                                             <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-info-circle me-2"></i> ข้อมูลที่ต้องการแสดงบนป้าย</h5>
                                             <div class="form-check mb-3">
                                                 <input class="form-check-input" type="checkbox" id="globalQrShowName" checked onchange="saveGlobalQRSettings()">
@@ -2938,6 +2946,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             <div class="form-check mb-3">
                                                 <input class="form-check-input" type="checkbox" id="globalQrShowLocation" checked onchange="saveGlobalQRSettings()">
                                                 <label class="form-check-label fw-semibold text-dark" for="globalQrShowLocation">แสดงตำแหน่งจัดเก็บ (Location)</label>
+                                            </div>
+                                        </div>
+                                        <div class="card shadow-sm border p-4 bg-light">
+                                            <h5 class="fw-bold mb-3 text-primary"><i class="fas fa-eye me-2"></i> ตัวอย่างป้ายสด (Live Preview)</h5>
+                                            <p class="text-muted small mb-3">ลองรูดแท่งเลื่อนด้านซ้ายดู — ตัวอย่างด้านล่างจะขยับตามทันที ไม่ต้องเดาว่าตัวเลขที่ใส่จะออกมาหน้าตาแบบไหน</p>
+                                            <div class="d-flex justify-content-center align-items-center bg-white border rounded p-3" style="min-height:220px;overflow:auto;">
+                                                <div id="qrStickerPreviewBox"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -4693,24 +4708,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     .then(r => r.json())
                     .then(res => {
                         clearTimeout(timer);
-                        if (res && res.success === false) {
-                            // ★ เพิ่ม: เจอ session หมดอายุจาก backend (sessionExpired: true) ให้เด้งกลับหน้า login
-                            // ทันทีทุกจุดในระบบโดยอัตโนมัติ แทนที่จะโชว์แค่ popup error แล้วผู้ใช้งงว่าต้องทำอะไรต่อ
-                            // (เดิมผู้ใช้เห็นหน้าจอเหมือนยังล็อกอินอยู่ กดปุ่มอะไรก็ error ซ้ำๆ ไม่รู้ต้องไปกดออกจาก
-                            // ระบบเองก่อน) — ล้าง session เดิมทิ้งแล้วพาไปหน้า login พร้อมข้อความอธิบายสั้นๆ
-                            if (res.sessionExpired) {
-                                try { localStorage.removeItem('user_session'); clearSessionToken(); } catch (e) {}
-                                if (typeof Swal !== 'undefined') {
-                                    Swal.fire({ icon: 'info', title: 'เซสชันหมดอายุ', text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้งครับ', confirmButtonText: 'ตกลง' })
-                                        .then(() => location.reload());
-                                } else {
-                                    location.reload();
-                                }
-                                return;
-                            }
-                            if (onFail) onFail(res.error || 'error');
-                            return;
-                        }
+                        if (res && res.success === false) { if (onFail) onFail(res.error || 'error'); return; }
                         if (onOk) onOk(res);
                     })
                     .catch(e => {
@@ -5515,11 +5513,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     const sessionStr = localStorage.getItem('user_session');
                     if (sessionStr) {
                         const session = JSON.parse(sessionStr);
-                        // ★ แก้บั๊ก: เดิมตั้งไว้ 24 ชม. (86400000) แต่ token จริงจาก backend ใช้ได้แค่ 6 ชม. (ดู
-                        // SESSION_TTL_SEC ใน code.gs) ทำให้ช่วง 6-24 ชม. หน้าเว็บเข้าใจผิดว่ายังล็อกอินอยู่
-                        // (ไม่เด้งกลับหน้า login) แต่ token จริงหมดอายุไปแล้ว กดทำรายการอะไรก็ error ทันที
-                        // แก้ให้ค่านี้ตรงกับอายุ token จริงฝั่ง backend เป๊ะๆ
-                        if (session && session.uid && (Date.now() - session.timestamp < 21600000)) {
+                        if (session && session.uid && (Date.now() - session.timestamp < 86400000)) {
                             uid = session.uid;
                         } else {
                             localStorage.removeItem('user_session');
@@ -10900,6 +10894,28 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 <body>
                     <div id="labels-container"></div>
                     <script>
+                        // ★ เพิ่มใหม่ — ย่อขนาดตัวหนังสือลงอัตโนมัติทีละนิด ถ้าเนื้อหา (ชื่อ+รหัส+หมวด+ตำแหน่ง)
+                        // ยาวเกินจนล้นออกจากขอบป้ายสติกเกอร์ที่ตั้งไว้ แทนที่จะปล่อยให้ตัดขาด/ล้นออกไปเฉยๆ
+                        // ทำงานทีละใบ (แต่ละใบมีความยาวชื่อไม่เท่ากัน) หยุดย่อทันทีที่พอดีแล้ว ไม่ย่อเกินความจำเป็น
+                        // มีขั้นต่ำกันไม่ให้เล็กจนอ่านไม่ออก (ย่อได้สุดแค่ 55% ของขนาดเดิม)
+                        function fitLabelCardText(card, isLandscape) {
+                            const els = card.querySelectorAll('.item-name, .item-code, .item-meta');
+                            if (!els.length) return;
+                            const baseSizes = Array.from(els).map(el => parseFloat(getComputedStyle(el).fontSize));
+                            const MIN_SCALE = 0.55;
+                            let scale = 1;
+                            let guard = 0;
+                            while (guard < 30) {
+                                const overflowing = isLandscape
+                                    ? card.scrollWidth > card.clientWidth + 1
+                                    : card.scrollHeight > card.clientHeight + 1;
+                                if (!overflowing || scale <= MIN_SCALE) break;
+                                scale = Math.max(MIN_SCALE, scale * 0.94);
+                                els.forEach((el, i) => { el.style.fontSize = (baseSizes[i] * scale) + 'px'; });
+                                guard++;
+                            }
+                        }
+
                         const items = ${JSON.stringify(itemsToPrint)};
                         const container = document.getElementById('labels-container');
                         items.forEach((item, index) => {
@@ -10919,7 +10935,12 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         window.onload = function() {
                             setTimeout(() => {
                                 items.forEach((item, index) => { new QRCode(document.getElementById('qr-' + index), { text: item.code, width: ${qrSize}, height: ${qrSize}, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M }); });
-                                setTimeout(() => { window.print(); }, 800);
+                                setTimeout(() => {
+                                    // ★ เพิ่ม: ย่อตัวหนังสือให้พอดีป้ายทีละใบ ก่อนสั่งพิมพ์จริง
+                                    const isLandscape = ${orientation === 'landscape' ? 'true' : 'false'};
+                                    Array.from(container.children).forEach(card => fitLabelCardText(card, isLandscape));
+                                    window.print();
+                                }, 800);
                             }, 300);
                         };
                     <\/script>
@@ -11774,6 +11795,65 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (sC) sC.checked = settings.showCode;
             if (sCat) sCat.checked = settings.showCategory;
             if (sLoc) sLoc.checked = settings.showLocation;
+
+            // ★ เพิ่ม: sync ตัวเลขบน badge ข้างแท่งเลื่อนให้ตรงกับค่าที่โหลดมา แล้ววาดตัวอย่างป้ายสด
+            _qrSliderLive('globalQrWidthMm', 'globalQrWidthMmBadge', ' มม.');
+            _qrSliderLive('globalQrHeightMm', 'globalQrHeightMmBadge', ' มม.');
+            _qrSliderLive('globalQrSize', 'globalQrSizeBadge', ' px');
+            _qrSliderLive('globalQrMargin', 'globalQrMarginBadge', ' px');
+        }
+
+        // ★ เพิ่มใหม่ — อัปเดตตัวเลขบน badge ทันทีตอนลากแท่งเลื่อน (oninput) โดยไม่ต้องรอปล่อยเมาส์ก่อนถึงจะเห็นค่า
+        // แล้ววาดตัวอย่างป้ายสด (Live Preview) ใหม่ให้ตรงกับค่าปัจจุบันบนแท่งเลื่อนทุกตัวไปด้วยในตัว
+        function _qrSliderLive(inputId, badgeId, unitLabel) {
+            const input = document.getElementById(inputId);
+            const badge = document.getElementById(badgeId);
+            if (input && badge) badge.textContent = input.value + unitLabel;
+            renderQrStickerPreview();
+        }
+
+        // ★ เพิ่มใหม่ — วาด "ตัวอย่างป้ายสด" ในหน้าตั้งค่า ให้เห็นภาพจริงว่าป้ายจะออกมาหน้าตาแบบไหน
+        // ก่อนสั่งพิมพ์จริง เพื่อให้ปรับขนาดได้ง่ายด้วยการดูภาพเทียบ ไม่ต้องนึกภาพจากตัวเลขในหัวเอง
+        // สเกลลงมาพอดีกับกล่อง preview (ไม่เกิน ~260px ด้านที่ยาวที่สุด) เพื่อไม่ให้ป้ายขนาดใหญ่ล้นออกจากกล่อง
+        function renderQrStickerPreview() {
+            const box = document.getElementById('qrStickerPreviewBox');
+            if (!box) return;
+
+            const widthMm = parseInt(document.getElementById('globalQrWidthMm')?.value) || 50;
+            const heightMm = parseInt(document.getElementById('globalQrHeightMm')?.value) || 80;
+            const qrSizePx = parseInt(document.getElementById('globalQrSize')?.value) || 120;
+            const marginPx = parseInt(document.getElementById('globalQrMargin')?.value) ?? 10;
+            const orientation = document.getElementById('globalQrOrientation')?.value || 'portrait';
+            const showName = document.getElementById('globalQrShowName')?.checked !== false;
+            const showCode = document.getElementById('globalQrShowCode')?.checked !== false;
+            const showCategory = document.getElementById('globalQrShowCategory')?.checked !== false;
+            const showLocation = document.getElementById('globalQrShowLocation')?.checked !== false;
+
+            // สเกลป้าย (มม. → px จำลอง) ให้พอดีกับกรอบ preview เสมอไม่ว่าจะตั้งขนาดจริงเท่าไหร่
+            const MAX_PREVIEW_PX = 260;
+            const scale = Math.min(MAX_PREVIEW_PX / widthMm, MAX_PREVIEW_PX / heightMm, 6);
+            const boxW = Math.max(60, widthMm * scale);
+            const boxH = Math.max(60, heightMm * scale);
+            // ขนาด QR/margin ที่ตั้งเป็น px จริงของป้าย ก็ต้องสเกลลงมาตามสัดส่วนเดียวกัน (คร่าวๆ เทียบ 96px = 25.4mm)
+            const pxToMmRatio = 25.4 / 96;
+            const qrSizeScaled = Math.max(16, qrSizePx * pxToMmRatio * scale);
+            const marginScaled = Math.max(2, marginPx * pxToMmRatio * scale);
+
+            const flexDir = orientation === 'landscape' ? 'row' : 'column';
+            const textLines = [];
+            if (showName) textLines.push('<div style="font-weight:700;font-size:10px;line-height:1.2;">ชื่อสินค้าตัวอย่าง</div>');
+            if (showCode) textLines.push('<div style="font-size:9px;color:#555;">CODE-001</div>');
+            if (showCategory) textLines.push('<div style="font-size:9px;color:#555;">หมวดหมู่: ตัวอย่าง</div>');
+            if (showLocation) textLines.push('<div style="font-size:9px;color:#555;">ตำแหน่ง: A1-01</div>');
+            const textHtml = textLines.length ? textLines.join('') : '<div style="font-size:9px;color:#bbb;">(ไม่แสดงข้อมูลข้อความ)</div>';
+
+            box.innerHTML = `
+                <div style="width:${boxW}px;height:${boxH}px;padding:${marginScaled}px;background:#fff;border:1px dashed #999;display:flex;flex-direction:${flexDir};align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 4px rgba(0,0,0,.1);overflow:hidden;">
+                    <div style="width:${qrSizeScaled}px;height:${qrSizeScaled}px;flex-shrink:0;background:repeating-linear-gradient(45deg,#111 0 3px,#fff 3px 6px);border:1px solid #111;"></div>
+                    <div style="text-align:${orientation === 'landscape' ? 'left' : 'center'};overflow:hidden;">${textHtml}</div>
+                </div>
+                <div class="text-center text-muted small mt-2" style="width:100%">ขนาดจริง ${widthMm}×${heightMm} มม. (ย่อสเกลเพื่อแสดงตัวอย่าง)</div>
+            `;
         }
 
         function saveGlobalQRSettings() {
@@ -11789,6 +11869,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 showLocation: document.getElementById('globalQrShowLocation')?.checked !== false
             };
             localStorage.setItem('globalQrPrintSettings', JSON.stringify(settings));
+            renderQrStickerPreview(); // ★ เพิ่ม: อัปเดตตัวอย่างป้ายสดทุกครั้งที่ตั้งค่าเปลี่ยน (ครอบคลุมทั้ง checkbox/dropdown ที่เรียกฟังก์ชันนี้อยู่แล้ว)
         }
 
         function getGlobalQRSettings() {
@@ -11892,10 +11973,34 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         </div>
                     </div>
                     <script>
+                        // ★ เพิ่มใหม่ — ย่อขนาดตัวหนังสือลงอัตโนมัติทีละนิด ถ้าเนื้อหาล้นออกจากขอบป้ายที่ตั้งไว้
+                        // (เหมือนกับที่แก้ใน printBulkQRCodes ด้านบน — จุดนี้คือแบบพิมพ์ทีละ 1 ใบ)
+                        function fitLabelCardText(card, isLandscape) {
+                            const els = card.querySelectorAll('.item-name, .item-code, .item-meta');
+                            if (!els.length) return;
+                            const baseSizes = Array.from(els).map(el => parseFloat(getComputedStyle(el).fontSize));
+                            const MIN_SCALE = 0.55;
+                            let scale = 1;
+                            let guard = 0;
+                            while (guard < 30) {
+                                const overflowing = isLandscape
+                                    ? card.scrollWidth > card.clientWidth + 1
+                                    : card.scrollHeight > card.clientHeight + 1;
+                                if (!overflowing || scale <= MIN_SCALE) break;
+                                scale = Math.max(MIN_SCALE, scale * 0.94);
+                                els.forEach((el, i) => { el.style.fontSize = (baseSizes[i] * scale) + 'px'; });
+                                guard++;
+                            }
+                        }
                         window.onload = function() {
                             setTimeout(() => {
                                 new QRCode(document.getElementById('qr-single'), { text: "${code}", width: ${qrSize}, height: ${qrSize}, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
-                                setTimeout(() => { window.print(); window.close(); }, 800);
+                                setTimeout(() => {
+                                    // ★ เพิ่ม: ย่อตัวหนังสือให้พอดีป้าย ก่อนสั่งพิมพ์จริง
+                                    const isLandscape = ${orientation === 'landscape' ? 'true' : 'false'};
+                                    fitLabelCardText(document.querySelector('.label-card'), isLandscape);
+                                    window.print(); window.close();
+                                }, 800);
                             }, 300);
                         };
                     <\/script>
