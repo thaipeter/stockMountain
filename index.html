@@ -1207,7 +1207,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
 
 <script>
-// 🖼️ Client-side Image Compression Helper (ย่อขนาดรูปภาพก่อนส่งไป ป้องกัน Timeout/Payload Error)
+// 🖼️ Client-side Image Compression Helper (ย่อขนาดรูปภาพก่อนส่งไป GAS ป้องกัน Timeout/Payload Error)
 function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.7) {
     return new Promise((resolve, reject) => {
         if (!file || !file.type || !file.type.startsWith('image/')) { resolve(file); return; }
@@ -4693,7 +4693,24 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     .then(r => r.json())
                     .then(res => {
                         clearTimeout(timer);
-                        if (res && res.success === false) { if (onFail) onFail(res.error || 'error'); return; }
+                        if (res && res.success === false) {
+                            // ★ เพิ่ม: เจอ session หมดอายุจาก backend (sessionExpired: true) ให้เด้งกลับหน้า login
+                            // ทันทีทุกจุดในระบบโดยอัตโนมัติ แทนที่จะโชว์แค่ popup error แล้วผู้ใช้งงว่าต้องทำอะไรต่อ
+                            // (เดิมผู้ใช้เห็นหน้าจอเหมือนยังล็อกอินอยู่ กดปุ่มอะไรก็ error ซ้ำๆ ไม่รู้ต้องไปกดออกจาก
+                            // ระบบเองก่อน) — ล้าง session เดิมทิ้งแล้วพาไปหน้า login พร้อมข้อความอธิบายสั้นๆ
+                            if (res.sessionExpired) {
+                                try { localStorage.removeItem('user_session'); clearSessionToken(); } catch (e) {}
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({ icon: 'info', title: 'เซสชันหมดอายุ', text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้งครับ', confirmButtonText: 'ตกลง' })
+                                        .then(() => location.reload());
+                                } else {
+                                    location.reload();
+                                }
+                                return;
+                            }
+                            if (onFail) onFail(res.error || 'error');
+                            return;
+                        }
                         if (onOk) onOk(res);
                     })
                     .catch(e => {
@@ -5498,7 +5515,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     const sessionStr = localStorage.getItem('user_session');
                     if (sessionStr) {
                         const session = JSON.parse(sessionStr);
-                        if (session && session.uid && (Date.now() - session.timestamp < 86400000)) {
+                        // ★ แก้บั๊ก: เดิมตั้งไว้ 24 ชม. (86400000) แต่ token จริงจาก backend ใช้ได้แค่ 6 ชม. (ดู
+                        // SESSION_TTL_SEC ใน code.gs) ทำให้ช่วง 6-24 ชม. หน้าเว็บเข้าใจผิดว่ายังล็อกอินอยู่
+                        // (ไม่เด้งกลับหน้า login) แต่ token จริงหมดอายุไปแล้ว กดทำรายการอะไรก็ error ทันที
+                        // แก้ให้ค่านี้ตรงกับอายุ token จริงฝั่ง backend เป๊ะๆ
+                        if (session && session.uid && (Date.now() - session.timestamp < 21600000)) {
                             uid = session.uid;
                         } else {
                             localStorage.removeItem('user_session');
