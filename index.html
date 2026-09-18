@@ -1492,6 +1492,28 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
     <!-- hidden reader div ที่ html5QrCode อาจต้องการ -->
     <div id="reader" style="display:none;position:absolute;pointer-events:none;"></div>
 
+    <!-- ★ เพิ่มใหม่ — โมดัลย้ายหมวดหมู่หลายรายการพร้อมกัน (Bulk Move Category) -->
+    <div class="modal fade" id="bulkMoveCategoryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-layer-group me-2"></i> ย้ายหมวดหมู่ที่เลือก</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="mb-3">ย้าย <b id="bulkMoveModalCount">0</b> รายการ ไปยังหมวดหมู่:</p>
+                    <input type="hidden" id="bulkMoveModalType">
+                    <select class="form-select" id="bulkMoveCategorySelect"></select>
+                    <p class="text-muted small mt-2 mb-0"><i class="fas fa-info-circle me-1"></i>เลือกได้เฉพาะหมวดหมู่ที่มีอยู่แล้วในระบบเท่านั้น</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-warning fw-bold px-4" onclick="submitBulkMoveCategory()"><i class="fas fa-check me-1"></i> ยืนยันย้ายหมวด</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="editItemModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -2819,9 +2841,16 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <select class="form-select w-auto shadow-none border-light bg-light fw-medium" id="itemCategoryFilter" onchange="filterTable('itemsTable')"><option value="">📁 ทุกหมวดหมู่</option></select>
                         <div class="search-box mx-2"><i class="fas fa-search text-primary"></i><input type="text" class="form-control form-control-lg shadow-sm" placeholder="พิมพ์ชื่อ, รหัส..." onkeyup="filterTable('itemsTable')"></div>
                     </div>
+                    <!-- ★ เพิ่มใหม่ — แถบเครื่องมือ "ย้ายหมวดที่เลือก" (โผล่เฉพาะตอนติ๊กเลือกอย่างน้อย 1 รายการ) -->
+                    <div id="itemsBulkMoveBar" class="admin-only-element d-none align-items-center gap-3 bg-warning bg-opacity-10 border border-warning rounded-3 p-3 mb-3">
+                        <i class="fas fa-layer-group text-warning fs-5"></i>
+                        <span class="fw-bold">เลือกอยู่ <span id="itemsBulkMoveCount">0</span> รายการ</span>
+                        <button class="btn btn-warning btn-sm fw-bold ms-auto" onclick="openBulkMoveCategoryModal('item')"><i class="fas fa-arrow-right me-1"></i> ย้ายหมวดที่เลือก</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="clearInventorySelection('item')">ล้างการเลือก</button>
+                    </div>
                     <div class="table-container p-0" id="itemsTableContainer">
                         <div id="itemsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
-                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center" id="itemsThStock">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center" id="itemsThStatus">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
+                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="3%" class="admin-only-element text-center"><input type="checkbox" id="itemsCheckAll" onclick="toggleSelectAllInventory('item', this.checked)" title="เลือกทั้งหมด"></th><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center" id="itemsThStock">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center" id="itemsThStatus">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
 
@@ -2843,9 +2872,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <select class="form-select w-auto shadow-none border-light bg-light fw-medium" id="toolCategoryFilter" onchange="filterTable('toolsTable')"><option value="">📁 ทุกหมวดหมู่</option></select>
                         <div class="search-box mx-2"><i class="fas fa-search text-info"></i><input type="text" class="form-control form-control-lg shadow-sm" placeholder="พิมพ์ชื่อ, รหัส..." onkeyup="filterTable('toolsTable')"></div>
                     </div>
+                    <div id="toolsBulkMoveBar" class="admin-only-element d-none align-items-center gap-3 bg-warning bg-opacity-10 border border-warning rounded-3 p-3 mb-3">
+                        <i class="fas fa-layer-group text-warning fs-5"></i>
+                        <span class="fw-bold">เลือกอยู่ <span id="toolsBulkMoveCount">0</span> รายการ</span>
+                        <button class="btn btn-warning btn-sm fw-bold ms-auto" onclick="openBulkMoveCategoryModal('tool')"><i class="fas fa-arrow-right me-1"></i> ย้ายหมวดที่เลือก</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="clearInventorySelection('tool')">ล้างการเลือก</button>
+                    </div>
                     <div class="table-container p-0" id="toolsTableContainer">
                         <div id="toolsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
-                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="toolsTable"><thead><tr><th width="12%">รหัส</th><th width="18%">ชื่อเครื่องมือ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">พร้อมใช้</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
+                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="toolsTable"><thead><tr><th width="3%" class="admin-only-element text-center"><input type="checkbox" id="toolsCheckAll" onclick="toggleSelectAllInventory('tool', this.checked)" title="เลือกทั้งหมด"></th><th width="12%">รหัส</th><th width="18%">ชื่อเครื่องมือ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">พร้อมใช้</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
 
@@ -4909,7 +4944,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         let allData = { items: [], tools: [], history: [], activeBorrows: [], pendingPOs: [], users: [], settings: {} };
         let lastDataSnapshot = null; // ใช้เทียบว่าข้อมูลรอบใหม่ต่างจากรอบก่อนจริงหรือไม่ ก่อนจะวาดหน้าใหม่ตอน auto-refresh
         let charts = {};
-        let adjustModal, addPOModal, editPOModal, txModal, addBorrowModal, damageModal, repairModal, newItemModal, editItemModal, qrActionModal, changePinModal, changeDashboardPasswordModal;
+        let adjustModal, addPOModal, editPOModal, txModal, addBorrowModal, damageModal, repairModal, newItemModal, editItemModal, qrActionModal, changePinModal, changeDashboardPasswordModal, bulkMoveCategoryModal;
         let sessionTimer;
         let currentUserProfile = { name: 'Web Admin', uid: null, role: 'admin' };
         let webFailedAttempts = {};
@@ -4918,6 +4953,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         let html5QrCode = null;
         let scannedItemContext = null;
         let selectedQRCodes = new Set(); 
+        // ★ เพิ่มใหม่ — เก็บรหัสรายการที่ติ๊กเลือกไว้ในตารางคลังอะไหล่/เครื่องมือหลัก (สำหรับฟีเจอร์ย้ายหมวดหมู่หลายรายการพร้อมกัน)
+        window.inventorySelection = { item: new Set(), tool: new Set() };
 
         window.onload = resetSessionTimer;
         document.onmousemove = resetSessionTimer;
@@ -4937,6 +4974,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             qrActionModal = new bootstrap.Modal(document.getElementById('qrActionModal'));
             changePinModal = new bootstrap.Modal(document.getElementById('changePinModal'));
             changeDashboardPasswordModal = new bootstrap.Modal(document.getElementById('changeDashboardPasswordModal'));
+            bulkMoveCategoryModal = new bootstrap.Modal(document.getElementById('bulkMoveCategoryModal'));
             
             // qrScannerModal replaced by scannerPanel - no modal listener needed
 
@@ -8401,9 +8439,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const tbody = document.querySelector(`#${tableId} tbody`); if(!tbody) return; tbody.innerHTML = '';
                 const cardListId = tableId === 'itemsTable' ? 'itemsCardListMobile' : 'toolsCardListMobile';
                 const cardList = document.getElementById(cardListId); if (cardList) cardList.innerHTML = '';
+                // ★ เพิ่ม: ล้างรายการที่เคยติ๊กเลือกไว้ทุกครั้งที่ตารางถูกวาดใหม่ (กรอง/ค้นหาเปลี่ยน) กันเลือกค้างรหัสที่มองไม่เห็นแล้ว
+                if (inventorySelection[type]) { inventorySelection[type].clear(); updateBulkMoveBar(type); }
                 const limit = parseInt(allData.settings?.rowsPerPage) || 100; const limitedData = data.slice(0, limit);
                 if (limitedData.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบข้อมูลที่ค้นหา</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบข้อมูลที่ค้นหา</td></tr>';
                     if (cardList) cardList.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบข้อมูลที่ค้นหา</div>';
                     return;
                 }
@@ -8464,11 +8504,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         stockCell = `<td class="text-center ${isLow?'text-danger':'text-primary'} fw-bold fs-5">${formatNumber(item.stock)}</td>`;
                         statusCell = `<td class="text-center">${statusBadge}</td>`;
                     }
-                    tr.innerHTML = `<td><span class="badge badge-code px-2 py-1">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark fs-6">${escapeHtml(item.name)}</td><td><span class="badge badge-cat px-2 py-1">${escapeHtml(displayCat)}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td>${stockCell}<td class="text-muted fw-medium">${escapeHtml(item.unit)}</td>${statusCell}<td class="text-center">${actionButtons}</td>`;
+                    const checkboxCell = `<td class="admin-only-element text-center"><input type="checkbox" class="inv-select-cb" ${inventorySelection[type] && inventorySelection[type].has(item.code) ? 'checked' : ''} onclick="toggleInventorySelect('${safeType}', '${safeCode}', this.checked)"></td>`;
+                    tr.innerHTML = `${checkboxCell}<td><span class="badge badge-code px-2 py-1">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark fs-6">${escapeHtml(item.name)}</td><td><span class="badge badge-cat px-2 py-1">${escapeHtml(displayCat)}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td>${stockCell}<td class="text-muted fw-medium">${escapeHtml(item.unit)}</td>${statusCell}<td class="text-center">${actionButtons}</td>`;
                     tr.style.cursor = 'pointer';
                     tr.title = 'คลิกเพื่อดูประวัติการรับเข้า';
                     tr.addEventListener('click', function(e) {
-                        if (e.target.closest('button') || e.target.closest('a')) return;
+                        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) return;
                         showReceiveHistory(item.code);
                     });
                     tbody.appendChild(tr);
@@ -8509,13 +8550,93 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         card.querySelector('.ml-card-status').innerHTML = statusBadge;
                         card.querySelector('.ml-card-actions').innerHTML = actionButtons;
                         card.addEventListener('click', function(e) {
-                            if (e.target.closest('button') || e.target.closest('a')) return;
+                            if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) return;
                             showReceiveHistory(item.code);
                         });
                         cardList.appendChild(card);
                     }
                 });
             } catch(e) { console.error(e); }
+        }
+
+        // ═══════════════════════════════════════════════════
+        // ★ เพิ่มใหม่ — ฟังก์ชันสำหรับฟีเจอร์ "ย้ายหมวดหมู่หลายรายการพร้อมกัน" (Bulk Move Category)
+        // ═══════════════════════════════════════════════════
+        function toggleInventorySelect(type, code, checked) {
+            if (!inventorySelection[type]) return;
+            if (checked) inventorySelection[type].add(code); else inventorySelection[type].delete(code);
+            updateBulkMoveBar(type);
+        }
+
+        function toggleSelectAllInventory(type, checked) {
+            const tableId = type === 'tool' ? 'toolsTable' : 'itemsTable';
+            const boxes = document.querySelectorAll(`#${tableId} tbody .inv-select-cb`);
+            inventorySelection[type].clear();
+            boxes.forEach(cb => {
+                cb.checked = checked;
+                if (checked) {
+                    const tr = cb.closest('tr');
+                    const codeBadge = tr ? tr.querySelector('.badge-code') : null;
+                    if (codeBadge) inventorySelection[type].add(codeBadge.textContent.trim());
+                }
+            });
+            updateBulkMoveBar(type);
+        }
+
+        function clearInventorySelection(type) {
+            inventorySelection[type].clear();
+            const tableId = type === 'tool' ? 'toolsTable' : 'itemsTable';
+            document.querySelectorAll(`#${tableId} tbody .inv-select-cb`).forEach(cb => cb.checked = false);
+            const checkAll = document.getElementById(type === 'tool' ? 'toolsCheckAll' : 'itemsCheckAll');
+            if (checkAll) checkAll.checked = false;
+            updateBulkMoveBar(type);
+        }
+
+        function updateBulkMoveBar(type) {
+            const bar = document.getElementById(type === 'tool' ? 'toolsBulkMoveBar' : 'itemsBulkMoveBar');
+            const countEl = document.getElementById(type === 'tool' ? 'toolsBulkMoveCount' : 'itemsBulkMoveCount');
+            const count = inventorySelection[type] ? inventorySelection[type].size : 0;
+            if (countEl) countEl.textContent = count;
+            if (bar) {
+                if (count > 0) { bar.classList.remove('d-none'); bar.classList.add('d-flex'); }
+                else { bar.classList.add('d-none'); bar.classList.remove('d-flex'); }
+            }
+        }
+
+        function openBulkMoveCategoryModal(type) {
+            const count = inventorySelection[type] ? inventorySelection[type].size : 0;
+            if (count === 0) return;
+            document.getElementById('bulkMoveModalType').value = type;
+            document.getElementById('bulkMoveModalCount').textContent = count;
+            populateCategoryDatalist('bulkMoveCategorySelect', type); // ใช้ตัวเดียวกับ datalist หมวดหมู่ในโมดัลแก้ไขรายการ — โชว์เฉพาะหมวดที่มีอยู่แล้วจริง
+            bulkMoveCategoryModal.show();
+        }
+
+        function submitBulkMoveCategory() {
+            const type = document.getElementById('bulkMoveModalType').value;
+            const category = document.getElementById('bulkMoveCategorySelect').value;
+            const codes = Array.from(inventorySelection[type] || []);
+            if (!category) { Swal.fire({ icon: 'warning', title: 'กรุณาเลือกหมวดหมู่ปลายทาง', timer: 1800, showConfirmButton: false }); return; }
+            if (codes.length === 0) { bulkMoveCategoryModal.hide(); return; }
+
+            bulkMoveCategoryModal.hide();
+            document.getElementById('loading').style.display = 'flex';
+            const payload = { userId: currentUserProfile.uid, userName: currentUserProfile.name, type: type, codes: codes, category: category };
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    document.getElementById('loading').style.display = 'none';
+                    if (!res.success) { Swal.fire({ icon: 'error', title: 'ย้ายหมวดหมู่ไม่สำเร็จ', text: res.error }); return; }
+                    writeAudit('BULK_MOVE_CATEGORY', `ย้ายหมวดหมู่ ${res.movedCount || codes.length} รายการ (${type}) ไปยัง "${category}" — รหัส: ${codes.join(', ')}`);
+                    // อัปเดตข้อมูลในเครื่อง (allData) ให้ตรงกับที่บันทึกจริง แล้ว render ใหม่ทันที ไม่ต้องรอโหลดข้อมูลทั้งชุดจากเซิร์ฟเวอร์ซ้ำ
+                    const targetList = type === 'tool' ? allData.tools : allData.items;
+                    const codeSet = new Set(codes);
+                    targetList.forEach(i => { if (codeSet.has(i.code)) i.category = category; });
+                    clearInventorySelection(type);
+                    onDataLoaded(allData);
+                    Swal.fire({ icon: 'success', title: 'ย้ายหมวดหมู่สำเร็จ', text: `ย้าย ${res.movedCount || codes.length} รายการ ไปยัง "${category}" เรียบร้อย`, timer: 2200, showConfirmButton: false });
+                })
+                .withFailureHandler(window._gasGenericFail)
+                .webBulkMoveCategory(payload);
         }
 
         function showReceiveHistory(itemCode) {
