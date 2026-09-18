@@ -2875,6 +2875,11 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     <span class="text-muted fw-bold ms-2"><i class="fas fa-filter text-primary"></i> กรอง:</span>
                                     <select class="form-select w-auto shadow-none border-light bg-white fw-medium" id="qrTypeFilter" onchange="filterQRTable()"><option value="all">📦 ทั้งหมด</option><option value="items">อะไหล่ (Items)</option><option value="tools">เครื่องมือ (Tools)</option></select>
                                     <select class="form-select w-auto shadow-none border-light bg-white fw-medium ms-2" id="qrCategoryFilter" onchange="filterQRTable()"><option value="">📁 ทุกหมวดหมู่</option></select>
+                                    <select class="form-select w-auto shadow-none border-light bg-white fw-medium ms-2" id="qrStockFilter" onchange="filterQRTable()">
+                                        <option value="all">📊 ทุกสถานะสต็อก</option>
+                                        <option value="inStock">✅ มีจำนวนคงเหลือ (มากกว่า 0)</option>
+                                        <option value="outOfStock">⛔ หมดสต็อก (เท่ากับ 0)</option>
+                                    </select>
                                     <div class="search-box mx-2"><i class="fas fa-search text-primary"></i><input type="text" class="form-control form-control-lg shadow-sm" id="qrSearchInput" placeholder="พิมพ์ค้นหา รหัส, ชื่อ..." onkeyup="filterQRTable()"></div>
                                 </div>
                                 <div class="table-responsive border rounded"><table class="table table-hover align-middle mb-0" id="qrManageTable"><thead class="bg-light"><tr><th width="5%" class="text-center"><input class="form-check-input" type="checkbox" id="qrSelectAll" onchange="toggleSelectAllQR(this)"></th><th width="15%">รหัส (Code)</th><th width="35%">ชื่อรายการ</th><th width="20%">หมวดหมู่</th><th width="15%">ประเภท</th><th width="10%" class="text-center">QR</th></tr></thead><tbody></tbody></table></div>
@@ -10748,6 +10753,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const typeFilter = document.getElementById('qrTypeFilter').value;
             const catFilter = document.getElementById('qrCategoryFilter').value.toLowerCase().trim();
             const search = document.getElementById('qrSearchInput').value.toLowerCase().trim();
+            // ★ เพิ่ม: ตัวกรอง "รายการที่มีจำนวนอยู่" — กรองตามสต็อกคงเหลือ (item.stock) เพื่อไม่ต้องไล่ดูรายการที่หมดสต็อกแล้ว
+            const stockFilterEl = document.getElementById('qrStockFilter');
+            const stockFilter = stockFilterEl ? stockFilterEl.value : 'all';
             
             let list = [];
             if(typeFilter === 'all' || typeFilter === 'items') { allData.items.forEach(i => list.push({...i, itemType: 'Items (อะไหล่)'})); }
@@ -10759,6 +10767,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 let match = true;
                 if(search !== '' && !text.includes(search)) match = false;
                 if(catFilter !== '' && itemCat !== catFilter) match = false;
+                if(stockFilter === 'inStock' && !(Number(item.stock) > 0)) match = false;
+                if(stockFilter === 'outOfStock' && Number(item.stock) > 0) match = false;
                 return match;
             });
 
