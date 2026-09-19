@@ -1130,6 +1130,10 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
     .table-container.view-mode-card .mobile-card-list {
         display: grid !important;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        align-items: stretch; /* ★ เพิ่ม: บังคับให้ทุกการ์ดในแถวเดียวกันสูงเท่ากันเสมอ (ค่านี้เป็นค่าเริ่มต้นของ Grid
+        อยู่แล้ว แต่ใส่ชัดเจนไว้กันกรณีมี style อื่นมา override โดยไม่ตั้งใจ) — ทำงานคู่กับ height:100% บนตัวการ์ดเอง
+        ที่เพิ่มไว้ใน renderTable() เพื่อให้แถวปุ่ม action ไปเกาะขอบล่างของทุกใบพร้อมกัน ไม่ขยับตามความยาวชื่อ */
+        gap: 1rem;
     }
 }
 </style>
@@ -8528,13 +8532,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             cardImgHtml = `<span style="font-size:26px;color:#6b7280">📦</span>`;
                         }
                         const card = document.createElement('div');
-                        card.style.cssText = 'background:#20242f;border-radius:12px;padding:12px;border:1px solid #2a2f3d;cursor:pointer';
+                        // ★ แก้บั๊ก: เดิมการ์ดไม่มี height:100%/flex-column ทำให้ตอนจอกว้าง (แสดงเป็น Grid หลายคอลัมน์)
+                        // การ์ดที่ชื่อสินค้าสั้น vs ยาว จะสูงไม่เท่ากัน และปุ่ม +/-/แก้ไข (.ml-card-actions) จะอยู่
+                        // คนละตำแหน่งกันในแต่ละใบ (หดตามจำนวนบรรทัดของชื่อ) — แก้โดยให้การ์ดยืดเต็มความสูงแถว Grid
+                        // (height:100%) แล้วจัดเป็น flex-column พร้อม justify-content:space-between เพื่อดันแถวปุ่ม
+                        // ลงไปชิดขอบล่างให้พอดีเสมอ ไม่ว่าชื่อจะสั้นหรือยาวแค่ไหน
+                        card.style.cssText = 'background:#20242f;border-radius:12px;padding:12px;border:1px solid #2a2f3d;cursor:pointer;height:100%;display:flex;flex-direction:column;justify-content:space-between';
                         card.innerHTML = `
                             <div class="d-flex gap-3">
                                 <div style="width:88px;height:88px;flex-shrink:0;border-radius:10px;background:#181b24;display:flex;align-items:center;justify-content:center;position:relative">${cardImgHtml}</div>
                                 <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between">
                                     <div>
-                                        <p style="color:#fff;font-size:14px;font-weight:500;margin:0;overflow-wrap:break-word">${escapeHtml(item.name)}</p>
+                                        <p style="color:#fff;font-size:14px;font-weight:500;margin:0;overflow-wrap:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden">${escapeHtml(item.name)}</p>
                                         <div style="font-size:12px;color:#6b7280;margin-top:2px">${escapeHtml(item.code)} · ${escapeHtml(displayCat)}${item.location ? ` · <i class="fas fa-map-marker-alt text-danger"></i> ${escapeHtml(item.location)}` : ''}</div>
                                         <div class="ml-card-status" style="margin-top:4px;font-size:11px"></div>
                                     </div>
@@ -11080,7 +11089,13 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                                 setTimeout(() => {
                                     // ★ เพิ่ม: ย่อตัวหนังสือให้พอดีป้ายทีละใบ ก่อนสั่งพิมพ์จริง
                                     const isLandscape = ${orientation === 'landscape' ? 'true' : 'false'};
-                                    Array.from(container.children).forEach(card => fitLabelCardText(card, isLandscape));
+                                    Array.from(container.children).forEach(card => {
+                                        // ★ แก้บั๊ก: เดิมถ้าใบไหน error กลางคัน (เช่น ชื่อยาวผิดปกติ) forEach จะหยุดทำงาน
+                                        // ทันทีทั้งลูป ทำให้ทุกใบที่เหลือหลังจากนั้นไม่ถูกย่อ/ตัดข้อความเลยสักใบ
+                                        // ครอบด้วย try/catch แยกทีละใบ กันไม่ให้ใบเดียวพังแล้วลากใบอื่นพังตามไปด้วย
+                                        try { fitLabelCardText(card, isLandscape); }
+                                        catch (e) { console.error('fitLabelCardText error on card:', card, e); }
+                                    });
                                     window.print();
                                 }, 800);
                             }, 300);
@@ -12149,9 +12164,10 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             setTimeout(() => {
                                 new QRCode(document.getElementById('qr-single'), { text: "${code}", width: ${qrSize}, height: ${qrSize}, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
                                 setTimeout(() => {
-                                    // ★ เพิ่ม: ย่อตัวหนังสือให้พอดีป้าย ก่อนสั่งพิมพ์จริง
+                                    // ★ เพิ่ม: ย่อตัวหนังสือให้พอดีป้าย ก่อนสั่งพิมพ์จริง (ครอบ try/catch กันพังแล้วไม่พิมพ์เลย)
                                     const isLandscape = ${orientation === 'landscape' ? 'true' : 'false'};
-                                    fitLabelCardText(document.querySelector('.label-card'), isLandscape);
+                                    try { fitLabelCardText(document.querySelector('.label-card'), isLandscape); }
+                                    catch (e) { console.error('fitLabelCardText error:', e); }
                                     window.print(); window.close();
                                 }, 800);
                             }, 300);
