@@ -1478,7 +1478,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const sessionStr = localStorage.getItem('user_session');
       if (sessionStr) {
         const session = JSON.parse(sessionStr);
-        if (session && session.uid && (Date.now() - session.timestamp < 86400000)) {
+        if (session && session.uid && (Date.now() - session.timestamp < 21600000)) {
+          // ★ แก้บั๊ก: เดิมตั้งไว้ 24 ชม. (86400000) แต่ token จริงจาก backend ใช้ได้แค่ 6 ชม. (ดู
+          // SESSION_TTL_SEC ใน code.gs) ทำให้ช่วง 6-24 ชม. หน้านี้เข้าใจผิดว่ายังล็อกอินอยู่ (ไม่เด้งกลับ
+          // หน้า login) แต่ token จริงหมดอายุไปแล้ว กดบันทึกรายการอะไรก็ error ทันที — แก้ให้ตรงกับ backend
           const userExists = (allData.users || []).some(x => x.userId === session.uid);
           if (userExists) {
             loginSuccess(session.uid);
@@ -3503,6 +3506,25 @@ function callGASQueued(fn, args, onOk, onFail) {
   callGAS(fn, args, onOk, onFail);
 }
 
+function _handleSessionExpired() {
+  // ★ เพิ่ม: เจอ session หมดอายุจาก backend (sessionExpired: true) ให้เด้งกลับหน้า login ทันทีอัตโนมัติ
+  // แทนที่จะโชว์แค่ popup error แล้วผู้ใช้งงว่าต้องกดอะไรต่อ (เดิมเห็นหน้าจอเหมือนยังล็อกอินอยู่ กดปุ่ม
+  // อะไรก็ error ซ้ำๆ ไม่รู้ต้องไปกดออกจากระบบเองก่อน)
+  try {
+    localStorage.removeItem('user_session');
+    localStorage.removeItem('qr_sess_token');
+    sessionStorage.removeItem('withdrawCart');
+    sessionStorage.removeItem('borrowCart');
+    sessionStorage.removeItem('receiveCart');
+  } catch (e) {}
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({ icon: 'info', title: 'เซสชันหมดอายุ', text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้งครับ', confirmButtonText: 'ตกลง' })
+      .then(() => location.reload());
+  } else {
+    location.reload();
+  }
+}
+
 function callGAS(fn, args, onOk, onFail) {
   // 1. ถ้ารันอยู่บน Google Apps Script Web App (มี google.script.run) ให้ใช้ช่องทางหลักเสมอ เพื่อเลี่ยงปัญหา CORS
   if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -3511,7 +3533,10 @@ function callGAS(fn, args, onOk, onFail) {
     google.script.run
       .withSuccessHandler(res => {
         if (done) return; done = true; clearTimeout(timer);
-        if (res && res.success === false) { if (onFail) onFail(res.error || 'error'); return; }
+        if (res && res.success === false) {
+          if (res.sessionExpired) { _handleSessionExpired(); return; }
+          if (onFail) onFail(res.error || 'error'); return;
+        }
         onOk(res);
       })
       .withFailureHandler(e => {
@@ -3539,7 +3564,10 @@ function callGAS(fn, args, onOk, onFail) {
     .then(r => r.json())
     .then(res => {
       clearTimeout(timer);
-      if (res && res.success === false) { if (onFail) onFail(res.error || 'error'); return; }
+      if (res && res.success === false) {
+        if (res.sessionExpired) { _handleSessionExpired(); return; }
+        if (onFail) onFail(res.error || 'error'); return;
+      }
       onOk(res);
     })
     .catch(err => {
