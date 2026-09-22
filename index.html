@@ -4698,6 +4698,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         }
         window._gasGenericFail = _gasGenericFail; // เปิดให้เรียกได้จากทุกจุดในไฟล์ (ฟังก์ชันนี้อยู่ใน IIFE)
 
+        // ★ แก้บั๊ก: ตัวจัดการข้อผิดพลาดแบบ "เงียบ" สำหรับฟังก์ชันที่ทำงานพื้นหลัง/polling อัตโนมัติ
+        // (เช่น เช็คคำขอ QR ใหม่ทุก 30 วิ, เช็คส่วนต่างนับสต็อก) — เดิมใช้ _gasGenericFail (popup เต็มจอ)
+        // ปนกับฟังก์ชันบันทึกข้อมูล ทำให้เวลา background poll ล้มเหลวชั่ววูบ (เช่น session หมดอายุตอนเปิด
+        // หน้าทิ้งไว้นาน) ผู้ใช้เห็น popup "ทำรายการไม่สำเร็จ" โผล่มาขัดจังหวะทั้งที่ไม่ได้กดอะไรเลย
+        // งงว่าทำอะไรพลาด — เปลี่ยนให้แค่ log ไว้เงียบๆ แล้วรอ poll รอบถัดไปลองใหม่เอง (เวอร์ชันเก่าก่อนหน้านี้
+        // ก็ fail เงียบแบบนี้อยู่แล้ว ไม่เคยมี popup ในจุดพื้นหลังพวกนี้)
+        function _gasSilentFail(err) {
+            console.warn('background refresh failed (will retry automatically):', err);
+        }
+        window._gasSilentFail = _gasSilentFail;
+
             function callGAS(fn, args, onOk, onFail, timeoutMs, _attempt, _requestId) {
                 _attempt = _attempt || 1;
                 // ★ requestId: สุ่มขึ้นครั้งเดียวตอนเริ่มคำสั่งนี้ (ไม่สุ่มใหม่ทุก retry) แล้วส่งไปกับทุกครั้งที่ยิงซ้ำ
@@ -4752,7 +4763,22 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     .then(r => r.json())
                     .then(res => {
                         clearTimeout(timer);
-                        if (res && res.success === false) { if (onFail) onFail(res.error || 'error'); return; }
+                        if (res && res.success === false) {
+                            // ★ เพิ่ม: เจอ session หมดอายุจาก backend (sessionExpired: true) ให้เด้งกลับหน้า login
+                            // ทันทีทุกจุดในระบบโดยอัตโนมัติ แทนที่จะโชว์แค่ popup error แล้วผู้ใช้งงว่าต้องทำอะไรต่อ
+                            if (res.sessionExpired) {
+                                try { localStorage.removeItem('user_session'); if (typeof clearSessionToken === 'function') clearSessionToken(); } catch (e) {}
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({ icon: 'info', title: 'เซสชันหมดอายุ', text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้งครับ', confirmButtonText: 'ตกลง' })
+                                        .then(() => location.reload());
+                                } else {
+                                    location.reload();
+                                }
+                                return;
+                            }
+                            if (onFail) onFail(res.error || 'error');
+                            return;
+                        }
                         if (onOk) onOk(res);
                     })
                     .catch(e => {
@@ -13558,7 +13584,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (!currentUserProfile || currentUserProfile.role !== 'admin') return;
             if (typeof google === 'undefined' || !google.script || !google.script.run) return;
             google.script.run
-                    .withFailureHandler(window._gasGenericFail).withSuccessHandler(function(rows) {
+                    .withFailureHandler(window._gasSilentFail).withSuccessHandler(function(rows) {
                 rows = rows || [];
                 // อัปเดตแท็บ "อนุมัติผู้ใช้" ในหน้ารออนุมัติแบบสด ๆ ถ้าเปิดอยู่
                 if (typeof renderPendingUserApprovals === 'function') renderPendingUserApprovals(rows);
@@ -13791,7 +13817,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         function loadStockTakeDiffs() {
             if (typeof google !== 'undefined' && google.script && google.script.run && typeof google.script.run.webGetStockTakeDiffs === 'function') {
                 google.script.run
-                    .withFailureHandler(window._gasGenericFail)
+                    .withFailureHandler(window._gasSilentFail)
                     .withSuccessHandler(function(res) {
                         if (!res || !res.success) return;
                         stMgmtState.diffs = res.diffs || [];
