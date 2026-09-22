@@ -1509,6 +1509,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     <input type="hidden" id="bulkMoveModalType">
                     <select class="form-select" id="bulkMoveCategorySelect"></select>
                     <p class="text-muted small mt-2 mb-0"><i class="fas fa-info-circle me-1"></i>เลือกได้เฉพาะหมวดหมู่ที่มีอยู่แล้วในระบบเท่านั้น</p>
+                    <p class="text-warning small mt-1 mb-0"><i class="fas fa-tag me-1"></i>ระบบจะออก <b>รหัสใหม่</b> ให้ตรงกับหมวดปลายทางอัตโนมัติ (รหัสเดิมยังสแกนเจอของถูกต้อง แนะนำพิมพ์ QR ใหม่ทีหลัง)</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">ยกเลิก</button>
@@ -8661,14 +8662,29 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 .withSuccessHandler(function(res) {
                     document.getElementById('loading').style.display = 'none';
                     if (!res.success) { Swal.fire({ icon: 'error', title: 'ย้ายหมวดหมู่ไม่สำเร็จ', text: res.error }); return; }
-                    writeAudit('BULK_MOVE_CATEGORY', `ย้ายหมวดหมู่ ${res.movedCount || codes.length} รายการ (${type}) ไปยัง "${category}" — รหัส: ${codes.join(', ')}`);
-                    // อัปเดตข้อมูลในเครื่อง (allData) ให้ตรงกับที่บันทึกจริง แล้ว render ใหม่ทันที ไม่ต้องรอโหลดข้อมูลทั้งชุดจากเซิร์ฟเวอร์ซ้ำ
+                    // ★ เพิ่ม: backend ตอนนี้ "เปลี่ยนรหัสใหม่ให้ตรงกับ prefix หมวดปลายทาง" ในขั้นตอนเดียวกันด้วย
+                    // (ตามที่ตกลงกันไว้) — renameMap คือรายการ {oldCode, newCode, name} ที่ backend สร้างให้
+                    const renameMap = Array.isArray(res.renameMap) ? res.renameMap : [];
+                    const renameSummary = renameMap.map(r => `${r.oldCode} → ${r.newCode}`).join(', ');
+                    writeAudit('BULK_MOVE_CATEGORY', `ย้ายหมวดหมู่ ${res.movedCount || codes.length} รายการ (${type}) ไปยัง "${category}" พร้อมออกรหัสใหม่: ${renameSummary}`);
+                    // อัปเดตข้อมูลในเครื่อง (allData) ให้ตรงกับที่บันทึกจริง (ทั้งหมวดหมู่ + รหัสใหม่) แล้ว render ใหม่ทันที
+                    // ไม่ต้องรอโหลดข้อมูลทั้งชุดจากเซิร์ฟเวอร์ซ้ำ — จับคู่ด้วย "รหัสเก่า" เพราะ codes array ยังเป็นรหัสเดิมอยู่
                     const targetList = type === 'tool' ? allData.tools : allData.items;
-                    const codeSet = new Set(codes);
-                    targetList.forEach(i => { if (codeSet.has(i.code)) i.category = category; });
+                    const renameByOldCode = {};
+                    renameMap.forEach(r => { renameByOldCode[r.oldCode] = r.newCode; });
+                    targetList.forEach(i => {
+                        if (renameByOldCode[i.code]) { i.category = category; i.code = renameByOldCode[i.code]; }
+                    });
                     clearInventorySelection(type);
                     onDataLoaded(allData);
-                    Swal.fire({ icon: 'success', title: 'ย้ายหมวดหมู่สำเร็จ', text: `ย้าย ${res.movedCount || codes.length} รายการ ไปยัง "${category}" เรียบร้อย`, timer: 2200, showConfirmButton: false });
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'ย้ายหมวดหมู่สำเร็จ',
+                        html: `ย้าย ${res.movedCount || codes.length} รายการ ไปยัง "${category}" เรียบร้อย<br><br>` +
+                              `<div class="text-start small" style="max-height:180px;overflow-y:auto">${renameMap.map(r => `<div>${escapeHtml(r.name)}: <b>${escapeHtml(r.oldCode)}</b> → <b class="text-success">${escapeHtml(r.newCode)}</b></div>`).join('')}</div>` +
+                              `<div class="alert alert-warning mt-3 mb-0 py-2 small"><i class="fas fa-exclamation-triangle me-1"></i> รหัสเปลี่ยนแล้ว — แนะนำให้พิมพ์สติกเกอร์ QR ใหม่ไปแปะทับของเดิม (QR เก่ายังสแกนเจอของถูกต้องอยู่ ไม่ต้องรีบก็ได้)</div>`,
+                        confirmButtonText: 'รับทราบ'
+                    });
                 })
                 .withFailureHandler(window._gasGenericFail)
                 .webBulkMoveCategory(payload);
@@ -9751,10 +9767,18 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (type === 'tools' || type === 'tool') list = allData.tools;
                 else if (type === 'items' || type === 'item') list = allData.items;
                 else list = allData.items.concat(allData.tools);
-                // ใช้เฉพาะหมวดหมู่ที่มีอยู่จริงในข้อมูลของประเภทนั้นๆ เท่านั้น
-                // (ไม่ใช้ allData.settings.categories ตรงนี้ เพราะเป็น master list รวม prefix ของทั้งอะไหล่+เครื่องมือปนกัน
-                //  ถ้าใช้จะทำให้ dropdown โชว์หมวดหมู่ของอีกประเภทหนึ่งปนมาด้วย)
-                const uniqueCats = [...new Set((list || []).map(item => getItemCategory(item)))]
+                // ★ แก้บั๊ก: เดิมใช้เฉพาะหมวดหมู่ที่มีรายการอยู่จริงในข้อมูลของประเภทนั้นๆ เท่านั้น
+                // ทำให้หมวดหมู่ที่เพิ่งสร้างใหม่ใน "ข้อมูลหลัก (MASTER)" (ยังไม่มีรายการใดๆ ในหมวดนั้นเลย)
+                // ไม่โผล่ใน datalist นี้ — ผู้ใช้ต้องพิมพ์ชื่อหมวดเองตอนขึ้นทะเบียนรายการ
+                // หากพิมพ์ชื่อหมวดไม่ตรงกับที่ตั้งไว้เป๊ะๆ (เว้นวรรค/สะกดต่าง) getNextCodeForWeb() จะหา prefix ที่ตั้งไว้ไม่เจอ
+                // แล้ว fallback ไปใช้ prefix เดิม/ค่า default แทนแบบเงียบๆ โดยไม่มีการแจ้งเตือนใดๆ
+                // → นำชื่อหมวดจาก Master list (allData.settings.categories) มารวมด้วย เพื่อให้เลือกจาก dropdown ได้ตรงเป๊ะเสมอ
+                const masterCatNames = String((allData.settings || {}).categories || '')
+                    .split(',').map(s => (s.includes(':') ? s.split(':')[0] : s).trim())
+                    .filter(s => s && s !== 'undefined');
+                const uniqueCats = [...new Set(
+                    (list || []).map(item => getItemCategory(item)).concat(masterCatNames)
+                )]
                     .filter(c => c && c !== 'undefined' && String(c).trim() !== '')
                     .sort();
                 uniqueCats.forEach(cat => { let opt = document.createElement('option'); opt.value = cat; datalist.appendChild(opt); });
@@ -9860,8 +9884,17 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             
             if(forcedType) ts.value = forcedType;
             populateCategoryDatalist('categoryOptions', ts.value);
-            ts.onchange = function() { populateCategoryDatalist('categoryOptions', this.value); ci.value = ''; };
-            
+            ts.onchange = function() { populateCategoryDatalist('categoryOptions', this.value); ci.value = ''; regenerateAllRowCodes(); };
+
+            // ★ แก้บั๊ก: เดิมรหัสอัตโนมัติจะถูกเจนแค่ตอนสร้างแถวใหม่ (ตอนนั้นยังไม่ได้เลือกหมวดหมู่ จึงเจนไม่ได้)
+            // และไม่มีการเจนซ้ำเมื่อผู้ใช้พิมพ์/เลือกหมวดหมู่ภายหลัง ต้องกดปุ่ม "Auto" เองทีละแถวเท่านั้น
+            // ถ้าลืมกด รหัสจะค้างเป็นค่าว่างหรือรหัสเดิม ไม่ได้ตัวย่อของหมวดที่เพิ่งตั้งใหม่ → ผูก listener ให้เจนใหม่อัตโนมัติทุกครั้งที่เปลี่ยนหมวดหมู่
+            if (!ci._autoCodeBound) {
+                ci._autoCodeBound = true;
+                ci.addEventListener('input', regenerateAllRowCodes);
+                ci.addEventListener('change', regenerateAllRowCodes);
+            }
+
             const tbody = document.getElementById('newItemsTableBody');
             tbody.innerHTML = '';
             window.newItemRowCounter = 0;
@@ -9939,19 +9972,28 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 </td>
             `;
             tbody.appendChild(row);
-            autoGenerateCodeForRow(rowId);
+            autoGenerateCodeForRow(rowId, true); // silent: ตอนสร้างแถวใหม่ผู้ใช้อาจยังไม่ได้เลือกหมวดหมู่ ไม่ต้องเด้งเตือน
             const nameInp = row.querySelector('[data-name-input]');
             if (nameInp) {
                 nameInp.addEventListener('input', validateNewItemNames);
             }
         }
 
-        function autoGenerateCodeForRow(rowId) {
+        // ★ แก้บั๊ก: เจนรหัสใหม่ให้ทุกแถวที่มีอยู่ ทุกครั้งที่ผู้ใช้เปลี่ยน/พิมพ์หมวดหมู่หรือประเภท
+        // (เดิมต้องกดปุ่ม "Auto" เองทีละแถว ถ้าลืมกด รหัสจะไม่ตรงกับตัวย่อของหมวดที่เพิ่งตั้งใหม่)
+        function regenerateAllRowCodes() {
+            document.querySelectorAll('#newItemsTableBody tr').forEach(row => autoGenerateCodeForRow(row.id, true));
+        }
+
+        function autoGenerateCodeForRow(rowId, silent) {
             const row = document.getElementById(rowId);
             if (!row) return;
             const type = document.getElementById('newItemType').value;
             const category = document.getElementById('newItemCat').value.trim();
-            if (!type || !category) return Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: 'เลือกประเภทและหมวดหมู่ก่อน'});
+            if (!type || !category) {
+                if (!silent) Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: 'เลือกประเภทและหมวดหมู่ก่อน'});
+                return;
+            }
             
             const rows = Array.from(document.querySelectorAll('#newItemsTableBody tr'));
             const rowIndex = rows.indexOf(row);
