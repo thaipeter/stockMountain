@@ -1558,6 +1558,10 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <input type="number" class="form-control text-center text-primary fw-bold" id="editItemMin" min="0" step="any" required>
                             </div>
                         </div>
+                        <div class="mb-3 price-only-element">
+                            <label class="form-label text-muted small fw-bold">ราคาทุนต่อหน่วย (บาท) <small class="text-muted fw-normal">— ใช้คำนวณมูลค่าคลัง</small></label>
+                            <input type="number" class="form-control" id="editItemPrice" min="0" step="any" placeholder="เช่น 150">
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -2294,6 +2298,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-4"></canvas></div>
                             </div>
                         </div>
+                        <div class="col-6 col-md-3 col-sm-6 price-only-element">
+                            <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-warning border-4">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">มูลค่าคลังรวม (ราคาทุน)</div>
+                                        <div class="stat-value" id="count-stock-value" style="font-size:1.6rem; font-weight:800; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
+                                        <div style="font-size:12px; font-weight:700; margin-top:2px; color:#a78bfa;">อะไหล่ + เครื่องมือ (คงเหลือ × ราคาทุน)</div>
+                                    </div>
+                                    <div class="stat-icon bg-warning bg-opacity-10 text-warning mb-0"><i class="fas fa-coins"></i></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <!-- Main Content -->
                     <div class="row g-4 mt-0 mb-4">
@@ -2855,7 +2871,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <div class="table-container p-0" id="itemsTableContainer">
                         <div id="itemsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
-                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="3%" class="admin-only-element text-center"><input type="checkbox" id="itemsCheckAll" onclick="toggleSelectAllInventory('item', this.checked)" title="เลือกทั้งหมด"></th><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center" id="itemsThStock">คงเหลือ</th><th width="6%">หน่วย</th><th width="11%" class="text-center" id="itemsThStatus">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
+                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="itemsTable"><thead><tr><th width="3%" class="admin-only-element text-center"><input type="checkbox" id="itemsCheckAll" onclick="toggleSelectAllInventory('item', this.checked)" title="เลือกทั้งหมด"></th><th width="12%">รหัส</th><th width="18%">ชื่อรายการ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center" id="itemsThStock">คงเหลือ</th><th width="6%">หน่วย</th><th width="9%" class="text-end price-only-element">มูลค่า</th><th width="11%" class="text-center" id="itemsThStatus">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
 
@@ -2885,7 +2901,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                     <div class="table-container p-0" id="toolsTableContainer">
                         <div id="toolsCardListMobile" class="mobile-card-list" style="display:none;flex-direction:column;gap:10px;padding:12px"></div>
-                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="toolsTable"><thead><tr><th width="3%" class="admin-only-element text-center"><input type="checkbox" id="toolsCheckAll" onclick="toggleSelectAllInventory('tool', this.checked)" title="เลือกทั้งหมด"></th><th width="12%">รหัส</th><th width="18%">ชื่อเครื่องมือ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">พร้อมใช้</th><th width="6%">หน่วย</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
+                        <div class="table-responsive desktop-table-view"><table class="table table-hover align-middle" id="toolsTable"><thead><tr><th width="3%" class="admin-only-element text-center"><input type="checkbox" id="toolsCheckAll" onclick="toggleSelectAllInventory('tool', this.checked)" title="เลือกทั้งหมด"></th><th width="12%">รหัส</th><th width="18%">ชื่อเครื่องมือ</th><th width="10%">หมวดหมู่</th><th width="10%">ตำแหน่ง</th><th width="8%" class="text-center">รูป</th><th width="8%" class="text-center">พร้อมใช้</th><th width="6%">หน่วย</th><th width="9%" class="text-end price-only-element">มูลค่า</th><th width="11%" class="text-center">สถานะ</th><th width="17%" class="text-center">เครื่องมือผู้ดูแล</th></tr></thead><tbody></tbody></table></div>
                     </div>
                 </div>
 
@@ -6461,6 +6477,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             }
         }
 
+        // ★ เพิ่มใหม่ — เช็คสิทธิ์มองเห็นราคา/มูลค่าคลัง แบบเรียกใช้ได้จากทุกที่ (ตรรกะเดียวกับใน applyPermissions ด้านล่าง)
+        // แยกออกมาเป็นฟังก์ชัน เพราะ renderTable() ต้องเรียกใช้ตอนสร้างเซลล์ใหม่ทุกครั้งที่ตารางถูกวาดใหม่
+        // (พึ่งพา applyPermissions ที่รันแค่ตอนโหลด/เปลี่ยนสิทธิ์อย่างเดียวไม่พอ เพราะ innerHTML ใหม่จะโผล่มาแบบไม่ซ่อนก่อน)
+        function userCanSeePrice() {
+            const role = currentUserProfile.role;
+            const isAdmin = (role === 'admin');
+            const isStaff = (role === 'staff');
+            const s = allData.settings || {};
+            return isAdmin || (isStaff ? (s.permPriceStaff !== undefined ? !!s.permPriceStaff : true) : !!s.permPriceUser);
+        }
+
         function applyPermissions() {
             const role = currentUserProfile.role;
             const isAdmin = (role === 'admin');
@@ -7196,6 +7223,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const _dispatchToday = data.history.filter(h => h.time && h.time.includes(_todayDateStr) && String(h.action).trim().toLowerCase().startsWith('เบิก')).length;
                 const _receiveToday = data.history.filter(h => h.time && h.time.includes(_todayDateStr) && (String(h.action).trim().toLowerCase() === 'รับเข้า' || String(h.action).trim().toLowerCase() === 'new item')).length;
                 animateValue("count-items", 0, data.items.length, 500); animateValue("count-tools", 0, data.tools.length, 500); animateValue("count-low", 0, _dispatchToday, 500); animateValue("count-logs", 0, _receiveToday, 500);
+
+                // ★ เพิ่มใหม่ — มูลค่าคลังรวม (ราคาทุน) = ผลรวม (คงเหลือ × ราคาทุนต่อหน่วย) ของอะไหล่ + เครื่องมือทั้งหมด
+                const _stockValueEl = document.getElementById('count-stock-value');
+                if (_stockValueEl) {
+                    const totalStockValue = data.items.concat(data.tools).reduce((sum, i) => sum + ((Number(i.stock) || 0) * (Number(i.price) || 0)), 0);
+                    _stockValueEl.innerText = formatNumber(totalStockValue) + ' ฿';
+                }
 
                 const toolCodes = new Set(data.tools.map(t => t.code));
                 const activeToolBorrows = data.activeBorrows.filter(b => toolCodes.has(b.itemCode));
@@ -8474,7 +8508,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 if (inventorySelection[type]) { inventorySelection[type].clear(); updateBulkMoveBar(type); }
                 const limit = parseInt(allData.settings?.rowsPerPage) || 100; const limitedData = data.slice(0, limit);
                 if (limitedData.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบข้อมูลที่ค้นหา</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="11" class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบข้อมูลที่ค้นหา</td></tr>';
                     if (cardList) cardList.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-search fs-3 d-block mb-2"></i> ไม่พบข้อมูลที่ค้นหา</div>';
                     return;
                 }
@@ -8517,7 +8551,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     
                     if (currentUserProfile.role === 'admin') {
                         let qrBtn = `<button class="btn btn-sm btn-light text-primary border me-1" onclick="showQRCode('${safeCode}', '${safeName}')" title="แสดง QR Code"><i class="fas fa-qrcode"></i></button>`;
-                        let editBtn = `<button class="btn btn-sm btn-light text-warning border" onclick="openEditItemModal('${safeCode}', '${safeName}', '${safeCat}', '${safeUnit}', ${item.min}, '${safeType}', '${safeLocation}')" title="แก้ไข"><i class="fas fa-edit"></i></button>`;
+                        let editBtn = `<button class="btn btn-sm btn-light text-warning border" onclick="openEditItemModal('${safeCode}', '${safeName}', '${safeCat}', '${safeUnit}', ${item.min}, '${safeType}', '${safeLocation}', ${Number(item.price) || 0})" title="แก้ไข"><i class="fas fa-edit"></i></button>`;
                         if(type === 'item') { actionButtons = `<div class="d-flex justify-content-center gap-1">${qrBtn}${editBtn}<button class="btn btn-sm btn-light text-success border ms-1" onclick="openAdjustModal('${safeCode}', '${safeName}', '${safeUnit}', 'add')" title="เพิ่มยอดแมนนวล"><i class="fas fa-plus"></i></button><button class="btn btn-sm btn-light text-danger border" onclick="openAdjustModal('${safeCode}', '${safeName}', '${safeUnit}', 'remove')" title="ลดยอดแมนนวล"><i class="fas fa-minus"></i></button></div>`; } 
                         else if (type === 'tool') { actionButtons = `<div class="d-flex justify-content-center gap-1">${qrBtn}${editBtn}<button class="btn btn-sm btn-light text-danger border ms-1" onclick="openDamageModal('${safeCode}', '${safeName}', '${safeUnit}')" title="แจ้งเสีย"><i class="fas fa-heart-broken"></i></button><button class="btn btn-sm btn-light text-success border" onclick="openRepairModal('${safeCode}', '${safeName}', '${safeUnit}', 1)" title="ซ่อมแล้ว"><i class="fas fa-tools"></i></button></div>`; }
                     } else {
@@ -8536,7 +8570,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         statusCell = `<td class="text-center">${statusBadge}</td>`;
                     }
                     const checkboxCell = `<td class="admin-only-element text-center"><input type="checkbox" class="inv-select-cb" ${inventorySelection[type] && inventorySelection[type].has(item.code) ? 'checked' : ''} onclick="toggleInventorySelect('${safeType}', '${safeCode}', this.checked)"></td>`;
-                    tr.innerHTML = `${checkboxCell}<td><span class="badge badge-code px-2 py-1">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark fs-6">${escapeHtml(item.name)}</td><td><span class="badge badge-cat px-2 py-1">${escapeHtml(displayCat)}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td>${stockCell}<td class="text-muted fw-medium">${escapeHtml(item.unit)}</td>${statusCell}<td class="text-center">${actionButtons}</td>`;
+                    // ★ เพิ่มใหม่ — คอลัมน์มูลค่าคลังต่อรายการ (คงเหลือ × ราคาทุนต่อหน่วย) แสดงเฉพาะผู้มีสิทธิ์เห็นราคา
+                    // เช็คสิทธิ์ตรงนี้เลย (ไม่รอ applyPermissions รอบถัดไป) กันเซลล์ใหม่โผล่มาแบบไม่ซ่อนก่อนชั่วขณะ
+                    const itemValue = (Number(item.stock) || 0) * (Number(item.price) || 0);
+                    const valueCell = userCanSeePrice()
+                        ? `<td class="text-end price-only-element fw-bold ${item.price ? 'text-dark' : 'text-muted'}">${item.price ? formatNumber(itemValue) : '-'}</td>`
+                        : `<td class="text-end price-only-element" style="display:none"></td>`;
+                    tr.innerHTML = `${checkboxCell}<td><span class="badge badge-code px-2 py-1">${escapeHtml(item.code)}</span></td><td class="fw-bold text-dark fs-6">${escapeHtml(item.name)}</td><td><span class="badge badge-cat px-2 py-1">${escapeHtml(displayCat)}</span></td><td>${displayLocation}</td><td class="text-center">${imageCell}</td>${stockCell}<td class="text-muted fw-medium">${escapeHtml(item.unit)}</td>${valueCell}${statusCell}<td class="text-center">${actionButtons}</td>`;
                     tr.style.cursor = 'pointer';
                     tr.title = 'คลิกเพื่อดูประวัติการรับเข้า';
                     tr.addEventListener('click', function(e) {
@@ -10549,10 +10589,11 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             });
         }
 
-        function openEditItemModal(code, name, category, unit, min, type, location) {
+        function openEditItemModal(code, name, category, unit, min, type, location, price) {
             if (currentUserProfile.role !== 'admin') return Swal.fire({icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'สิทธิ์การใช้งานไม่เพียงพอ! (เฉพาะ Admin เท่านั้น)'});
             const ci = document.getElementById('editItemCat'); const cdi = document.getElementById('editItemCode'); const ti = document.getElementById('editItemType');
             cdi.value = code; document.getElementById('editItemName').value = name; ci.value = category; document.getElementById('editItemUnit').value = unit; document.getElementById('editItemMin').value = min; ti.value = type; document.getElementById('editItemLocation').value = location;
+            const priceInput = document.getElementById('editItemPrice'); if (priceInput) priceInput.value = price || '';
             const editNameInput = document.getElementById('editItemName');
             editNameInput.classList.remove('is-invalid');
             const errDiv = document.getElementById('editItemNameError');
@@ -10563,7 +10604,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
         }
 
         function submitEditItem() {
-            const payload = { code: document.getElementById('editItemCode').value, name: document.getElementById('editItemName').value.trim(), category: document.getElementById('editItemCat').value.trim(), location: document.getElementById('editItemLocation').value.trim(), unit: document.getElementById('editItemUnit').value.trim(), min: parseFloat(document.getElementById('editItemMin').value) || 0, type: document.getElementById('editItemType').value, user: currentUserProfile.name, userId: currentUserProfile.uid };
+            const priceVal = document.getElementById('editItemPrice') ? document.getElementById('editItemPrice').value : '';
+            const payload = { code: document.getElementById('editItemCode').value, name: document.getElementById('editItemName').value.trim(), category: document.getElementById('editItemCat').value.trim(), location: document.getElementById('editItemLocation').value.trim(), unit: document.getElementById('editItemUnit').value.trim(), min: parseFloat(document.getElementById('editItemMin').value) || 0, price: priceVal !== '' ? (parseFloat(priceVal) || 0) : 0, type: document.getElementById('editItemType').value, user: currentUserProfile.name, userId: currentUserProfile.uid };
             if(!payload.name || !payload.category || !payload.unit) return Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณากรอกข้อมูลที่มี * ให้ครบถ้วน'});
             document.getElementById('loading').style.display = 'flex'; editItemModal.hide();
             if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -10576,7 +10618,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             writeAudit('EDIT_ITEM', `แก้ไข [${payload.code}] ชื่อ: ${payload.name} | หมวด: ${payload.category} | Min: ${payload.min}`);
                             Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'อัปเดตข้อมูลสินค้าเสร็จสมบูรณ์!', timer: 2000, showConfirmButton: false});
                             let targetList = payload.type === 'tool' ? allData.tools : allData.items; let item = targetList.find(i => i.code === payload.code);
-                            if(item) { item.name = payload.name; item.category = payload.category; item.location = payload.location; item.unit = payload.unit; item.min = payload.min; } onDataLoaded(allData);
+                            if(item) { item.name = payload.name; item.category = payload.category; item.location = payload.location; item.unit = payload.unit; item.min = payload.min; item.price = payload.price; } onDataLoaded(allData);
                         }
                     }).webEditItem(payload);
                 } else setTimeout(() => { document.getElementById('loading').style.display = 'none'; writeAudit('EDIT_ITEM', `แก้ไข [${payload.code}] (Demo)`); Swal.fire({icon: 'success', title: 'สำเร็จ!', text: 'จำลองอัปเดตข้อมูลสินค้าเสร็จสมบูรณ์!', timer: 2000, showConfirmButton: false}); }, 500);
