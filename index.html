@@ -12477,79 +12477,104 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             };
 
             const qrPayload = JSON.stringify({ slip: 'replacement', code: code, qty: qty, date: date });
-            const typeLabel = (type === 'ยืม') ? 'ยืม (ต้องนำมาคืน)' : 'เบิก / แจกจ่าย (ไม่ต้องคืน)';
-            const typeBadgeColor = (type === 'ยืม') ? '#2563eb' : '#dc2626';
+            const isBorrow = (type === 'ยืม');
+            const typeLabel = isBorrow ? 'ยืม • ต้องนำคืน' : 'เบิก • ไม่ต้องคืน';
+            const typeBadgeClass = isBorrow ? 'borrow' : 'withdraw';
+            // ★ ชื่อหน่วยงาน/บริษัทอาจยาวมาก — ลดขนาดฟอนต์ลงเองอัตโนมัติตามความยาวข้อความ กันล้นกรอบ
+            const companyText = company || '-';
+            const companyFs = companyText.length > 55 ? 15 : (companyText.length > 32 ? 17 : 20);
+            const nameFs = name.length > 26 ? 24 : 28;
 
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <html>
                 <head>
                     <title>ใบแทน - ${escapeHtml(code)}</title>
-                    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+                    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
                     <style>
-                        @page { size: A5 portrait; margin: 10mm; }
+                        @page { size: A5 portrait; margin: 9mm; }
                         * { box-sizing: border-box; }
-                        body { font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; background: #fff; color: #1e293b; }
-                        .slip { width: 100%; height: 100%; border: 3px dashed #94a3b8; border-radius: 14px; padding: 18px 22px; display: flex; flex-direction: column; }
-                        .slip-head { text-align: center; border-bottom: 3px solid #1e293b; padding-bottom: 10px; margin-bottom: 14px; }
-                        .slip-head .tag { display:inline-block; font-size: 15px; font-weight: 700; letter-spacing: 2px; color:#e8a020; text-transform: uppercase; }
-                        .slip-head h1 { font-size: 34px; font-weight: 800; margin: 4px 0 0 0; }
-                        .type-badge { display:inline-block; margin-top:8px; padding:5px 18px; border-radius: 999px; font-size: 18px; font-weight: 700; color:#fff; background:${typeBadgeColor}; }
-                        .body-row { display:flex; gap:16px; flex: 1; }
-                        .info-col { flex: 1; display:flex; flex-direction:column; gap:10px; }
-                        .field { border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; }
-                        .field .label { font-size: 13px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
-                        .field .value { font-size: 24px; font-weight: 800; line-height:1.25; word-break: break-word; }
-                        .field .value.big { font-size: 30px; }
-                        .qty-code-row { display:flex; gap:14px; }
-                        .qty-code-row .field { flex:1; }
-                        .qr-col { width: 150px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px; }
-                        .qr-col .qr-box { width:140px; height:140px; }
-                        .qr-col .qr-caption { font-size: 12px; color:#64748b; text-align:center; }
-                        .slip-foot { margin-top:14px; padding-top:10px; border-top: 2px solid #1e293b; display:flex; justify-content:space-between; font-size: 13px; color:#64748b; }
-                        @media print { .slip { border-color:#94a3b8; } }
+                        body { font-family: 'Kanit', sans-serif; margin: 0; padding: 0; background: #fff; color: #111111; }
+                        .slip { width: 100%; height: 100%; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 18px 22px; display: flex; flex-direction: column; }
+
+                        /* 1) หัวเรื่อง — ลำดับชั้นชัดเจน ไม่ซ้อนกัน */
+                        .slip-head { text-align: center; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 2px solid #111111; }
+                        .slip-head .eyebrow { display:block; font-size: 11px; font-weight: 500; letter-spacing: 3px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+                        .slip-head h1 { font-size: 28px; font-weight: 800; margin: 0 0 10px 0; color: #0f172a; line-height: 1.2; }
+                        .type-badge { display:inline-block; padding: 5px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+                        .type-badge.borrow { background: #dbeafe; color: #1d4ed8; }
+                        .type-badge.withdraw { background: #ffedd5; color: #c2410c; }
+
+                        /* 2) กริด 2 คอลัมน์ ซ้าย-ขวา ลด White Space */
+                        .slip-body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 26px; align-content: start; }
+                        .field { border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; margin-bottom: 4px; }
+                        .field .label { font-size: 12px; font-weight: 300; color: #666666; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+                        .field .value { font-size: 19px; font-weight: 700; color: #111111; line-height: 1.28; word-break: break-word; }
+                        .mini-row { display: flex; gap: 12px; }
+                        .mini-row .field { flex: 1; }
+
+                        /* กล่องเน้นกำหนดคืน */
+                        .due-box { background: #fff7ed; border: 2px solid #fb923c; border-radius: 10px; padding: 8px 12px; margin-bottom: 4px; }
+                        .due-box .label { color: #c2410c; font-weight: 500; }
+                        .due-box .value { color: #c2410c; font-size: 24px; font-weight: 800; }
+                        .no-return-pill { display:inline-block; background:#f1f5f9; color:#475569; font-size:13px; font-weight:600; padding:5px 12px; border-radius:8px; }
+
+                        /* 3) footer + 4) QR ย้ายมามุมขวาล่าง ในกรอบการ์ด */
+                        .slip-foot { margin-top: 14px; padding-top: 12px; border-top: 2px solid #111111; display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; }
+                        .foot-meta { font-size: 12px; color: #666666; line-height: 1.7; }
+                        .qr-card { border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+                        .qr-card .qr-box { width: 96px; height: 96px; }
+                        .qr-card .qr-caption { font-size: 11px; color: #64748b; text-align: center; line-height: 1.4; }
+                        @media print { .slip { border-color: #94a3b8; } }
                     </style>
                 </head>
                 <body>
                     <div class="slip">
                         <div class="slip-head">
-                            <span class="tag">ใบแทน — Replacement Slip</span>
+                            <span class="eyebrow">ใบแทน · Replacement Slip</span>
                             <h1>วางแทนของช่องนี้ชั่วคราว</h1>
-                            <span class="type-badge">${escapeHtml(typeLabel)}</span>
+                            <span class="type-badge ${typeBadgeClass}">${escapeHtml(typeLabel)}</span>
                         </div>
-                        <div class="body-row">
-                            <div class="info-col">
-                                <div class="field"><div class="label">ชื่อรายการ</div><div class="value big">${escapeHtml(name)}</div></div>
-                                <div class="qty-code-row">
+
+                        <div class="slip-body">
+                            <!-- ฝั่งซ้าย: ข้อมูลรายการ -->
+                            <div class="col-left">
+                                <div class="field"><div class="label">ชนิดรายการ</div><div class="value" style="font-size:${nameFs}px">${escapeHtml(name)}</div></div>
+                                <div class="mini-row">
                                     <div class="field"><div class="label">รหัส</div><div class="value">${escapeHtml(code)}</div></div>
                                     <div class="field"><div class="label">จำนวน</div><div class="value">${formatNumber(qty)} ${escapeHtml(unit)}</div></div>
                                 </div>
                                 <div class="field"><div class="label">ตำแหน่งจัดเก็บเดิม</div><div class="value">${escapeHtml(location)}</div></div>
-                                <div class="qty-code-row">
-                                    <div class="field"><div class="label">ผู้ยืม/เบิก</div><div class="value">${escapeHtml(person)}</div></div>
-                                    <div class="field"><div class="label">หน่วยงาน/บริษัท</div><div class="value">${escapeHtml(company || '-')}</div></div>
-                                </div>
-                                <div class="qty-code-row">
-                                    <div class="field"><div class="label">วันที่นำออก</div><div class="value">${fmtDateTh(date)}</div></div>
-                                    <div class="field"><div class="label">กำหนดคืน</div><div class="value">${dueDate ? fmtDateTh(dueDate) : '-'}</div></div>
-                                </div>
-                                ${remark ? `<div class="field"><div class="label">หมายเหตุ</div><div class="value" style="font-size:18px;font-weight:600">${escapeHtml(remark)}</div></div>` : ''}
                             </div>
-                            <div class="qr-col">
+
+                            <!-- ฝั่งขวา: รายละเอียดการยืม/เบิก -->
+                            <div class="col-right">
+                                <div class="field"><div class="label">ผู้ยืม/เบิก</div><div class="value">${escapeHtml(person)}</div></div>
+                                <div class="field"><div class="label">หน่วยงาน/บริษัท</div><div class="value" style="font-size:${companyFs}px">${escapeHtml(companyText)}</div></div>
+                                <div class="field"><div class="label">วันที่นำออก</div><div class="value">${fmtDateTh(date)}</div></div>
+                                ${isBorrow && dueDate
+                                    ? `<div class="due-box"><div class="label">📅 กำหนดคืน</div><div class="value">${fmtDateTh(dueDate)}</div></div>`
+                                    : `<div class="field"><div class="label">กำหนดคืน</div><div class="no-return-pill">ไม่ต้องนำคืน</div></div>`}
+                                ${remark ? `<div class="field"><div class="label">หมายเหตุ</div><div class="value" style="font-size:16px;font-weight:500">${escapeHtml(remark)}</div></div>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="slip-foot">
+                            <div class="foot-meta">
+                                <div>พิมพ์โดย: ${escapeHtml(currentUserProfile ? currentUserProfile.name : 'Web')}</div>
+                                <div>พิมพ์เมื่อ: ${fmtDateTh(new Date().toISOString().slice(0,10))}</div>
+                            </div>
+                            <div class="qr-card">
                                 <div id="rpl-qr" class="qr-box"></div>
                                 <div class="qr-caption">สแกนตรวจสอบ<br>ตอนรับของคืน</div>
                             </div>
-                        </div>
-                        <div class="slip-foot">
-                            <span>พิมพ์โดย: ${escapeHtml(currentUserProfile ? currentUserProfile.name : 'Web')}</span>
-                            <span>พิมพ์เมื่อ: ${fmtDateTh(new Date().toISOString().slice(0,10))}</span>
                         </div>
                     </div>
                     <script>
                         window.onload = function() {
                             setTimeout(() => {
-                                new QRCode(document.getElementById('rpl-qr'), { text: ${JSON.stringify(qrPayload)}, width: 140, height: 140, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+                                new QRCode(document.getElementById('rpl-qr'), { text: ${JSON.stringify(qrPayload)}, width: 96, height: 96, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
                                 setTimeout(() => { window.print(); }, 400);
                             }, 200);
                         };
