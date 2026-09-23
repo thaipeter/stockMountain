@@ -2150,6 +2150,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             <a onclick="goTo('qrManagement'); toggleMobileNav(false)"><i class="fas fa-qrcode"></i> QR</a>
             <a onclick="goTo('history'); toggleMobileNav(false)"><i class="fas fa-history"></i> Logs</a>
             <a onclick="goTo('receiptPrint'); filterReceiptPrintTable(); toggleMobileNav(false)"><i class="fas fa-file-invoice"></i> พิมพ์ใบเบิก</a>
+            <a onclick="goTo('replacementSlip'); toggleMobileNav(false)"><i class="fas fa-clone"></i> ออกใบแทน</a>
             <a onclick="goTo('notes'); toggleMobileNav(false)"><i class="fas fa-sticky-note"></i> Notes</a>
             <a onclick="goTo('aiCenter'); toggleMobileNav(false)"><i class="fas fa-robot"></i> AI วิเคราะห์คลัง</a>
 
@@ -2184,12 +2185,13 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </ul>
                         </div>
                         <div class="topnav-group">
-                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="monthlyOrders,qrManagement,history,receiptPrint,archiveMgmt"><i class="fas fa-shopping-cart"></i> <span>เอกสาร & ตรวจสอบ</span></a>
+                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="monthlyOrders,qrManagement,history,receiptPrint,replacementSlip,archiveMgmt"><i class="fas fa-shopping-cart"></i> <span>เอกสาร & ตรวจสอบ</span></a>
                             <ul class="topnav-dropdown-menu">
                                 <li class="dropdown-item" onclick="goTo('monthlyOrders')"><i class="fas fa-shopping-cart"></i> ใบสั่งซื้อ (Orders)</li>
                                 <li class="dropdown-item" onclick="goTo('qrManagement')"><i class="fas fa-qrcode"></i> จัดการ QR Code</li>
                                 <li class="dropdown-item" onclick="goTo('history')"><i class="fas fa-history"></i> ประวัติ Logs</li>
                                 <li class="dropdown-item" onclick="goTo('receiptPrint'); filterReceiptPrintTable();"><i class="fas fa-file-invoice"></i> พิมพ์ใบเบิก (หลักฐาน)</li>
+                                <li class="dropdown-item" onclick="goTo('replacementSlip')"><i class="fas fa-clone"></i> ออกใบแทน</li>
                                 <li class="dropdown-item admin-only-element" id="menu-archive-top" onclick="goTo('archiveMgmt')"><i class="fas fa-archive"></i> คลังเอกสารเก่า</li>
                             </ul>
                         </div>
@@ -3524,6 +3526,80 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </div>
                         </div>
                     </div>
+                    </div>
+                </div>
+
+                <div id="replacementSlip" class="section-view">
+                    <div class="mb-4 d-flex align-items-center gap-3">
+                        <div style="width:42px;height:42px;background:rgba(232,160,32,.12);border-radius:12px;display:flex;align-items:center;justify-content:center">
+                            <i class="fas fa-clone" style="color:#e8a020"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0" style="color:rgba(255,255,255,.9)">ออกใบแทน (วางแทนของบนชั้นเก็บ)</h3>
+                            <p class="mb-0" style="font-size:.75rem;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase">กรอกข้อมูลแล้วพิมพ์ใบแทนไปวางไว้ที่ตำแหน่งเดิมของของ ระหว่างที่ถูกยืม/เบิกออกไป</p>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-xl-7">
+                            <div class="table-container p-4 bg-white h-100">
+                                <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-pen-to-square me-1 text-warning"></i> ข้อมูลใบแทน</h6>
+                                <form id="replacementSlipForm" onsubmit="return false;">
+                                    <div class="row g-3">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label fw-bold text-muted small">ประเภทการนำออก <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="rplType" onchange="toggleReplacementDueDate()">
+                                                <option value="ยืม">🛠️ ยืม (ต้องนำมาคืน)</option>
+                                                <option value="เบิก">📤 เบิก / แจกจ่าย (ไม่ต้องคืน)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label fw-bold text-muted small">วันที่ทำรายการ <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="rplDate">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold text-muted small">ค้นหาสินค้า / เครื่องมือ <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="rplItemCode"></select>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <label class="form-label fw-bold text-muted small">จำนวน <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="rplQty" min="1" step="1" value="1">
+                                        </div>
+                                        <div class="col-12 col-md-8">
+                                            <label class="form-label fw-bold text-muted small">ชื่อผู้ยืม/เบิก <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="rplPerson" placeholder="ชื่อ-นามสกุล ผู้ทำรายการ">
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label fw-bold text-muted small">หน่วยงาน / บริษัทผู้ยืม-เบิก <span class="text-muted fw-normal">(ถ้ามี)</span></label>
+                                            <input type="text" class="form-control" id="rplCompany" placeholder="เช่น บริษัทแม่ / ชื่อลูกข่าย ฯลฯ">
+                                        </div>
+                                        <div class="col-12 col-md-6" id="rplDueDateWrap">
+                                            <label class="form-label fw-bold text-muted small">กำหนดคืน <span class="text-muted fw-normal">(เฉพาะรายการยืม)</span></label>
+                                            <input type="date" class="form-control" id="rplDueDate">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold text-muted small">หมายเหตุ <span class="text-muted fw-normal">(ถ้ามี)</span></label>
+                                            <textarea class="form-control" id="rplRemark" rows="2" placeholder="เช่น หน้างาน / เครื่องจักรที่นำไปใช้"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                                        <button type="button" class="btn btn-warning fw-bold text-dark px-4" onclick="generateReplacementSlip()"><i class="fas fa-print me-1"></i> พิมพ์ใบแทน</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-5">
+                            <div class="table-container p-3 bg-white h-100">
+                                <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-circle-info me-1 text-warning"></i> เกี่ยวกับใบแทน</h6>
+                                <ul class="small text-muted ps-3 mb-0" style="line-height:1.9">
+                                    <li>ใบแทนคือกระดาษ A5/A4 ตัวหนังสือใหญ่ ใช้วางไว้ที่ตำแหน่งจัดเก็บเดิมของสินค้า แทนของที่ถูกยืม/เบิกออกไปชั่วคราว</li>
+                                    <li>ไม่ต้องออกใบแทนทุกรายการ — เลือกใช้เฉพาะรายการที่จำเป็น (เช่น ของสำคัญ หรือของที่หยิบบ่อย)</li>
+                                    <li>รองรับทั้งการยืม (มีกำหนดคืน) และการเบิก/แจกจ่าย (ไม่ต้องคืน)</li>
+                                    <li>มี QR Code สำหรับสแกนตรวจสอบรายการเมื่อรับของคืน หรือเทียบยอดตอนตรวจนับสต็อก</li>
+                                    <li>ระบบจะบันทึกการออกใบแทนไว้ใน Logs ของระบบ (System Audit Log) ทุกครั้งที่พิมพ์</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -5448,6 +5524,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     }
                     if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
                     if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
+                    if(sectionId === 'replacementSlip' && typeof initReplacementSlipForm === 'function') initReplacementSlipForm();
                     if(sectionId === 'archiveMgmt' && typeof loadArchiveList === 'function') loadArchiveList();
                     if(sectionId === 'archiveMgmt' && typeof loadRestoreBackupList === 'function') loadRestoreBackupList();
                     if(sectionId === 'pendingApprovals' && typeof startPendingApprovalsPolling === 'function') startPendingApprovalsPolling();
@@ -12328,7 +12405,163 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 userId: currentUserProfile ? currentUserProfile.uid : '-'
             }]);
         }
-        
+
+        /* ============================================================
+           🆕 ใบแทน (Replacement Slip) — ใบวางแทนของบนชั้นเก็บ ระหว่างที่
+           ของถูกยืม/เบิกออกไป ใช้แยกต่างหากจากระบบ "ใบเบิก (หลักฐาน)" เดิม
+           เพราะจุดประสงค์ต่างกัน — ไม่ผูกกับระบบบันทึกธุรกรรมหลัก (Withdraws/
+           BorrowRequests) จึงเลือกใช้แค่บางรายการได้อิสระ ไม่บังคับทุกครั้ง
+        ============================================================ */
+        function initReplacementSlipForm() {
+            const dateEl = document.getElementById('rplDate');
+            if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
+
+            const select = document.getElementById('rplItemCode');
+            if (!select) return;
+            try { if (window.rplSelectInstance) { window.rplSelectInstance.destroy(); window.rplSelectInstance = null; } } catch (e) {}
+            select.innerHTML = '<option value="">🔍 พิมพ์ค้นหาชื่อหรือรหัสสินค้า/เครื่องมือ...</option>';
+
+            const groups = [{ group: '📦 คลังอะไหล่', items: allData.items || [] }, { group: '🛠️ เครื่องมือ', items: allData.tools || [] }];
+            groups.forEach(g => {
+                if (!g.items.length) return;
+                let optGroup = document.createElement('optgroup'); optGroup.label = g.group;
+                g.items.forEach(i => {
+                    let opt = document.createElement('option'); opt.value = i.code;
+                    let locText = i.location ? ` | พิกัด: ${i.location}` : '';
+                    opt.text = `[${i.code}] ${i.name} (คงเหลือ: ${formatNumber(i.stock)}${locText})`;
+                    optGroup.appendChild(opt);
+                });
+                select.appendChild(optGroup);
+            });
+            window.rplSelectInstance = new TomSelect("#rplItemCode", { create: false, sortField: { field: "text", direction: "asc" } });
+
+            toggleReplacementDueDate();
+        }
+
+        function toggleReplacementDueDate() {
+            const type = document.getElementById('rplType')?.value || 'ยืม';
+            const wrap = document.getElementById('rplDueDateWrap');
+            if (!wrap) return;
+            wrap.style.display = (type === 'ยืม') ? '' : 'none';
+        }
+
+        function generateReplacementSlip() {
+            const type = document.getElementById('rplType').value;
+            const code = document.getElementById('rplItemCode').value;
+            const qty = parseFloat(document.getElementById('rplQty').value);
+            const person = document.getElementById('rplPerson').value.trim();
+            const company = document.getElementById('rplCompany').value.trim();
+            const date = document.getElementById('rplDate').value;
+            const dueDate = document.getElementById('rplDueDate').value;
+            const remark = document.getElementById('rplRemark').value.trim();
+
+            if (!code) return Swal.fire({icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาค้นหาและเลือกสินค้า/เครื่องมือ'});
+            if (!qty || qty < 1) return Swal.fire({icon: 'warning', title: 'จำนวนไม่ถูกต้อง', text: 'กรุณาระบุจำนวนอย่างน้อย 1'});
+            if (!person) return Swal.fire({icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาระบุชื่อผู้ยืม/เบิก'});
+            if (!date) return Swal.fire({icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาระบุวันที่ทำรายการ'});
+
+            const allList = (allData.items || []).concat(allData.tools || []);
+            const found = allList.find(i => i.code === code);
+            const name = found ? found.name : code;
+            const unit = found ? (found.unit || '') : '';
+            const location = found ? (found.location || '-') : '-';
+
+            const fmtDateTh = (isoStr) => {
+                if (!isoStr) return '';
+                const d = new Date(isoStr + 'T00:00:00');
+                if (isNaN(d.getTime())) return isoStr;
+                const isEn = allData.settings?.dateFormat === 'EN';
+                const yr = isEn ? d.getFullYear() : d.getFullYear() + 543;
+                const pad = n => String(n).padStart(2, '0');
+                return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${yr}`;
+            };
+
+            const qrPayload = JSON.stringify({ slip: 'replacement', code: code, qty: qty, date: date });
+            const typeLabel = (type === 'ยืม') ? 'ยืม (ต้องนำมาคืน)' : 'เบิก / แจกจ่าย (ไม่ต้องคืน)';
+            const typeBadgeColor = (type === 'ยืม') ? '#2563eb' : '#dc2626';
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>ใบแทน - ${escapeHtml(code)}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+                    <style>
+                        @page { size: A5 portrait; margin: 10mm; }
+                        * { box-sizing: border-box; }
+                        body { font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; background: #fff; color: #1e293b; }
+                        .slip { width: 100%; height: 100%; border: 3px dashed #94a3b8; border-radius: 14px; padding: 18px 22px; display: flex; flex-direction: column; }
+                        .slip-head { text-align: center; border-bottom: 3px solid #1e293b; padding-bottom: 10px; margin-bottom: 14px; }
+                        .slip-head .tag { display:inline-block; font-size: 15px; font-weight: 700; letter-spacing: 2px; color:#e8a020; text-transform: uppercase; }
+                        .slip-head h1 { font-size: 34px; font-weight: 800; margin: 4px 0 0 0; }
+                        .type-badge { display:inline-block; margin-top:8px; padding:5px 18px; border-radius: 999px; font-size: 18px; font-weight: 700; color:#fff; background:${typeBadgeColor}; }
+                        .body-row { display:flex; gap:16px; flex: 1; }
+                        .info-col { flex: 1; display:flex; flex-direction:column; gap:10px; }
+                        .field { border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; }
+                        .field .label { font-size: 13px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+                        .field .value { font-size: 24px; font-weight: 800; line-height:1.25; word-break: break-word; }
+                        .field .value.big { font-size: 30px; }
+                        .qty-code-row { display:flex; gap:14px; }
+                        .qty-code-row .field { flex:1; }
+                        .qr-col { width: 150px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px; }
+                        .qr-col .qr-box { width:140px; height:140px; }
+                        .qr-col .qr-caption { font-size: 12px; color:#64748b; text-align:center; }
+                        .slip-foot { margin-top:14px; padding-top:10px; border-top: 2px solid #1e293b; display:flex; justify-content:space-between; font-size: 13px; color:#64748b; }
+                        @media print { .slip { border-color:#94a3b8; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="slip">
+                        <div class="slip-head">
+                            <span class="tag">ใบแทน — Replacement Slip</span>
+                            <h1>วางแทนของช่องนี้ชั่วคราว</h1>
+                            <span class="type-badge">${escapeHtml(typeLabel)}</span>
+                        </div>
+                        <div class="body-row">
+                            <div class="info-col">
+                                <div class="field"><div class="label">ชื่อรายการ</div><div class="value big">${escapeHtml(name)}</div></div>
+                                <div class="qty-code-row">
+                                    <div class="field"><div class="label">รหัส</div><div class="value">${escapeHtml(code)}</div></div>
+                                    <div class="field"><div class="label">จำนวน</div><div class="value">${formatNumber(qty)} ${escapeHtml(unit)}</div></div>
+                                </div>
+                                <div class="field"><div class="label">ตำแหน่งจัดเก็บเดิม</div><div class="value">${escapeHtml(location)}</div></div>
+                                <div class="qty-code-row">
+                                    <div class="field"><div class="label">ผู้ยืม/เบิก</div><div class="value">${escapeHtml(person)}</div></div>
+                                    <div class="field"><div class="label">หน่วยงาน/บริษัท</div><div class="value">${escapeHtml(company || '-')}</div></div>
+                                </div>
+                                <div class="qty-code-row">
+                                    <div class="field"><div class="label">วันที่นำออก</div><div class="value">${fmtDateTh(date)}</div></div>
+                                    <div class="field"><div class="label">กำหนดคืน</div><div class="value">${dueDate ? fmtDateTh(dueDate) : '-'}</div></div>
+                                </div>
+                                ${remark ? `<div class="field"><div class="label">หมายเหตุ</div><div class="value" style="font-size:18px;font-weight:600">${escapeHtml(remark)}</div></div>` : ''}
+                            </div>
+                            <div class="qr-col">
+                                <div id="rpl-qr" class="qr-box"></div>
+                                <div class="qr-caption">สแกนตรวจสอบ<br>ตอนรับของคืน</div>
+                            </div>
+                        </div>
+                        <div class="slip-foot">
+                            <span>พิมพ์โดย: ${escapeHtml(currentUserProfile ? currentUserProfile.name : 'Web')}</span>
+                            <span>พิมพ์เมื่อ: ${fmtDateTh(new Date().toISOString().slice(0,10))}</span>
+                        </div>
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            setTimeout(() => {
+                                new QRCode(document.getElementById('rpl-qr'), { text: ${JSON.stringify(qrPayload)}, width: 140, height: 140, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+                                setTimeout(() => { window.print(); }, 400);
+                            }, 200);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+
+            writeAudit('ใบแทน', `ออกใบแทน — [${code}] ${name} จำนวน ${qty} ${unit} | ประเภท: ${type} | ผู้ยืม/เบิก: ${person}${company ? ' | หน่วยงาน: ' + company : ''}${dueDate ? ' | กำหนดคืน: ' + dueDate : ''}`);
+        }
+
         // ฟังก์ชันโหลดและแสดงตารางประวัติ
         function savePrintLogToSheet(records) {
             if (!records || !records.length) return;
