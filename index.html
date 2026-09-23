@@ -2981,6 +2981,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                                 <input type="range" class="form-range" id="globalQrMargin" value="10" min="0" max="150" step="1" oninput="_qrSliderLive('globalQrMargin','globalQrMarginBadge',' px')" onchange="saveGlobalQRSettings()">
                                             </div>
                                             <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <label class="form-label fw-bold text-muted small mb-0">ขนาดตัวอักษร (Font Size)</label>
+                                                    <span class="badge bg-primary" id="globalQrFontScaleBadge">100%</span>
+                                                </div>
+                                                <input type="range" class="form-range" id="globalQrFontScale" value="100" min="50" max="200" step="5" oninput="_qrSliderLive('globalQrFontScale','globalQrFontScaleBadge','%')" onchange="saveGlobalQRSettings()">
+                                                <small class="text-muted d-block mt-1">ปรับขนาดตัวหนังสือของชื่อรายการ/รหัส/หมวดหมู่บนป้ายทั้งหมด (ระบบจะยังย่ออัตโนมัติถ้าเนื้อหายาวเกินป้าย)</small>
+                                            </div>
+                                            <div class="mb-3">
                                                 <label class="form-label fw-bold text-muted small">ทิศทางการจัดวาง (Layout Orientation)</label>
                                                 <select class="form-select" id="globalQrOrientation" onchange="saveGlobalQRSettings()">
                                                     <option value="portrait">แนวตั้ง (QR อยู่บน | รายละเอียดอยู่ล่าง)</option>
@@ -4682,7 +4690,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
         // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
         // ใส่ URL เดียวกับที่ใช้ในหน้า QR (indexqrv1.html) เพราะเป็น backend เดียวกัน
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyQ_DrUGSaLg4gNuczD8Tadwd_nvB8rcBT0fDYKe7s0HwFsCbS3urdAEFrpdLGYfGV3Hg/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbylisKoMy8pBAxmBewSMATjEsxQySUvq2Y6_znHQwNI1Z2JkgwKFjVM_5RsgrUn4uceTQ/exec";
         const isGAS = (typeof google !== 'undefined' && google.script && google.script.run && typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:');
         window.isGAS = isGAS;
 
@@ -11094,6 +11102,10 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const widthMm = settings.widthMm;
             const heightMm = settings.heightMm;
             const orientation = settings.orientation;
+            const fontScale = (settings.fontScale || 100) / 100; // ★ เพิ่ม: ตัวคูณขนาดตัวอักษรจากค่าที่ตั้งไว้
+            const nameFs = (13 * fontScale).toFixed(1);
+            const codeFs = (11 * fontScale).toFixed(1);
+            const metaFs = (10 * fontScale).toFixed(1);
 
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
@@ -11134,9 +11146,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             ${orientation === 'landscape' ? 'align-items: flex-start; margin-left: 8px; max-width: calc(100% - ' + qrSize + 'px);' : 'align-items: center; margin-top: 8px;'}
                             word-break: break-word;
                         }
-                        .item-name { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0 0 3px 0; line-height: 1.2; }
-                        .item-code { font-size: 11px; font-family: monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #cbd5e1; margin: 0 0 3px 0; font-weight: bold; display: inline-block; }
-                        .item-meta { font-size: 10px; color: #64748b; margin: 0 0 2px 0; }
+                        .item-name { font-size: ${nameFs}px; font-weight: 700; color: #1e293b; margin: 0 0 3px 0; line-height: 1.2; }
+                        .item-code { font-size: ${codeFs}px; font-family: monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #cbd5e1; margin: 0 0 3px 0; font-weight: bold; display: inline-block; }
+                        .item-meta { font-size: ${metaFs}px; color: #64748b; margin: 0 0 2px 0; }
                         @media print { 
                             .label-card { border: none; } 
                         }
@@ -12034,6 +12046,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     heightMm: 80,
                     qrSize: 120,
                     margin: 10,
+                    fontScale: 100,
                     orientation: 'portrait',
                     showName: true,
                     showCode: true,
@@ -12042,11 +12055,13 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 };
                 localStorage.setItem('globalQrPrintSettings', JSON.stringify(settings));
             }
-            
+            if (settings.fontScale === undefined) settings.fontScale = 100; // ★ เพิ่ม: รองรับผู้ใช้เดิมที่ยังไม่มีค่านี้ในเครื่อง
+
             const wMm = document.getElementById('globalQrWidthMm');
             const hMm = document.getElementById('globalQrHeightMm');
             const qS = document.getElementById('globalQrSize');
             const qM = document.getElementById('globalQrMargin');
+            const qF = document.getElementById('globalQrFontScale');
             const qO = document.getElementById('globalQrOrientation');
             const sN = document.getElementById('globalQrShowName');
             const sC = document.getElementById('globalQrShowCode');
@@ -12057,6 +12072,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (hMm) hMm.value = settings.heightMm;
             if (qS) qS.value = settings.qrSize;
             if (qM) qM.value = settings.margin;
+            if (qF) qF.value = settings.fontScale;
             if (qO) qO.value = settings.orientation;
             if (sN) sN.checked = settings.showName;
             if (sC) sC.checked = settings.showCode;
@@ -12068,6 +12084,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             _qrSliderLive('globalQrHeightMm', 'globalQrHeightMmBadge', ' มม.');
             _qrSliderLive('globalQrSize', 'globalQrSizeBadge', ' px');
             _qrSliderLive('globalQrMargin', 'globalQrMarginBadge', ' px');
+            _qrSliderLive('globalQrFontScale', 'globalQrFontScaleBadge', '%');
         }
 
         // ★ เพิ่มใหม่ — อัปเดตตัวเลขบน badge ทันทีตอนลากแท่งเลื่อน (oninput) โดยไม่ต้องรอปล่อยเมาส์ก่อนถึงจะเห็นค่า
@@ -12090,6 +12107,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const heightMm = parseInt(document.getElementById('globalQrHeightMm')?.value) || 80;
             const qrSizePx = parseInt(document.getElementById('globalQrSize')?.value) || 120;
             const marginPx = parseInt(document.getElementById('globalQrMargin')?.value) ?? 10;
+            const fontScale = (parseInt(document.getElementById('globalQrFontScale')?.value) || 100) / 100; // ★ เพิ่ม: ตัวคูณขนาดตัวอักษร
             const orientation = document.getElementById('globalQrOrientation')?.value || 'portrait';
             const showName = document.getElementById('globalQrShowName')?.checked !== false;
             const showCode = document.getElementById('globalQrShowCode')?.checked !== false;
@@ -12107,11 +12125,14 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const marginScaled = Math.max(2, marginPx * pxToMmRatio * scale);
 
             const flexDir = orientation === 'landscape' ? 'row' : 'column';
+            // ★ เพิ่ม: คูณขนาดฐาน (10px/9px) ด้วย fontScale เพื่อให้ตัวอย่างตรงกับป้ายที่พิมพ์จริง
+            const nameFsPrev = (10 * fontScale).toFixed(1);
+            const metaFsPrev = (9 * fontScale).toFixed(1);
             const textLines = [];
-            if (showName) textLines.push('<div style="font-weight:700;font-size:10px;line-height:1.2;">ชื่อสินค้าตัวอย่าง</div>');
-            if (showCode) textLines.push('<div style="font-size:9px;color:#555;">CODE-001</div>');
-            if (showCategory) textLines.push('<div style="font-size:9px;color:#555;">หมวดหมู่: ตัวอย่าง</div>');
-            if (showLocation) textLines.push('<div style="font-size:9px;color:#555;">ตำแหน่ง: A1-01</div>');
+            if (showName) textLines.push(`<div style="font-weight:700;font-size:${nameFsPrev}px;line-height:1.2;">ชื่อสินค้าตัวอย่าง</div>`);
+            if (showCode) textLines.push(`<div style="font-size:${metaFsPrev}px;color:#555;">CODE-001</div>`);
+            if (showCategory) textLines.push(`<div style="font-size:${metaFsPrev}px;color:#555;">หมวดหมู่: ตัวอย่าง</div>`);
+            if (showLocation) textLines.push(`<div style="font-size:${metaFsPrev}px;color:#555;">ตำแหน่ง: A1-01</div>`);
             const textHtml = textLines.length ? textLines.join('') : '<div style="font-size:9px;color:#bbb;">(ไม่แสดงข้อมูลข้อความ)</div>';
 
             box.innerHTML = `
@@ -12129,6 +12150,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 heightMm: parseInt(document.getElementById('globalQrHeightMm')?.value) || 80,
                 qrSize: parseInt(document.getElementById('globalQrSize')?.value) || 120,
                 margin: parseInt(document.getElementById('globalQrMargin')?.value) ?? 10,
+                fontScale: parseInt(document.getElementById('globalQrFontScale')?.value) || 100,
                 orientation: document.getElementById('globalQrOrientation')?.value || 'portrait',
                 showName: document.getElementById('globalQrShowName')?.checked !== false,
                 showCode: document.getElementById('globalQrShowCode')?.checked !== false,
@@ -12147,6 +12169,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     heightMm: 80,
                     qrSize: 120,
                     margin: 10,
+                    fontScale: 100,
                     orientation: 'portrait',
                     showName: true,
                     showCode: true,
@@ -12154,6 +12177,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     showLocation: true
                 };
             }
+            if (settings.fontScale === undefined) settings.fontScale = 100; // ★ เพิ่ม: รองรับผู้ใช้เดิมที่ยังไม่มีค่านี้ในเครื่อง
             return settings;
         }
 
@@ -12172,6 +12196,10 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const widthMm = settings.widthMm;
             const heightMm = settings.heightMm;
             const orientation = settings.orientation;
+            const fontScale = (settings.fontScale || 100) / 100; // ★ เพิ่ม: ตัวคูณขนาดตัวอักษรจากค่าที่ตั้งไว้
+            const nameFs = (13 * fontScale).toFixed(1);
+            const codeFs = (11 * fontScale).toFixed(1);
+            const metaFs = (10 * fontScale).toFixed(1);
 
             const allList = allData.items.concat(allData.tools);
             const found = allList.find(i => i.code === code);
@@ -12221,9 +12249,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             ${orientation === 'landscape' ? 'align-items: flex-start; margin-left: 8px; max-width: calc(100% - ' + qrSize + 'px);' : 'align-items: center; margin-top: 8px;'}
                             word-break: break-word;
                         }
-                        .item-name { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0 0 3px 0; line-height: 1.2; }
-                        .item-code { font-size: 11px; font-family: monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #cbd5e1; margin: 0 0 3px 0; font-weight: bold; display: inline-block; }
-                        .item-meta { font-size: 10px; color: #64748b; margin: 0 0 2px 0; }
+                        .item-name { font-size: ${nameFs}px; font-weight: 700; color: #1e293b; margin: 0 0 3px 0; line-height: 1.2; }
+                        .item-code { font-size: ${codeFs}px; font-family: monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #cbd5e1; margin: 0 0 3px 0; font-weight: bold; display: inline-block; }
+                        .item-meta { font-size: ${metaFs}px; color: #64748b; margin: 0 0 2px 0; }
                         @media print { 
                             body { width: ${widthMm}mm; height: ${heightMm}mm; } 
                             .label-card { border: none; } 
