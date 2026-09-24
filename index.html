@@ -1283,6 +1283,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             <i class="fas fa-layer-group text-theme sys-icon-display loading-icon-glow" style="font-size: 4.5rem; display:none;"></i>
             <!-- Small elegant loading indicator or text -->
             <div class="loading-pulse-text" style="font-size: 0.95rem; letter-spacing: 2px; color: var(--primary-color, #e8a020); opacity: 0.8; font-weight: 500; animation: textPulse 1.5s ease-in-out infinite; text-align: center; margin-top: 8px;">กำลังโหลดระบบ...</div>
+            <button id="retryConnectBtn" onclick="location.reload()" style="display:none; margin-top:8px; padding:10px 28px; border-radius:10px; border:none; background:var(--primary-color,#e8a020); color:#1a1a1a; font-weight:700; font-size:0.95rem; cursor:pointer;">ลองเชื่อมต่อใหม่</button>
         </div>
     </div>
     <style>
@@ -5627,14 +5628,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     if (loadingTextEl) loadingTextEl.textContent = 'กำลังเชื่อมต่อเซิร์ฟเวอร์... กรุณารอสักครู่';
                 }, 5000);
                 const loadTimer = setTimeout(() => {
-                    // ถ้า GAS ไม่ตอบใน 30 วินาที → fallback (ยืดจาก 12 วิ เดิม กัน cold start ช้าแล้วเด้ง Demo Mode เร็วเกินไป)
+                    // ★ แก้ไข: เดิมพอครบ 30 วิ จะเงียบๆ สลับไปโชว์รายชื่อผู้ใช้ปลอม (Demo Mode)
+                    // ทำให้ผู้ใช้งงว่าทำไมไม่เจอชื่อตัวเอง แล้วต้องมั่วรีเฟรชเองหลายรอบ
+                    // ตอนนี้เปลี่ยนเป็นบอกตรงๆ ว่าเชื่อมต่อไม่สำเร็จ พร้อมปุ่มลองใหม่ชัดเจน
                     clearTimeout(slowHintTimer);
-                    if (loadingTextEl) loadingTextEl.textContent = originalLoadingText;
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('loginScreen').style.display = 'flex';
-                    allData = createMockData();
-                    populateLoginUsers(allData.users || []);
-                }, 30000);
+                    if (loadingTextEl) loadingTextEl.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ (อาจเพราะเซิร์ฟเวอร์เพิ่งตื่นจากโหมดพัก)';
+                    const retryBtn = document.getElementById('retryConnectBtn');
+                    if (retryBtn) retryBtn.style.display = 'inline-block';
+                }, 45000);
 
                 function _onUsersLoaded(users) {
                     clearTimeout(slowHintTimer);
@@ -5687,13 +5688,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 }
                 function _onUsersFail(err) {
                     clearTimeout(slowHintTimer);
-                    if (loadingTextEl) loadingTextEl.textContent = originalLoadingText;
                     clearTimeout(loadTimer);
                     console.error('getLoginUsers error:', err);
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('loginScreen').style.display = 'flex';
-                    allData = createMockData();
-                    populateLoginUsers(allData.users || []);
+                    // ★ แก้ไข: เดิมสลับไปโชว์รายชื่อผู้ใช้ปลอม (Demo Mode) เงียบๆ ตอนนี้บอกตรงๆ ให้กดลองใหม่แทน
+                    if (loadingTextEl) loadingTextEl.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาลองใหม่';
+                    const retryBtn = document.getElementById('retryConnectBtn');
+                    if (retryBtn) retryBtn.style.display = 'inline-block';
                 }
 
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
