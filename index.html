@@ -1748,7 +1748,8 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                         <th style="width:8%">หน่วย <span class="text-danger">*</span></th>
                                         <th style="width:7%">MIN</th>
                                         <th style="width:9%">จำนวน <span class="text-danger">*</span></th>
-                                        <th style="width:19%" class="text-center"><i class="fas fa-camera me-1"></i>รูปภาพ</th>
+                                        <th style="width:9%">ราคาทุน/หน่วย</th>
+                                        <th style="width:14%" class="text-center"><i class="fas fa-camera me-1"></i>รูปภาพ</th>
                                         <th style="width:8%" class="text-center">ลบ</th>
                                     </tr>
                                 </thead>
@@ -2150,7 +2151,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             <a onclick="goTo('qrManagement'); toggleMobileNav(false)"><i class="fas fa-qrcode"></i> QR</a>
             <a onclick="goTo('history'); toggleMobileNav(false)"><i class="fas fa-history"></i> Logs</a>
             <a onclick="goTo('receiptPrint'); filterReceiptPrintTable(); toggleMobileNav(false)"><i class="fas fa-file-invoice"></i> พิมพ์ใบเบิก</a>
-            <a onclick="goTo('replacementSlip'); toggleMobileNav(false)"><i class="fas fa-clone"></i> ออกใบแทน</a>
             <a onclick="goTo('notes'); toggleMobileNav(false)"><i class="fas fa-sticky-note"></i> Notes</a>
             <a onclick="goTo('aiCenter'); toggleMobileNav(false)"><i class="fas fa-robot"></i> AI วิเคราะห์คลัง</a>
 
@@ -2185,13 +2185,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </ul>
                         </div>
                         <div class="topnav-group">
-                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="monthlyOrders,qrManagement,history,receiptPrint,replacementSlip,archiveMgmt"><i class="fas fa-shopping-cart"></i> <span>เอกสาร & ตรวจสอบ</span></a>
+                            <a class="dropdown-toggle" onclick="toggleTopnavDropdown(this, event)" data-group-sections="monthlyOrders,qrManagement,history,receiptPrint,archiveMgmt"><i class="fas fa-shopping-cart"></i> <span>เอกสาร & ตรวจสอบ</span></a>
                             <ul class="topnav-dropdown-menu">
                                 <li class="dropdown-item" onclick="goTo('monthlyOrders')"><i class="fas fa-shopping-cart"></i> ใบสั่งซื้อ (Orders)</li>
                                 <li class="dropdown-item" onclick="goTo('qrManagement')"><i class="fas fa-qrcode"></i> จัดการ QR Code</li>
                                 <li class="dropdown-item" onclick="goTo('history')"><i class="fas fa-history"></i> ประวัติ Logs</li>
                                 <li class="dropdown-item" onclick="goTo('receiptPrint'); filterReceiptPrintTable();"><i class="fas fa-file-invoice"></i> พิมพ์ใบเบิก (หลักฐาน)</li>
-                                <li class="dropdown-item" onclick="goTo('replacementSlip')"><i class="fas fa-clone"></i> ออกใบแทน</li>
                                 <li class="dropdown-item admin-only-element" id="menu-archive-top" onclick="goTo('archiveMgmt')"><i class="fas fa-archive"></i> คลังเอกสารเก่า</li>
                             </ul>
                         </div>
@@ -2300,15 +2299,15 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <div style="height: 35px; width: 100%; margin-top: 8px;"><canvas id="sparkline-4"></canvas></div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3 col-sm-6 price-only-element">
+                        <div class="col-12 price-only-element">
                             <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-warning border-4">
-                                <div class="d-flex justify-content-between align-items-start">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                     <div>
                                         <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">มูลค่าคลังรวม (ราคาทุน)</div>
-                                        <div class="stat-value" id="count-stock-value" style="font-size:1.6rem; font-weight:800; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
+                                        <div class="stat-value" id="count-stock-value" style="font-size:2.4rem; font-weight:800; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">0</div>
                                         <div style="font-size:12px; font-weight:700; margin-top:2px; color:#a78bfa;">อะไหล่ + เครื่องมือ (คงเหลือ × ราคาทุน)</div>
                                     </div>
-                                    <div class="stat-icon bg-warning bg-opacity-10 text-warning mb-0"><i class="fas fa-coins"></i></div>
+                                    <div class="stat-icon bg-warning bg-opacity-10 text-warning mb-0" style="width:56px;height:56px;font-size:1.4rem;"><i class="fas fa-coins"></i></div>
                                 </div>
                             </div>
                         </div>
@@ -2983,14 +2982,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                                 <input type="range" class="form-range" id="globalQrMargin" value="10" min="0" max="150" step="1" oninput="_qrSliderLive('globalQrMargin','globalQrMarginBadge',' px')" onchange="saveGlobalQRSettings()">
                                             </div>
                                             <div class="mb-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <label class="form-label fw-bold text-muted small mb-0">ขนาดตัวอักษร (Font Size)</label>
-                                                    <span class="badge bg-primary" id="globalQrFontScaleBadge">100%</span>
-                                                </div>
-                                                <input type="range" class="form-range" id="globalQrFontScale" value="100" min="50" max="200" step="5" oninput="_qrSliderLive('globalQrFontScale','globalQrFontScaleBadge','%')" onchange="saveGlobalQRSettings()">
-                                                <small class="text-muted d-block mt-1">ปรับขนาดตัวหนังสือของชื่อรายการ/รหัส/หมวดหมู่บนป้ายทั้งหมด (ระบบจะยังย่ออัตโนมัติถ้าเนื้อหายาวเกินป้าย)</small>
-                                            </div>
-                                            <div class="mb-3">
                                                 <label class="form-label fw-bold text-muted small">ทิศทางการจัดวาง (Layout Orientation)</label>
                                                 <select class="form-select" id="globalQrOrientation" onchange="saveGlobalQRSettings()">
                                                     <option value="portrait">แนวตั้ง (QR อยู่บน | รายละเอียดอยู่ล่าง)</option>
@@ -3526,80 +3517,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             </div>
                         </div>
                     </div>
-                    </div>
-                </div>
-
-                <div id="replacementSlip" class="section-view">
-                    <div class="mb-4 d-flex align-items-center gap-3">
-                        <div style="width:42px;height:42px;background:rgba(232,160,32,.12);border-radius:12px;display:flex;align-items:center;justify-content:center">
-                            <i class="fas fa-clone" style="color:#e8a020"></i>
-                        </div>
-                        <div>
-                            <h3 class="fw-bold mb-0" style="color:rgba(255,255,255,.9)">ออกใบแทน (วางแทนของบนชั้นเก็บ)</h3>
-                            <p class="mb-0" style="font-size:.75rem;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase">กรอกข้อมูลแล้วพิมพ์ใบแทนไปวางไว้ที่ตำแหน่งเดิมของของ ระหว่างที่ถูกยืม/เบิกออกไป</p>
-                        </div>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-12 col-xl-7">
-                            <div class="table-container p-4 bg-white h-100">
-                                <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-pen-to-square me-1 text-warning"></i> ข้อมูลใบแทน</h6>
-                                <form id="replacementSlipForm" onsubmit="return false;">
-                                    <div class="row g-3">
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label fw-bold text-muted small">ประเภทการนำออก <span class="text-danger">*</span></label>
-                                            <select class="form-select" id="rplType" onchange="toggleReplacementDueDate()">
-                                                <option value="ยืม">🛠️ ยืม (ต้องนำมาคืน)</option>
-                                                <option value="เบิก">📤 เบิก / แจกจ่าย (ไม่ต้องคืน)</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label fw-bold text-muted small">วันที่ทำรายการ <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" id="rplDate">
-                                        </div>
-                                        <div class="col-12">
-                                            <label class="form-label fw-bold text-muted small">ค้นหาสินค้า / เครื่องมือ <span class="text-danger">*</span></label>
-                                            <select class="form-select" id="rplItemCode"></select>
-                                        </div>
-                                        <div class="col-12 col-md-4">
-                                            <label class="form-label fw-bold text-muted small">จำนวน <span class="text-danger">*</span></label>
-                                            <input type="number" class="form-control" id="rplQty" min="1" step="1" value="1">
-                                        </div>
-                                        <div class="col-12 col-md-8">
-                                            <label class="form-label fw-bold text-muted small">ชื่อผู้ยืม/เบิก <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="rplPerson" placeholder="ชื่อ-นามสกุล ผู้ทำรายการ">
-                                        </div>
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label fw-bold text-muted small">หน่วยงาน / บริษัทผู้ยืม-เบิก <span class="text-muted fw-normal">(ถ้ามี)</span></label>
-                                            <input type="text" class="form-control" id="rplCompany" placeholder="เช่น บริษัทแม่ / ชื่อลูกข่าย ฯลฯ">
-                                        </div>
-                                        <div class="col-12 col-md-6" id="rplDueDateWrap">
-                                            <label class="form-label fw-bold text-muted small">กำหนดคืน <span class="text-muted fw-normal">(เฉพาะรายการยืม)</span></label>
-                                            <input type="date" class="form-control" id="rplDueDate">
-                                        </div>
-                                        <div class="col-12">
-                                            <label class="form-label fw-bold text-muted small">หมายเหตุ <span class="text-muted fw-normal">(ถ้ามี)</span></label>
-                                            <textarea class="form-control" id="rplRemark" rows="2" placeholder="เช่น หน้างาน / เครื่องจักรที่นำไปใช้"></textarea>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex justify-content-end mt-4 pt-3 border-top">
-                                        <button type="button" class="btn btn-warning fw-bold text-dark px-4" onclick="generateReplacementSlip()"><i class="fas fa-print me-1"></i> พิมพ์ใบแทน</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                        <div class="col-12 col-xl-5">
-                            <div class="table-container p-3 bg-white h-100">
-                                <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-circle-info me-1 text-warning"></i> เกี่ยวกับใบแทน</h6>
-                                <ul class="small text-muted ps-3 mb-0" style="line-height:1.9">
-                                    <li>ใบแทนคือกระดาษ A5/A4 ตัวหนังสือใหญ่ ใช้วางไว้ที่ตำแหน่งจัดเก็บเดิมของสินค้า แทนของที่ถูกยืม/เบิกออกไปชั่วคราว</li>
-                                    <li>ไม่ต้องออกใบแทนทุกรายการ — เลือกใช้เฉพาะรายการที่จำเป็น (เช่น ของสำคัญ หรือของที่หยิบบ่อย)</li>
-                                    <li>รองรับทั้งการยืม (มีกำหนดคืน) และการเบิก/แจกจ่าย (ไม่ต้องคืน)</li>
-                                    <li>มี QR Code สำหรับสแกนตรวจสอบรายการเมื่อรับของคืน หรือเทียบยอดตอนตรวจนับสต็อก</li>
-                                    <li>ระบบจะบันทึกการออกใบแทนไว้ใน Logs ของระบบ (System Audit Log) ทุกครั้งที่พิมพ์</li>
-                                </ul>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -5524,7 +5441,6 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     }
                     if(sectionId === 'notes' && typeof loadNotes === 'function') loadNotes();
                     if(sectionId === 'stockTakeMgmt' && typeof loadStockTakeMgmt === 'function') loadStockTakeMgmt();
-                    if(sectionId === 'replacementSlip' && typeof initReplacementSlipForm === 'function') initReplacementSlipForm();
                     if(sectionId === 'archiveMgmt' && typeof loadArchiveList === 'function') loadArchiveList();
                     if(sectionId === 'archiveMgmt' && typeof loadRestoreBackupList === 'function') loadRestoreBackupList();
                     if(sectionId === 'pendingApprovals' && typeof startPendingApprovalsPolling === 'function') startPendingApprovalsPolling();
@@ -10083,6 +9999,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 <td>
                     <input type="number" class="form-control form-control-sm shadow-sm text-center fw-bold text-success" data-qty-input min="0" step="any" placeholder="จำนวน" required>
                 </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm shadow-sm text-center" data-price-input min="0" step="any" placeholder="0.00">
+                </td>
                 <td class="text-center">
                     <div class="d-flex flex-column align-items-center gap-1">
                         <div data-img-preview-${rowId} style="width:40px;height:40px;border-radius:6px;border:1px dashed #ccc;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f8f9fa;cursor:pointer" title="คลิกเพื่อเลือกรูป" onclick="document.getElementById('imgInp_${rowId}').click()">
@@ -10244,6 +10163,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const unit = row.querySelector('[data-unit-input]').value.trim();
                 const min = parseFloat(row.querySelector('[data-min-input]').value) || 0;
                 const qty = parseFloat(row.querySelector('[data-qty-input]').value) || 0;
+                const price = parseFloat(row.querySelector('[data-price-input]').value) || 0;
                 
                 if (!code || !name || !unit) {
                     Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: `แถว ${idx + 1}: กรุณากรอกรหัส ชื่อ และหน่วย`});
@@ -10259,6 +10179,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     unit: unit,
                     min: min,
                     qty: qty,
+                    price: price,
                     date: date,
                     remark: globalRemark,
                     user: user,
@@ -10306,7 +10227,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             
             // ตัด _imgBase64/_imgMime ออกก่อนส่ง GAS เพื่อลด payload size
             const gasPayloads = payloads.map(function(p) {
-                return { type: p.type, category: p.category, code: p.code, name: p.name, location: p.location, unit: p.unit, min: p.min, qty: p.qty, date: p.date, remark: p.remark, user: p.user, userId: p.userId };
+                return { type: p.type, category: p.category, code: p.code, name: p.name, location: p.location, unit: p.unit, min: p.min, qty: p.qty, price: p.price, date: p.date, remark: p.remark, user: p.user, userId: p.userId };
             });
 
             if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -11179,10 +11100,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const widthMm = settings.widthMm;
             const heightMm = settings.heightMm;
             const orientation = settings.orientation;
-            const fontScale = (settings.fontScale || 100) / 100; // ★ เพิ่ม: ตัวคูณขนาดตัวอักษรจากค่าที่ตั้งไว้
-            const nameFs = (13 * fontScale).toFixed(1);
-            const codeFs = (11 * fontScale).toFixed(1);
-            const metaFs = (10 * fontScale).toFixed(1);
 
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
@@ -11223,9 +11140,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             ${orientation === 'landscape' ? 'align-items: flex-start; margin-left: 8px; max-width: calc(100% - ' + qrSize + 'px);' : 'align-items: center; margin-top: 8px;'}
                             word-break: break-word;
                         }
-                        .item-name { font-size: ${nameFs}px; font-weight: 700; color: #1e293b; margin: 0 0 3px 0; line-height: 1.2; }
-                        .item-code { font-size: ${codeFs}px; font-family: monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #cbd5e1; margin: 0 0 3px 0; font-weight: bold; display: inline-block; }
-                        .item-meta { font-size: ${metaFs}px; color: #64748b; margin: 0 0 2px 0; }
+                        .item-name { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0 0 3px 0; line-height: 1.2; }
+                        .item-code { font-size: 11px; font-family: monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #cbd5e1; margin: 0 0 3px 0; font-weight: bold; display: inline-block; }
+                        .item-meta { font-size: 10px; color: #64748b; margin: 0 0 2px 0; }
                         @media print { 
                             .label-card { border: none; } 
                         }
@@ -12123,7 +12040,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     heightMm: 80,
                     qrSize: 120,
                     margin: 10,
-                    fontScale: 100,
                     orientation: 'portrait',
                     showName: true,
                     showCode: true,
@@ -12132,13 +12048,11 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 };
                 localStorage.setItem('globalQrPrintSettings', JSON.stringify(settings));
             }
-            if (settings.fontScale === undefined) settings.fontScale = 100; // ★ เพิ่ม: รองรับผู้ใช้เดิมที่ยังไม่มีค่านี้ในเครื่อง
-
+            
             const wMm = document.getElementById('globalQrWidthMm');
             const hMm = document.getElementById('globalQrHeightMm');
             const qS = document.getElementById('globalQrSize');
             const qM = document.getElementById('globalQrMargin');
-            const qF = document.getElementById('globalQrFontScale');
             const qO = document.getElementById('globalQrOrientation');
             const sN = document.getElementById('globalQrShowName');
             const sC = document.getElementById('globalQrShowCode');
@@ -12149,7 +12063,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (hMm) hMm.value = settings.heightMm;
             if (qS) qS.value = settings.qrSize;
             if (qM) qM.value = settings.margin;
-            if (qF) qF.value = settings.fontScale;
             if (qO) qO.value = settings.orientation;
             if (sN) sN.checked = settings.showName;
             if (sC) sC.checked = settings.showCode;
@@ -12161,7 +12074,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             _qrSliderLive('globalQrHeightMm', 'globalQrHeightMmBadge', ' มม.');
             _qrSliderLive('globalQrSize', 'globalQrSizeBadge', ' px');
             _qrSliderLive('globalQrMargin', 'globalQrMarginBadge', ' px');
-            _qrSliderLive('globalQrFontScale', 'globalQrFontScaleBadge', '%');
         }
 
         // ★ เพิ่มใหม่ — อัปเดตตัวเลขบน badge ทันทีตอนลากแท่งเลื่อน (oninput) โดยไม่ต้องรอปล่อยเมาส์ก่อนถึงจะเห็นค่า
@@ -12184,7 +12096,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const heightMm = parseInt(document.getElementById('globalQrHeightMm')?.value) || 80;
             const qrSizePx = parseInt(document.getElementById('globalQrSize')?.value) || 120;
             const marginPx = parseInt(document.getElementById('globalQrMargin')?.value) ?? 10;
-            const fontScale = (parseInt(document.getElementById('globalQrFontScale')?.value) || 100) / 100; // ★ เพิ่ม: ตัวคูณขนาดตัวอักษร
             const orientation = document.getElementById('globalQrOrientation')?.value || 'portrait';
             const showName = document.getElementById('globalQrShowName')?.checked !== false;
             const showCode = document.getElementById('globalQrShowCode')?.checked !== false;
@@ -12202,14 +12113,11 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const marginScaled = Math.max(2, marginPx * pxToMmRatio * scale);
 
             const flexDir = orientation === 'landscape' ? 'row' : 'column';
-            // ★ เพิ่ม: คูณขนาดฐาน (10px/9px) ด้วย fontScale เพื่อให้ตัวอย่างตรงกับป้ายที่พิมพ์จริง
-            const nameFsPrev = (10 * fontScale).toFixed(1);
-            const metaFsPrev = (9 * fontScale).toFixed(1);
             const textLines = [];
-            if (showName) textLines.push(`<div style="font-weight:700;font-size:${nameFsPrev}px;line-height:1.2;">ชื่อสินค้าตัวอย่าง</div>`);
-            if (showCode) textLines.push(`<div style="font-size:${metaFsPrev}px;color:#555;">CODE-001</div>`);
-            if (showCategory) textLines.push(`<div style="font-size:${metaFsPrev}px;color:#555;">หมวดหมู่: ตัวอย่าง</div>`);
-            if (showLocation) textLines.push(`<div style="font-size:${metaFsPrev}px;color:#555;">ตำแหน่ง: A1-01</div>`);
+            if (showName) textLines.push('<div style="font-weight:700;font-size:10px;line-height:1.2;">ชื่อสินค้าตัวอย่าง</div>');
+            if (showCode) textLines.push('<div style="font-size:9px;color:#555;">CODE-001</div>');
+            if (showCategory) textLines.push('<div style="font-size:9px;color:#555;">หมวดหมู่: ตัวอย่าง</div>');
+            if (showLocation) textLines.push('<div style="font-size:9px;color:#555;">ตำแหน่ง: A1-01</div>');
             const textHtml = textLines.length ? textLines.join('') : '<div style="font-size:9px;color:#bbb;">(ไม่แสดงข้อมูลข้อความ)</div>';
 
             box.innerHTML = `
@@ -12227,7 +12135,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 heightMm: parseInt(document.getElementById('globalQrHeightMm')?.value) || 80,
                 qrSize: parseInt(document.getElementById('globalQrSize')?.value) || 120,
                 margin: parseInt(document.getElementById('globalQrMargin')?.value) ?? 10,
-                fontScale: parseInt(document.getElementById('globalQrFontScale')?.value) || 100,
                 orientation: document.getElementById('globalQrOrientation')?.value || 'portrait',
                 showName: document.getElementById('globalQrShowName')?.checked !== false,
                 showCode: document.getElementById('globalQrShowCode')?.checked !== false,
@@ -12246,7 +12153,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     heightMm: 80,
                     qrSize: 120,
                     margin: 10,
-                    fontScale: 100,
                     orientation: 'portrait',
                     showName: true,
                     showCode: true,
@@ -12254,7 +12160,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     showLocation: true
                 };
             }
-            if (settings.fontScale === undefined) settings.fontScale = 100; // ★ เพิ่ม: รองรับผู้ใช้เดิมที่ยังไม่มีค่านี้ในเครื่อง
             return settings;
         }
 
@@ -12273,10 +12178,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const widthMm = settings.widthMm;
             const heightMm = settings.heightMm;
             const orientation = settings.orientation;
-            const fontScale = (settings.fontScale || 100) / 100; // ★ เพิ่ม: ตัวคูณขนาดตัวอักษรจากค่าที่ตั้งไว้
-            const nameFs = (13 * fontScale).toFixed(1);
-            const codeFs = (11 * fontScale).toFixed(1);
-            const metaFs = (10 * fontScale).toFixed(1);
 
             const allList = allData.items.concat(allData.tools);
             const found = allList.find(i => i.code === code);
@@ -12326,9 +12227,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                             ${orientation === 'landscape' ? 'align-items: flex-start; margin-left: 8px; max-width: calc(100% - ' + qrSize + 'px);' : 'align-items: center; margin-top: 8px;'}
                             word-break: break-word;
                         }
-                        .item-name { font-size: ${nameFs}px; font-weight: 700; color: #1e293b; margin: 0 0 3px 0; line-height: 1.2; }
-                        .item-code { font-size: ${codeFs}px; font-family: monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #cbd5e1; margin: 0 0 3px 0; font-weight: bold; display: inline-block; }
-                        .item-meta { font-size: ${metaFs}px; color: #64748b; margin: 0 0 2px 0; }
+                        .item-name { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0 0 3px 0; line-height: 1.2; }
+                        .item-code { font-size: 11px; font-family: monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; border: 1px solid #cbd5e1; margin: 0 0 3px 0; font-weight: bold; display: inline-block; }
+                        .item-meta { font-size: 10px; color: #64748b; margin: 0 0 2px 0; }
                         @media print { 
                             body { width: ${widthMm}mm; height: ${heightMm}mm; } 
                             .label-card { border: none; } 
@@ -12405,188 +12306,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 userId: currentUserProfile ? currentUserProfile.uid : '-'
             }]);
         }
-
-        /* ============================================================
-           🆕 ใบแทน (Replacement Slip) — ใบวางแทนของบนชั้นเก็บ ระหว่างที่
-           ของถูกยืม/เบิกออกไป ใช้แยกต่างหากจากระบบ "ใบเบิก (หลักฐาน)" เดิม
-           เพราะจุดประสงค์ต่างกัน — ไม่ผูกกับระบบบันทึกธุรกรรมหลัก (Withdraws/
-           BorrowRequests) จึงเลือกใช้แค่บางรายการได้อิสระ ไม่บังคับทุกครั้ง
-        ============================================================ */
-        function initReplacementSlipForm() {
-            const dateEl = document.getElementById('rplDate');
-            if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
-
-            const select = document.getElementById('rplItemCode');
-            if (!select) return;
-            try { if (window.rplSelectInstance) { window.rplSelectInstance.destroy(); window.rplSelectInstance = null; } } catch (e) {}
-            select.innerHTML = '<option value="">🔍 พิมพ์ค้นหาชื่อหรือรหัสสินค้า/เครื่องมือ...</option>';
-
-            const groups = [{ group: '📦 คลังอะไหล่', items: allData.items || [] }, { group: '🛠️ เครื่องมือ', items: allData.tools || [] }];
-            groups.forEach(g => {
-                if (!g.items.length) return;
-                let optGroup = document.createElement('optgroup'); optGroup.label = g.group;
-                g.items.forEach(i => {
-                    let opt = document.createElement('option'); opt.value = i.code;
-                    let locText = i.location ? ` | พิกัด: ${i.location}` : '';
-                    opt.text = `[${i.code}] ${i.name} (คงเหลือ: ${formatNumber(i.stock)}${locText})`;
-                    optGroup.appendChild(opt);
-                });
-                select.appendChild(optGroup);
-            });
-            window.rplSelectInstance = new TomSelect("#rplItemCode", { create: false, sortField: { field: "text", direction: "asc" } });
-
-            toggleReplacementDueDate();
-        }
-
-        function toggleReplacementDueDate() {
-            const type = document.getElementById('rplType')?.value || 'ยืม';
-            const wrap = document.getElementById('rplDueDateWrap');
-            if (!wrap) return;
-            wrap.style.display = (type === 'ยืม') ? '' : 'none';
-        }
-
-        function generateReplacementSlip() {
-            const type = document.getElementById('rplType').value;
-            const code = document.getElementById('rplItemCode').value;
-            const qty = parseFloat(document.getElementById('rplQty').value);
-            const person = document.getElementById('rplPerson').value.trim();
-            const company = document.getElementById('rplCompany').value.trim();
-            const date = document.getElementById('rplDate').value;
-            const dueDate = document.getElementById('rplDueDate').value;
-            const remark = document.getElementById('rplRemark').value.trim();
-
-            if (!code) return Swal.fire({icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาค้นหาและเลือกสินค้า/เครื่องมือ'});
-            if (!qty || qty < 1) return Swal.fire({icon: 'warning', title: 'จำนวนไม่ถูกต้อง', text: 'กรุณาระบุจำนวนอย่างน้อย 1'});
-            if (!person) return Swal.fire({icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาระบุชื่อผู้ยืม/เบิก'});
-            if (!date) return Swal.fire({icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาระบุวันที่ทำรายการ'});
-
-            const allList = (allData.items || []).concat(allData.tools || []);
-            const found = allList.find(i => i.code === code);
-            const name = found ? found.name : code;
-            const unit = found ? (found.unit || '') : '';
-            const location = found ? (found.location || '-') : '-';
-
-            const fmtDateTh = (isoStr) => {
-                if (!isoStr) return '';
-                const d = new Date(isoStr + 'T00:00:00');
-                if (isNaN(d.getTime())) return isoStr;
-                const isEn = allData.settings?.dateFormat === 'EN';
-                const yr = isEn ? d.getFullYear() : d.getFullYear() + 543;
-                const pad = n => String(n).padStart(2, '0');
-                return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${yr}`;
-            };
-
-            const qrPayload = JSON.stringify({ slip: 'replacement', code: code, qty: qty, date: date });
-            const isBorrow = (type === 'ยืม');
-            const typeLabel = isBorrow ? 'ยืม • ต้องนำคืน' : 'เบิก • ไม่ต้องคืน';
-            const typeBadgeClass = isBorrow ? 'borrow' : 'withdraw';
-            // ★ ชื่อหน่วยงาน/บริษัทอาจยาวมาก — ลดขนาดฟอนต์ลงเองอัตโนมัติตามความยาวข้อความ กันล้นกรอบ
-            const companyText = company || '-';
-            const companyFs = companyText.length > 55 ? 15 : (companyText.length > 32 ? 17 : 20);
-            const nameFs = name.length > 26 ? 24 : 28;
-
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>ใบแทน - ${escapeHtml(code)}</title>
-                    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-                    <style>
-                        @page { size: A5 portrait; margin: 9mm; }
-                        * { box-sizing: border-box; }
-                        body { font-family: 'Kanit', sans-serif; margin: 0; padding: 0; background: #fff; color: #111111; }
-                        .slip { width: 100%; height: 100%; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 18px 22px; display: flex; flex-direction: column; }
-
-                        /* 1) หัวเรื่อง — ลำดับชั้นชัดเจน ไม่ซ้อนกัน */
-                        .slip-head { text-align: center; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 2px solid #111111; }
-                        .slip-head .eyebrow { display:block; font-size: 11px; font-weight: 500; letter-spacing: 3px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
-                        .slip-head h1 { font-size: 28px; font-weight: 800; margin: 0 0 10px 0; color: #0f172a; line-height: 1.2; }
-                        .type-badge { display:inline-block; padding: 5px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; }
-                        .type-badge.borrow { background: #dbeafe; color: #1d4ed8; }
-                        .type-badge.withdraw { background: #ffedd5; color: #c2410c; }
-
-                        /* 2) กริด 2 คอลัมน์ ซ้าย-ขวา ลด White Space */
-                        .slip-body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 26px; align-content: start; }
-                        .field { border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; margin-bottom: 4px; }
-                        .field .label { font-size: 12px; font-weight: 300; color: #666666; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
-                        .field .value { font-size: 19px; font-weight: 700; color: #111111; line-height: 1.28; word-break: break-word; }
-                        .mini-row { display: flex; gap: 12px; }
-                        .mini-row .field { flex: 1; }
-
-                        /* กล่องเน้นกำหนดคืน */
-                        .due-box { background: #fff7ed; border: 2px solid #fb923c; border-radius: 10px; padding: 8px 12px; margin-bottom: 4px; }
-                        .due-box .label { color: #c2410c; font-weight: 500; }
-                        .due-box .value { color: #c2410c; font-size: 24px; font-weight: 800; }
-                        .no-return-pill { display:inline-block; background:#f1f5f9; color:#475569; font-size:13px; font-weight:600; padding:5px 12px; border-radius:8px; }
-
-                        /* 3) footer + 4) QR ย้ายมามุมขวาล่าง ในกรอบการ์ด */
-                        .slip-foot { margin-top: 14px; padding-top: 12px; border-top: 2px solid #111111; display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; }
-                        .foot-meta { font-size: 12px; color: #666666; line-height: 1.7; }
-                        .qr-card { border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
-                        .qr-card .qr-box { width: 96px; height: 96px; }
-                        .qr-card .qr-caption { font-size: 11px; color: #64748b; text-align: center; line-height: 1.4; }
-                        @media print { .slip { border-color: #94a3b8; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="slip">
-                        <div class="slip-head">
-                            <span class="eyebrow">ใบแทน · Replacement Slip</span>
-                            <h1>วางแทนของช่องนี้ชั่วคราว</h1>
-                            <span class="type-badge ${typeBadgeClass}">${escapeHtml(typeLabel)}</span>
-                        </div>
-
-                        <div class="slip-body">
-                            <!-- ฝั่งซ้าย: ข้อมูลรายการ -->
-                            <div class="col-left">
-                                <div class="field"><div class="label">ชนิดรายการ</div><div class="value" style="font-size:${nameFs}px">${escapeHtml(name)}</div></div>
-                                <div class="mini-row">
-                                    <div class="field"><div class="label">รหัส</div><div class="value">${escapeHtml(code)}</div></div>
-                                    <div class="field"><div class="label">จำนวน</div><div class="value">${formatNumber(qty)} ${escapeHtml(unit)}</div></div>
-                                </div>
-                                <div class="field"><div class="label">ตำแหน่งจัดเก็บเดิม</div><div class="value">${escapeHtml(location)}</div></div>
-                            </div>
-
-                            <!-- ฝั่งขวา: รายละเอียดการยืม/เบิก -->
-                            <div class="col-right">
-                                <div class="field"><div class="label">ผู้ยืม/เบิก</div><div class="value">${escapeHtml(person)}</div></div>
-                                <div class="field"><div class="label">หน่วยงาน/บริษัท</div><div class="value" style="font-size:${companyFs}px">${escapeHtml(companyText)}</div></div>
-                                <div class="field"><div class="label">วันที่นำออก</div><div class="value">${fmtDateTh(date)}</div></div>
-                                ${isBorrow && dueDate
-                                    ? `<div class="due-box"><div class="label">📅 กำหนดคืน</div><div class="value">${fmtDateTh(dueDate)}</div></div>`
-                                    : `<div class="field"><div class="label">กำหนดคืน</div><div class="no-return-pill">ไม่ต้องนำคืน</div></div>`}
-                                ${remark ? `<div class="field"><div class="label">หมายเหตุ</div><div class="value" style="font-size:16px;font-weight:500">${escapeHtml(remark)}</div></div>` : ''}
-                            </div>
-                        </div>
-
-                        <div class="slip-foot">
-                            <div class="foot-meta">
-                                <div>พิมพ์โดย: ${escapeHtml(currentUserProfile ? currentUserProfile.name : 'Web')}</div>
-                                <div>พิมพ์เมื่อ: ${fmtDateTh(new Date().toISOString().slice(0,10))}</div>
-                            </div>
-                            <div class="qr-card">
-                                <div id="rpl-qr" class="qr-box"></div>
-                                <div class="qr-caption">สแกนตรวจสอบ<br>ตอนรับของคืน</div>
-                            </div>
-                        </div>
-                    </div>
-                    <script>
-                        window.onload = function() {
-                            setTimeout(() => {
-                                new QRCode(document.getElementById('rpl-qr'), { text: ${JSON.stringify(qrPayload)}, width: 96, height: 96, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
-                                setTimeout(() => { window.print(); }, 400);
-                            }, 200);
-                        };
-                    <\/script>
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-
-            writeAudit('ใบแทน', `ออกใบแทน — [${code}] ${name} จำนวน ${qty} ${unit} | ประเภท: ${type} | ผู้ยืม/เบิก: ${person}${company ? ' | หน่วยงาน: ' + company : ''}${dueDate ? ' | กำหนดคืน: ' + dueDate : ''}`);
-        }
-
+        
         // ฟังก์ชันโหลดและแสดงตารางประวัติ
         function savePrintLogToSheet(records) {
             if (!records || !records.length) return;
