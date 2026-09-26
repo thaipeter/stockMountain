@@ -3572,7 +3572,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     <div class="row g-3">
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-bold text-muted small">ประเภทการนำออก <span class="text-danger">*</span></label>
-                                            <select class="form-select" id="rplType" onchange="toggleReplacementDueDate()">
+                                            <select class="form-select" id="rplType" onchange="toggleReplacementDueDate(); onReplacementTypeChangeTerms();">
                                                 <option value="ยืม">🛠️ ยืม (ต้องนำมาคืน)</option>
                                                 <option value="เบิก">📤 เบิก / แจกจ่าย (ไม่ต้องคืน)</option>
                                             </select>
@@ -3635,7 +3635,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                                     <th style="width:36px">#</th>
                                                     <th>รหัส / รายการ</th>
                                                     <th style="width:80px">จำนวน</th>
-                                                    <th>สภาพ/หมายเหตุ</th>
+                                                    <th>สภาพ/หมายเหตุ <span class="fw-normal">(แก้ไขตรงนี้ได้)</span></th>
                                                     <th style="width:40px"></th>
                                                 </tr>
                                             </thead>
@@ -3644,6 +3644,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                             </tbody>
                                         </table>
                                     </div>
+
+                                    <hr class="my-4">
+
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label fw-bold text-muted small mb-0">เงื่อนไขการยืม/เบิก (Terms &amp; Conditions) <span class="text-muted fw-normal">(แก้ไข/พิมพ์เพิ่มเองได้ 1 บรรทัด = 1 ข้อ)</span></label>
+                                        <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" onclick="fillDefaultReplacementTerms()"><i class="fas fa-rotate-left me-1"></i>ใช้ข้อความเริ่มต้น</button>
+                                    </div>
+                                    <textarea class="form-control" id="rplTerms" rows="4" placeholder="พิมพ์เงื่อนไขแต่ละข้อ ขึ้นบรรทัดใหม่ต่อ 1 ข้อ"></textarea>
 
                                     <div class="d-flex justify-content-end mt-4 pt-3 border-top">
                                         <button type="button" class="btn btn-warning fw-bold text-dark px-4" onclick="generateReplacementSlip()"><i class="fas fa-print me-1"></i> พิมพ์ใบแทน</button>
@@ -12506,6 +12514,10 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             rplCartItems = [];
             renderReplacementCart();
 
+            // ★ เติมเงื่อนไขเริ่มต้นให้อัตโนมัติแค่ตอนช่องยังว่าง (ไม่ทับข้อความที่ผู้ใช้แก้ไว้เอง)
+            const termsEl = document.getElementById('rplTerms');
+            if (termsEl && !termsEl.value.trim()) fillDefaultReplacementTerms();
+
             const select = document.getElementById('rplItemCode');
             if (!select) return;
             try { if (window.rplSelectInstance) { window.rplSelectInstance.destroy(); window.rplSelectInstance = null; } } catch (e) {}
@@ -12533,6 +12545,30 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const wrap = document.getElementById('rplDueDateWrap');
             if (!wrap) return;
             wrap.style.display = (type === 'ยืม') ? '' : 'none';
+        }
+
+        // ★ เติมข้อความเงื่อนไขเริ่มต้น (ยืม/เบิก) ลงในช่องที่แก้ไขได้เอง — เรียกตอนโหลดฟอร์มครั้งแรก
+        // หรือกดปุ่ม "ใช้ข้อความเริ่มต้น" เอง (ทับข้อความเดิมที่พิมพ์ไว้ได้ตามต้องการ)
+        function _replacementDefaultTermsFor(type) {
+            return (type === 'ยืม')
+                ? 'ดูแลรักษาอุปกรณ์ ไม่ทำให้เสียหายก่อนถึงกำหนดคืน\nส่งคืนตามกำหนด หากภารกิจยังไม่เสร็จ ให้แจ้งขอต่อเวลาก่อนครบกำหนด\nความรับผิดชอบกรณีเสียหาย การไม่ส่งคืนใช้ดุลพินิจตามระเบียบบริษัท'
+                : 'ตรวจสอบจำนวน/สภาพสินค้าให้ถูกต้องก่อนเซ็นรับ\nรายการนี้เป็นการเบิกใช้ ไม่ต้องนำส่งคืนคลัง\nความรับผิดชอบกรณีสินค้าชำรุดจากการใช้งานใช้ดุลพินิจตามระเบียบบริษัท';
+        }
+
+        function fillDefaultReplacementTerms() {
+            const type = document.getElementById('rplType')?.value || 'ยืม';
+            const ta = document.getElementById('rplTerms');
+            if (!ta) return;
+            ta.value = _replacementDefaultTermsFor(type);
+        }
+
+        // ★ ตอนสลับ ยืม/เบิก ถ้าช่องเงื่อนไขยังเป็นข้อความอัตโนมัติเดิม (ยังไม่ถูกแก้ไข) จะสลับให้ตรงประเภทใหม่ให้อัตโนมัติ
+        // แต่ถ้าผู้ใช้แก้ไขข้อความเองแล้ว จะไม่แตะต้อง/ทับข้อความที่แก้ไว้เด็ดขาด
+        function onReplacementTypeChangeTerms() {
+            const ta = document.getElementById('rplTerms');
+            if (!ta) return;
+            const otherType = document.getElementById('rplType').value === 'ยืม' ? 'เบิก' : 'ยืม';
+            if (!ta.value.trim() || ta.value === _replacementDefaultTermsFor(otherType)) fillDefaultReplacementTerms();
         }
 
         function addReplacementCartItem() {
@@ -12566,6 +12602,11 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             renderReplacementCart();
         }
 
+        // ★ แก้ไข "สภาพ/หมายเหตุ" ของรายการที่เพิ่มไปแล้วได้ตรงๆ ในตาราง โดยไม่ต้องลบแล้วเพิ่มใหม่
+        function updateReplacementCartNote(idx, value) {
+            if (rplCartItems[idx]) rplCartItems[idx].note = value;
+        }
+
         function renderReplacementCart() {
             const body = document.getElementById('rplCartBody');
             if (!body) return;
@@ -12578,7 +12619,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     <td class="text-muted small">${idx + 1}</td>
                     <td><span class="fw-bold">${escapeHtml(it.code)}</span><br><span class="small text-muted">${escapeHtml(it.name)}</span></td>
                     <td>${formatNumber(it.qty)} ${escapeHtml(it.unit)}</td>
-                    <td class="small text-muted">${escapeHtml(it.note || '-')}</td>
+                    <td><input type="text" class="form-control form-control-sm" value="${escapeHtml(it.note || '')}" placeholder="-" oninput="updateReplacementCartNote(${idx}, this.value)"></td>
                     <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeReplacementCartItem(${idx})"><i class="fas fa-trash"></i></button></td>
                 </tr>
             `).join('');
@@ -12619,15 +12660,13 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             const companyLogo = hdr.logo || '';
 
             const receiverLabel = isBorrow ? 'ผู้รับคืน (Receiver)' : 'ผู้รับของ (Recipient)';
-            const termsHtml = isBorrow ? `
-                <li>ดูแลรักษาอุปกรณ์ ไม่ทำให้เสียหายก่อนถึงกำหนดคืน</li>
-                <li>ส่งคืนตามกำหนด หากภารกิจยังไม่เสร็จ ให้แจ้งขอต่อเวลาก่อนครบกำหนด</li>
-                <li>ความรับผิดชอบกรณีเสียหาย การไม่ส่งคืนใช้ดุลพินิจตามระเบียบบริษัท</li>
-            ` : `
-                <li>ตรวจสอบจำนวน/สภาพสินค้าให้ถูกต้องก่อนเซ็นรับ</li>
-                <li>รายการนี้เป็นการเบิกใช้ ไม่ต้องนำส่งคืนคลัง</li>
-                <li>ความรับผิดชอบกรณีสินค้าชำรุดจากการใช้งานใช้ดุลพินิจตามระเบียบบริษัท</li>
-            `;
+            // ★ ใช้ข้อความเงื่อนไขจากช่องที่ผู้ใช้แก้ไขได้เอง (1 บรรทัด = 1 ข้อ) แทนข้อความตายตัว
+            const termsRaw = (document.getElementById('rplTerms')?.value || '').trim();
+            const termsLines = termsRaw.split('\n').map(l => l.trim()).filter(Boolean);
+            const fallbackTermsLines = isBorrow
+                ? ['ดูแลรักษาอุปกรณ์ ไม่ทำให้เสียหายก่อนถึงกำหนดคืน', 'ส่งคืนตามกำหนด หากภารกิจยังไม่เสร็จ ให้แจ้งขอต่อเวลาก่อนครบกำหนด', 'ความรับผิดชอบกรณีเสียหาย การไม่ส่งคืนใช้ดุลพินิจตามระเบียบบริษัท']
+                : ['ตรวจสอบจำนวน/สภาพสินค้าให้ถูกต้องก่อนเซ็นรับ', 'รายการนี้เป็นการเบิกใช้ ไม่ต้องนำส่งคืนคลัง', 'ความรับผิดชอบกรณีสินค้าชำรุดจากการใช้งานใช้ดุลพินิจตามระเบียบบริษัท'];
+            const termsHtml = (termsLines.length ? termsLines : fallbackTermsLines).map(l => `<li>${escapeHtml(l)}</li>`).join('');
 
             const qrPayload = JSON.stringify({ slip: 'replacement', docNo, date, items: rplCartItems.map(it => ({ code: it.code, qty: it.qty })) });
 
