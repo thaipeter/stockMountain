@@ -1742,13 +1742,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <table class="table table-sm align-middle mb-0" id="newItemsTable">
                                 <thead class="bg-light border-bottom">
                                     <tr class="small fw-bold text-muted">
-                                        <th style="width:18%">รหัส <span class="text-danger">*</span></th>
-                                        <th style="width:20%">ชื่อรายการ <span class="text-danger">*</span></th>
-                                        <th style="width:11%">ตำแหน่ง</th>
-                                        <th style="width:8%">หน่วย <span class="text-danger">*</span></th>
-                                        <th style="width:7%">MIN</th>
+                                        <th style="width:17%">รหัส <span class="text-danger">*</span></th>
+                                        <th style="width:19%">ชื่อรายการ <span class="text-danger">*</span></th>
+                                        <th style="width:10%">ตำแหน่ง</th>
+                                        <th style="width:7%">หน่วย <span class="text-danger">*</span></th>
+                                        <th style="width:6%">MIN</th>
+                                        <th style="width:10%" class="price-only-element">ราคาทุน/หน่วย</th>
                                         <th style="width:9%">จำนวน <span class="text-danger">*</span></th>
-                                        <th style="width:19%" class="text-center"><i class="fas fa-camera me-1"></i>รูปภาพ</th>
+                                        <th style="width:14%" class="text-center"><i class="fas fa-camera me-1"></i>รูปภาพ</th>
                                         <th style="width:8%" class="text-center">ลบ</th>
                                     </tr>
                                 </thead>
@@ -10106,6 +10107,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 location: row.querySelector('[data-location-input]')?.value || '',
                 unit: row.querySelector('[data-unit-input]')?.value || '',
                 min: row.querySelector('[data-min-input]')?.value || '',
+                price: row.querySelector('[data-price-input]')?.value || '',
                 qty: row.querySelector('[data-qty-input]')?.value || ''
             }));
             return {
@@ -10171,6 +10173,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 if (r.location) { const inp = row.querySelector('[data-location-input]'); if (inp) inp.value = r.location; }
                 if (r.unit) { const inp = row.querySelector('[data-unit-input]'); if (inp) inp.value = r.unit; }
                 if (r.min) { const inp = row.querySelector('[data-min-input]'); if (inp) inp.value = r.min; }
+                if (r.price) { const inp = row.querySelector('[data-price-input]'); if (inp) inp.value = r.price; }
                 if (r.qty) { const inp = row.querySelector('[data-qty-input]'); if (inp) inp.value = r.qty; }
             });
         }
@@ -10261,6 +10264,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 </td>
                 <td>
                     <input type="number" class="form-control form-control-sm shadow-sm text-center" data-min-input min="0" step="any" value="0">
+                </td>
+                <td class="price-only-element">
+                    <input type="number" class="form-control form-control-sm shadow-sm text-center" data-price-input min="0" step="any" placeholder="ราคา">
                 </td>
                 <td>
                     <input type="number" class="form-control form-control-sm shadow-sm text-center fw-bold text-success" data-qty-input min="0" step="any" placeholder="จำนวน" required>
@@ -10426,6 +10432,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 const unit = row.querySelector('[data-unit-input]').value.trim();
                 const min = parseFloat(row.querySelector('[data-min-input]').value) || 0;
                 const qty = parseFloat(row.querySelector('[data-qty-input]').value) || 0;
+                const _priceRaw = row.querySelector('[data-price-input]') ? row.querySelector('[data-price-input]').value : '';
+                const price = (_priceRaw !== '' && _priceRaw != null) ? Math.max(0, parseFloat(_priceRaw) || 0) : ''; // ว่าง = ไม่ระบุราคา
                 
                 if (!code || !name || !unit) {
                     Swal.fire({icon: 'warning', title: 'แจ้งเตือน', text: `แถว ${idx + 1}: กรุณากรอกรหัส ชื่อ และหน่วย`});
@@ -10440,6 +10448,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     location: location,
                     unit: unit,
                     min: min,
+                    price: price,
                     qty: qty,
                     date: date,
                     remark: globalRemark,
@@ -10488,7 +10497,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             
             // ตัด _imgBase64/_imgMime ออกก่อนส่ง GAS เพื่อลด payload size
             const gasPayloads = payloads.map(function(p) {
-                return { type: p.type, category: p.category, code: p.code, name: p.name, location: p.location, unit: p.unit, min: p.min, qty: p.qty, date: p.date, remark: p.remark, user: p.user, userId: p.userId };
+                return { type: p.type, category: p.category, code: p.code, name: p.name, location: p.location, unit: p.unit, min: p.min, price: p.price, qty: p.qty, date: p.date, remark: p.remark, user: p.user, userId: p.userId };
             });
 
             if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -10516,7 +10525,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         Swal.fire({icon: 'success', title: 'สำเร็จ!', text: `เพิ่มรายการใหม่ ${payloads.length} รายการสำเร็จ!${imgPayloads.length > 0 ? ` (กำลังอัปโหลดรูป ${imgPayloads.length} รูป...)` : ''}`, timer: 2500, showConfirmButton: false});
                         const itemList = type === 'Tools' ? allData.tools : allData.items;
                         payloads.forEach(p => {
-                            itemList.push({ code: p.code, name: p.name, category: p.category, location: p.location, unit: p.unit, min: p.min, stock: p.qty, date: p.date, remark: p.remark, imageUrl: '' });
+                            itemList.push({ code: p.code, name: p.name, category: p.category, location: p.location, unit: p.unit, min: p.min, stock: p.qty, price: Number(p.price) || 0, date: p.date, remark: p.remark, imageUrl: '' });
                             allData.history.unshift({ time: getFormattedDate(), action: 'รับเข้า', code: p.code, itemName: p.name, amount: '+' + formatNumber(p.qty), balance: formatNumber(p.qty), user: p.user });
                         });
                         onDataLoaded(allData);
