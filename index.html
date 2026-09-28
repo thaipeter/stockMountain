@@ -2312,6 +2312,19 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 </div>
                             </div>
                         </div>
+                        <!-- ★ เพิ่มใหม่ — รายการที่ยังไม่ได้คืนจากใบแทน (ยืม) แสดงข้างมูลค่าคลังรวม (เฉพาะ Admin) -->
+                        <div class="col-6 col-md-3 col-sm-6 admin-only-element" id="dashSlipBorrowCol">
+                            <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-danger border-4" style="cursor:pointer;" onclick="goTo('replacementSlip')" title="ไปที่หน้าใบแทน">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">ค้างคืน (จากใบแทน)</div>
+                                        <div class="stat-value" id="count-slip-borrowing" style="font-size:1.6rem; font-weight:800; color:#fff; font-family:'TH Sarabun New','Sarabun',sans-serif;">-</div>
+                                        <div style="font-size:12px; font-weight:700; margin-top:2px; color:#a78bfa;" id="statSlipBorrowSub">กำลังโหลด...</div>
+                                    </div>
+                                    <div class="stat-icon bg-danger bg-opacity-10 text-danger mb-0"><i class="fas fa-clock-rotate-left"></i></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <!-- Main Content -->
                     <div class="row g-4 mt-0 mb-4">
@@ -2832,6 +2845,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                         <ul class="nav nav-tabs px-4 pt-3 border-bottom-0" style="background:transparent!important;" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabBorrowToolsMain" type="button"><i class="fas fa-toolbox text-primary me-1"></i> รายการเครื่องมือติดยืม</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabBorrowItemsMain" type="button"><i class="fas fa-box text-info me-1"></i> รายการอะไหล่ติดยืม</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabBorrowHistoryMain" type="button" onclick="loadBorrowHistory()"><i class="fas fa-clock-rotate-left text-secondary me-1"></i> ประวัติยืม-คืนย้อนหลัง</button></li>
                         </ul>
                         <div class="tab-content border-top">
                             <div class="tab-pane fade show active p-4" id="tabBorrowToolsMain">
@@ -2841,6 +2855,18 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             <div class="tab-pane fade p-4" id="tabBorrowItemsMain">
                                 <div class="d-flex justify-content-end mb-3"><button class="btn btn-outline-success btn-sm bg-white fw-bold shadow-sm" onclick="exportExcel('borrowedItemsTableMain', 'Borrowed_Items')"><i class="fas fa-file-excel"></i> Export</button></div>
                                 <div class="table-responsive border rounded"><table class="table table-hover align-middle mb-0" id="borrowedItemsTableMain"><thead><tr><th>วันที่ทำรายการ</th><th>ชื่ออะไหล่</th><th>สถานที่ใช้งาน</th><th class="text-center">จำนวนยืม</th><th>ผู้ยืม</th><th>หมายเหตุ</th><th class="text-center text-primary">รับคืน</th></tr></thead><tbody></tbody></table></div>
+                            </div>
+                            <div class="tab-pane fade p-4" id="tabBorrowHistoryMain">
+                                <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                        <select class="form-select form-select-sm w-auto" id="borrowHistStatus" onchange="renderBorrowHistory()"><option value="">ทุกสถานะ</option><option value="approved">กำลังยืม</option><option value="returned">คืนแล้ว</option><option value="pending">รออนุมัติ</option><option value="rejected">ไม่อนุมัติ</option></select>
+                                        <input type="text" class="form-control form-control-sm w-auto" id="borrowHistSearch" placeholder="ค้นหาชื่อ, รหัส, ผู้ยืม..." onkeyup="renderBorrowHistory()" style="min-width:220px;">
+                                        <button class="btn btn-sm btn-light border" onclick="loadBorrowHistory()" title="รีเฟรช"><i class="fas fa-sync-alt"></i></button>
+                                    </div>
+                                    <button class="btn btn-outline-success btn-sm bg-white fw-bold shadow-sm" onclick="exportExcel('borrowHistoryTable', 'Borrow_History')"><i class="fas fa-file-excel"></i> Export</button>
+                                </div>
+                                <div class="table-responsive border rounded"><table class="table table-hover align-middle mb-0" id="borrowHistoryTable"><thead><tr><th>วันที่ยืม</th><th>รายการ</th><th>สถานที่ใช้งาน</th><th class="text-center">จำนวน</th><th>ผู้ยืม</th><th class="text-center">สถานะ</th><th>วันที่คืน</th><th>หมายเหตุ</th></tr></thead><tbody></tbody></table></div>
+                                <div class="text-muted small mt-2" id="borrowHistCount"></div>
                             </div>
                         </div>
                     </div>
@@ -7425,6 +7451,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     _stockValueEl.innerText = formatNumber(totalStockValue) + ' ฿';
                 }
 
+                // ★ เพิ่มใหม่ — รายการที่ยังไม่ได้คืนจากใบแทน (ข้อมูลใบแทนดึงได้เฉพาะ Admin)
+                try { if (currentUserProfile && String(currentUserProfile.role).toLowerCase() === 'admin') loadReplacementHistory(); } catch(e) { console.warn('loadReplacementHistory (dashboard) error:', e); }
+
                 const toolCodes = new Set(data.tools.map(t => t.code));
                 const activeToolBorrows = data.activeBorrows.filter(b => toolCodes.has(b.itemCode));
                 const activeItemBorrows = data.activeBorrows.filter(b => !toolCodes.has(b.itemCode)); 
@@ -7447,6 +7476,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 setTimeout(() => {
                     renderMonthlyOrders(currentlyDamaged, data.items.filter(i => i.stock <= i.min), data.pendingPOs);
                     renderBorrowedTable('borrowedItemsTableMain', activeItemBorrows); renderBorrowedTable('borrowedToolsTableMain', activeToolBorrows); 
+                    try { if (document.getElementById('tabBorrowHistoryMain')?.classList.contains('active')) loadBorrowHistory(); } catch(e) {}
                     renderDamagedTools(currentlyDamaged); filterUsersTable();
                     renderHistoryPOTableWithFilter(data.pendingPOs);
                     renderSummaryPOTable(data.pendingPOs);
@@ -8271,6 +8301,49 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     let actionBtn = currentUserProfile.role === 'admin' ? `<button class="btn btn-sm btn-info text-white fw-bold shadow-sm w-100" onclick="returnBorrowedItem('${safeReqId}', '${safeCode}', '${safeName}', ${b.qty})"><i class="fas fa-undo me-1"></i> กดรับคืน</button>` : `<span class="badge bg-warning text-dark px-3 py-2 w-100">รอส่งคืน</span>`;
                     tr.innerHTML = `<td><small class="text-muted font-monospace bg-light px-2 py-1 rounded">${escapeHtml(b.date)}</small></td><td class="fw-bold text-dark">${escapeHtml(b.itemName)} <span class="badge bg-light text-secondary border font-monospace ms-2 fw-normal">${escapeHtml(b.itemCode)}</span></td><td><span class="badge bg-info bg-opacity-10 text-info px-2 py-1"><i class="fas fa-map-marker-alt me-1"></i> ${escapeHtml(b.machine)}</span></td><td class="text-center fw-bold text-danger fs-5">${formatNumber(b.qty)}</td><td class="fw-medium text-secondary"><i class="fas fa-user-tag me-1"></i> ${escapeHtml(b.borrower)}</td><td><small class="text-muted">${escapeHtml(b.remark)}</small></td><td class="text-center" style="width:120px;">${actionBtn}</td>`; tbody.appendChild(tr); 
                 });
+            } catch(e) { console.error(e); }
+        }
+
+        // ★ ประวัติยืม-คืนย้อนหลัง (หน้า ระบบยืม - คืน) — อ่านจากชีต BorrowRequests ทุกสถานะ (กำลังยืม/คืนแล้ว/รออนุมัติ/ไม่อนุมัติ)
+        let borrowHistoryCache = [];
+
+        function loadBorrowHistory() {
+            const body = document.querySelector('#borrowHistoryTable tbody');
+            if (body && !borrowHistoryCache.length) body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">กำลังโหลด...</td></tr>';
+            callGAS('webGetBorrowHistory', [300],
+                (res) => {
+                    if (res && res.success === false) { if (body) body.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">โหลดประวัติไม่สำเร็จ: ' + escapeHtml(String(res.error || '')) + '</td></tr>'; return; }
+                    borrowHistoryCache = (res && res.history) || [];
+                    renderBorrowHistory();
+                },
+                (err) => { if (body) body.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">โหลดประวัติไม่สำเร็จ: ' + escapeHtml(String(err)) + '</td></tr>'; }
+            );
+        }
+
+        function renderBorrowHistory() {
+            try {
+                const tbody = document.querySelector('#borrowHistoryTable tbody'); if (!tbody) return;
+                const st = document.getElementById('borrowHistStatus')?.value || '';
+                const q = (document.getElementById('borrowHistSearch')?.value || '').trim().toLowerCase();
+                const rows = borrowHistoryCache.filter(b => {
+                    if (st && b.status !== st) return false;
+                    if (q && ![b.itemCode, b.itemName, b.borrower, b.machine, b.remark].join(' ').toLowerCase().includes(q)) return false;
+                    return true;
+                });
+                const cnt = document.getElementById('borrowHistCount');
+                if (cnt) cnt.innerText = 'แสดง ' + rows.length + ' จาก ' + borrowHistoryCache.length + ' รายการ (ล่าสุด 300 รายการ)';
+                if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-inbox fs-3 d-block mb-2"></i> ไม่พบประวัติการยืม-คืน</td></tr>'; return; }
+                const badgeMap = { approved: 'bg-warning text-dark', returned: 'bg-success', pending: 'bg-info text-dark', rejected: 'bg-secondary' };
+                tbody.innerHTML = rows.map(b => `<tr>
+                    <td><small class="text-muted font-monospace bg-light px-2 py-1 rounded">${escapeHtml(b.borrowDate || '-')}</small></td>
+                    <td class="fw-bold text-dark">${escapeHtml(b.itemName)} <span class="badge bg-light text-secondary border font-monospace ms-1 fw-normal">${escapeHtml(b.itemCode)}</span></td>
+                    <td><small>${escapeHtml(b.machine || '-')}</small></td>
+                    <td class="text-center fw-bold">${formatNumber(b.qty)}</td>
+                    <td class="fw-medium text-secondary"><i class="fas fa-user-tag me-1"></i> ${escapeHtml(b.borrower)}</td>
+                    <td class="text-center"><span class="badge ${badgeMap[b.status] || 'bg-light text-dark border'}">${escapeHtml(b.statusLabel || b.status)}</span></td>
+                    <td><small class="text-muted">${escapeHtml(b.returnedAt || '-')}</small></td>
+                    <td><small class="text-muted">${escapeHtml(b.remark || '')}</small></td>
+                </tr>`).join('');
             } catch(e) { console.error(e); }
         }
 
@@ -12783,8 +12856,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         .terms-box ol, .terms-box ul { margin: 6px 0 0 0; padding-left: 20px; line-height: 1.8; }
 
                         .sign-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; margin-top: 22px; }
-                        .sign-box { border: 1px solid #94a3b8; border-radius: 8px; padding: 12px 14px 14px; }
-                        .sign-box .sign-title { font-size: 12.5px; font-weight: 600; margin-bottom: 22px; }
+                        .sign-box { border: 1px solid #94a3b8; border-radius: 8px; padding: 12px 14px 14px; page-break-inside: avoid; break-inside: avoid; }
+                        .sign-box .sign-title { font-size: 12.5px; font-weight: 600; margin-bottom: 58px; }
                         .sign-line { border-bottom: 1px dotted #64748b; margin-bottom: 6px; height: 1px; }
                         .sign-name { text-align:center; font-size: 12px; color:#475569; }
                         .sign-date { font-size: 12px; color:#475569; margin-top: 6px; }
@@ -12922,12 +12995,29 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             );
         }
 
+        // ★ อัปเดตการ์ด "ค้างคืน (จากใบแทน)" บนแดชบอร์ด — นับเฉพาะใบแทนประเภท "ยืม" ที่ยังไม่คืน/ไม่ยกเลิก (นิยามเดียวกับป้าย "ยืมอยู่" ในหน้าใบแทน)
+        function updateDashSlipBorrowCard() {
+            const el = document.getElementById('count-slip-borrowing');
+            if (!el) return;
+            const sub = document.getElementById('statSlipBorrowSub');
+            const open = rplHistoryCache.filter(s => s.type === 'ยืม' && (s.status === 'ออกใบแล้ว' || s.status === 'เซ็นแล้ว'));
+            const itemCount = open.reduce((sum, s) => sum + ((s.items || []).length || 1), 0);
+            const overdue = open.filter(rplIsOverdue).length;
+            el.innerText = formatNumber(itemCount) + ' รายการ';
+            if (sub) {
+                sub.style.color = overdue ? '#f87171' : '#a78bfa';
+                sub.innerText = open.length
+                    ? 'ยังไม่ได้คืน · ' + open.length + ' ใบ' + (overdue ? ' · เกินกำหนด ' + overdue + ' ใบ' : '')
+                    : 'ไม่มีรายการค้างคืน';
+            }
+        }
+
         function loadReplacementHistory() {
             const body = document.getElementById('rplHistBody');
             if (body && !rplHistoryCache.length) body.innerHTML = '<tr><td colspan="7" class="text-center text-muted small py-3">กำลังโหลด...</td></tr>';
             callGAS('webGetReplacementSlips', [300],
-                (res) => { rplHistoryCache = (res && res.slips) || []; renderReplacementHistory(); },
-                (err) => { if (body) body.innerHTML = '<tr><td colspan="7" class="text-center text-danger small py-3">โหลดประวัติไม่สำเร็จ: ' + escapeHtml(String(err)) + '</td></tr>'; }
+                (res) => { rplHistoryCache = (res && res.slips) || []; updateDashSlipBorrowCard(); renderReplacementHistory(); },
+                (err) => { const _sub = document.getElementById('statSlipBorrowSub'); if (_sub) { _sub.style.color = '#f87171'; _sub.innerText = 'โหลดข้อมูลไม่สำเร็จ'; } if (body) body.innerHTML = '<tr><td colspan="7" class="text-center text-danger small py-3">โหลดประวัติไม่สำเร็จ: ' + escapeHtml(String(err)) + '</td></tr>'; }
             );
         }
 
@@ -13465,6 +13555,21 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             'USER_MGMT':   { label: 'จัดการผู้ใช้',       badge: 'bg-danger bg-opacity-10 text-danger',      icon: 'fa-users-cog' },
         };
 
+        // ★ แก้บั๊ก: ตัวกรอง "ยืม/คืน" เดิมเทียบ type === 'BORROW' อย่างเดียว แต่ฝั่ง backend (LINE/QR/อนุมัติ/รับคืน)
+        // บันทึก type เป็น 'ยืม', 'ยืม (รออนุมัติ)', 'คืน', 'APPROVE_BORROW' ฯลฯ → รายการยืมเลยไม่ขึ้น เห็นแต่ 'BORROW' ที่หน้าเว็บเขียนเอง
+        const AUDIT_BORROW_TYPES = ['BORROW', 'ยืม', 'ยืม (รออนุมัติ)', 'คืน', 'APPROVE_BORROW', 'REJECT_BORROW'];
+        const AUDIT_BORROW_TX_TYPES = ['APPROVE_WEB_TX', 'REJECT_WEB_TX', 'CANCEL_WEB_TX']; // ใช้ร่วมกับเบิก → ดูจากรายละเอียดว่าเป็นยืมไหม
+        function isBorrowAuditLog(log) {
+            const t = String(log.type || '').trim();
+            if (AUDIT_BORROW_TYPES.includes(t)) return true;
+            return AUDIT_BORROW_TX_TYPES.includes(t) && /ยืม|คืน/.test(String(log.detail || ''));
+        }
+        (function () {
+            const base = AUDIT_TYPE_META['BORROW'];
+            const labels = { 'ยืม': 'ยืม', 'ยืม (รออนุมัติ)': 'ยืม (รออนุมัติ)', 'คืน': 'คืน', 'APPROVE_BORROW': 'อนุมัติยืม', 'REJECT_BORROW': 'ปฏิเสธยืม' };
+            Object.keys(labels).forEach(k => { if (!AUDIT_TYPE_META[k]) AUDIT_TYPE_META[k] = Object.assign({}, base, { label: labels[k] }); });
+        })();
+
         // ส่ง audit ไป Google Sheet (fire-and-forget ไม่บล็อก UI)
         function writeAudit(type, detail, status = 'SUCCESS') {
             try {
@@ -13617,7 +13722,8 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 
             const all = _auditCache;
             const filtered = all.filter(log => {
-                if (typeFilter && log.type !== typeFilter) return false;
+                if (typeFilter === 'BORROW') { if (!isBorrowAuditLog(log)) return false; }
+                else if (typeFilter && log.type !== typeFilter) return false;
                 if (searchText) {
                     const hay = `${log.user} ${log.detail} ${log.type} ${log.role}`.toLowerCase();
                     if (!hay.includes(searchText)) return false;
