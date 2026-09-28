@@ -2150,7 +2150,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             <a onclick="goTo('qrManagement'); toggleMobileNav(false)"><i class="fas fa-qrcode"></i> QR</a>
             <a onclick="goTo('history'); toggleMobileNav(false)"><i class="fas fa-history"></i> Logs</a>
             <a onclick="goTo('receiptPrint'); filterReceiptPrintTable(); toggleMobileNav(false)"><i class="fas fa-file-invoice"></i> พิมพ์ใบเบิก</a>
-            <a onclick="goTo('replacementSlip'); toggleMobileNav(false)"><i class="fas fa-clone"></i> ออกใบแทน</a>
+            <a class="admin-only-element" onclick="goTo('replacementSlip'); toggleMobileNav(false)"><i class="fas fa-clone"></i> ออกใบแทน</a>
             <a onclick="goTo('notes'); toggleMobileNav(false)"><i class="fas fa-sticky-note"></i> Notes</a>
             <a onclick="goTo('aiCenter'); toggleMobileNav(false)"><i class="fas fa-robot"></i> AI วิเคราะห์คลัง</a>
 
@@ -2191,7 +2191,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <li class="dropdown-item" onclick="goTo('qrManagement')"><i class="fas fa-qrcode"></i> จัดการ QR Code</li>
                                 <li class="dropdown-item" onclick="goTo('history')"><i class="fas fa-history"></i> ประวัติ Logs</li>
                                 <li class="dropdown-item" onclick="goTo('receiptPrint'); filterReceiptPrintTable();"><i class="fas fa-file-invoice"></i> พิมพ์ใบเบิก (หลักฐาน)</li>
-                                <li class="dropdown-item" onclick="goTo('replacementSlip')"><i class="fas fa-clone"></i> ออกใบแทน</li>
+                                <li class="dropdown-item admin-only-element" onclick="goTo('replacementSlip')"><i class="fas fa-clone"></i> ออกใบแทน</li>
                                 <li class="dropdown-item admin-only-element" id="menu-archive-top" onclick="goTo('archiveMgmt')"><i class="fas fa-archive"></i> คลังเอกสารเก่า</li>
                             </ul>
                         </div>
@@ -3529,14 +3529,14 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     </div>
                 </div>
 
-                <div id="replacementSlip" class="section-view">
+                <div id="replacementSlip" class="section-view admin-only-element">
                     <div class="mb-4 d-flex align-items-center gap-3">
                         <div style="width:42px;height:42px;background:rgba(232,160,32,.12);border-radius:12px;display:flex;align-items:center;justify-content:center">
                             <i class="fas fa-clone" style="color:#e8a020"></i>
                         </div>
                         <div>
                             <h3 class="fw-bold mb-0" style="color:rgba(255,255,255,.9)">ออกใบแทน ใบยืม/เบิกอะไหล่ · เครื่องมือ</h3>
-                            <p class="mb-0" style="font-size:.75rem;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase">เอกสารทางการ พร้อมช่องเซ็นอนุมัติ — พิมพ์แล้วนำไปวางไว้ที่ตำแหน่งเดิมของของ ระหว่างที่ถูกยืม/เบิกออกไป</p>
+                            <p class="mb-0" style="font-size:.75rem;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase">เฉพาะ Admin — เอกสารทางการ พร้อมช่องเซ็นอนุมัติ และประวัติ/ไฟล์ใบที่เซ็นแล้ว</p>
                         </div>
                     </div>
 
@@ -3672,6 +3672,43 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 </ul>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="table-container p-4 bg-white mt-3">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-clock-rotate-left me-1 text-warning"></i> ประวัติใบแทนที่ออกไปแล้ว</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <input type="text" class="form-control form-control-sm" id="rplHistSearch" placeholder="ค้นหา เลขที่/ชื่อ/บริษัท/รหัส" style="width:220px" oninput="renderReplacementHistory()">
+                                <select class="form-select form-select-sm" id="rplHistStatus" style="width:160px" onchange="renderReplacementHistory()">
+                                    <option value="">ทุกสถานะ</option>
+                                    <option value="รอเซ็น">รอใบเซ็น (ยังไม่แนบไฟล์)</option>
+                                    <option value="ค้างคืน">ยืมอยู่ (ยังไม่คืน)</option>
+                                    <option value="เกินกำหนด">เกินกำหนดคืน</option>
+                                    <option value="เซ็นแล้ว">เซ็นแล้ว</option>
+                                    <option value="คืนแล้ว">คืนแล้ว</option>
+                                    <option value="ยกเลิก">ยกเลิก</option>
+                                </select>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadReplacementHistory()" title="รีเฟรช"><i class="fas fa-rotate"></i></button>
+                            </div>
+                        </div>
+                        <div id="rplHistStats" class="d-flex flex-wrap gap-2 mb-3 small"></div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr class="small text-muted">
+                                        <th>เลขที่ / วันที่</th>
+                                        <th>ผู้ยืม/เบิก</th>
+                                        <th>รายการ</th>
+                                        <th>กำหนดคืน</th>
+                                        <th>สถานะ</th>
+                                        <th>ใบที่เซ็นแล้ว</th>
+                                        <th style="width:170px">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rplHistBody"><tr><td colspan="7" class="text-center text-muted small py-3">กำลังโหลด...</td></tr></tbody>
+                            </table>
+                        </div>
+                        <p class="small text-muted mt-2 mb-0"><i class="fas fa-folder-open me-1"></i> ใบที่เซ็นแล้ว: ถ่ายรูป/สแกน แล้วกด "แนบไฟล์" — ระบบเก็บไว้ใน Google Drive โฟลเดอร์ <b>Signed_Replacement_Slips</b> และผูกลิงก์กับเลขที่เอกสารให้อัตโนมัติ</p>
                     </div>
                 </div>
 
@@ -4838,7 +4875,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
         // ★ แก้บั๊ก: เดิมค่านี้ว่างเปล่า ทำให้ตอน deploy หน้านี้แยกบน GitHub Pages (นอก Apps Script)
         // ทุกการเรียก backend ผ่าน fetch ล้มเหลวทันทีด้วย error "ยังไม่ได้เชื่อมต่อ Backend"
         // ใส่ URL เดียวกับที่ใช้ในหน้า QR (indexqrv1.html) เพราะเป็น backend เดียวกัน
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyQ_DrUGSaLg4gNuczD8Tadwd_nvB8rcBT0fDYKe7s0HwFsCbS3urdAEFrpdLGYfGV3Hg/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbylisKoMy8pBAxmBewSMATjEsxQySUvq2Y6_znHQwNI1Z2JkgwKFjVM_5RsgrUn4uceTQ/exec";
         const isGAS = (typeof google !== 'undefined' && google.script && google.script.run && typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:');
         window.isGAS = isGAS;
 
@@ -4900,7 +4937,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     'webGetMyPendingRetroWithdraws', 'webGetPendingWebRequests', 'webGetMyPendingRequests',
                     'webGetPendingRequests', 'webGetPendingApprovals', 'getPendingWebRequests',
                     'getPendingRequests', 'getPendingApprovals', 'webGetMyRecentDecisions',
-                    'webGetPrintLogs', 'webGetReceiptData', 'webGetReceiptDataBatch',
+                    'webGetPrintLogs', 'webGetReplacementSlips', 'webGetReceiptData', 'webGetReceiptDataBatch',
                     'webGetArchiveList', 'webListBackupFiles', 'webHasDashboardPassword',
                     'webGetLineChannelSettings', 'webGetBotMessageTemplates', 'webGetLineQuotaStatus',
                     'webGetAIProviderSettings', 'webGetActiveAIProviderLabel', 'webGetFullItemHistory',
@@ -12513,6 +12550,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             loadReplacementHeaderSettings();
             rplCartItems = [];
             renderReplacementCart();
+            loadReplacementHistory();
 
             // ★ เติมเงื่อนไขเริ่มต้นให้อัตโนมัติแค่ตอนช่องยังว่าง (ไม่ทับข้อความที่ผู้ใช้แก้ไว้เอง)
             const termsEl = document.getElementById('rplTerms');
@@ -12619,7 +12657,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     <td class="text-muted small">${idx + 1}</td>
                     <td><span class="fw-bold">${escapeHtml(it.code)}</span><br><span class="small text-muted">${escapeHtml(it.name)}</span></td>
                     <td>${formatNumber(it.qty)} ${escapeHtml(it.unit)}</td>
-                    <td><input type="text" class="form-control form-control-sm" value="${escapeHtml(it.note || '')}" placeholder="-" oninput="updateReplacementCartNote(${idx}, this.value)"></td>
+                    <td><input type="text" class="form-control form-control-sm" value="${rplAttr(it.note || '')}" placeholder="-" oninput="updateReplacementCartNote(${idx}, this.value)"></td>
                     <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeReplacementCartItem(${idx})"><i class="fas fa-trash"></i></button></td>
                 </tr>
             `).join('');
@@ -12639,6 +12677,26 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             if (!person) return Swal.fire({icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาระบุชื่อผู้ยืม/เบิก'});
             if (!date) return Swal.fire({icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาระบุวันที่ทำรายการ'});
 
+            const docNo = 'RPL-' + date.replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+            const slip = {
+                docNo, type, person, empId, dept, company, date,
+                dueDate: (type === 'ยืม') ? dueDate : '',
+                purpose,
+                items: rplCartItems.map(it => ({ code: it.code, name: it.name, unit: it.unit, qty: it.qty, note: it.note || '' }))
+            };
+
+            printReplacementSlipDoc(slip);
+            saveReplacementSlipRecord(slip);
+
+            const itemsSummary = slip.items.map(it => `${it.code} x${it.qty}`).join(', ');
+            writeAudit('ใบแทน', `ออกใบแทน [${docNo}] — ${itemsSummary} | ประเภท: ${type} | ผู้ยืม/เบิก: ${person}${company ? ' | หน่วยงาน: ' + company : ''}${slip.dueDate ? ' | กำหนดคืน: ' + slip.dueDate : ''}`);
+        }
+
+        // พิมพ์ใบแทนจากข้อมูล slip (ใช้ทั้งตอนออกใหม่ และพิมพ์ซ้ำจากประวัติ)
+        function printReplacementSlipDoc(slip) {
+            const { docNo, type, person, empId, dept, company, date, dueDate, purpose } = slip;
+            const items = slip.items || [];
+
             const fmtDateTh = (isoStr) => {
                 if (!isoStr) return '';
                 const d = new Date(isoStr + 'T00:00:00');
@@ -12651,7 +12709,6 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 
             const isBorrow = (type === 'ยืม');
             const docTitle = isBorrow ? 'ใบแทน ใบยืมอะไหล่ / เครื่องมือ' : 'ใบแทน ใบเบิกอะไหล่ / เครื่องมือ';
-            const docNo = 'RPL-' + date.replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
 
             let hdr = {};
             try { hdr = JSON.parse(localStorage.getItem('rplHeaderSettings')) || {}; } catch (e) {}
@@ -12668,9 +12725,9 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 : ['ตรวจสอบจำนวน/สภาพสินค้าให้ถูกต้องก่อนเซ็นรับ', 'รายการนี้เป็นการเบิกใช้ ไม่ต้องนำส่งคืนคลัง', 'ความรับผิดชอบกรณีสินค้าชำรุดจากการใช้งานใช้ดุลพินิจตามระเบียบบริษัท'];
             const termsHtml = (termsLines.length ? termsLines : fallbackTermsLines).map(l => `<li>${escapeHtml(l)}</li>`).join('');
 
-            const qrPayload = JSON.stringify({ slip: 'replacement', docNo, date, items: rplCartItems.map(it => ({ code: it.code, qty: it.qty })) });
+            const qrPayload = JSON.stringify({ slip: 'replacement', docNo, date, items: items.map(it => ({ code: it.code, qty: it.qty })) });
 
-            const itemRows = rplCartItems.map((it, idx) => `
+            const itemRows = items.map((it, idx) => `
                 <tr>
                     <td style="text-align:center">${idx + 1}</td>
                     <td>${escapeHtml(it.code)}</td>
@@ -12679,7 +12736,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                     <td style="text-align:center">${escapeHtml(it.unit || '-')}</td>
                     <td>${escapeHtml(it.note || '-')}</td>
                 </tr>
-            `).join('') + Array.from({ length: Math.max(0, 2 - rplCartItems.length) }).map(() => `
+            `).join('') + Array.from({ length: Math.max(0, 2 - items.length) }).map(() => `
                 <tr><td style="height:26px">&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
             `).join('');
 
@@ -12833,9 +12890,191 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                 </html>
             `);
             printWindow.document.close();
+        }
 
-            const itemsSummary = rplCartItems.map(it => `${it.code} x${it.qty}`).join(', ');
-            writeAudit('ใบแทน', `ออกใบแทน [${docNo}] — ${itemsSummary} | ประเภท: ${type} | ผู้ยืม/เบิก: ${person}${company ? ' | หน่วยงาน: ' + company : ''}${dueDate ? ' | กำหนดคืน: ' + dueDate : ''}`);
+        /* ============================================================
+           🗂️ ประวัติใบแทน + แนบใบที่เซ็นแล้ว (เก็บใน Sheet ReplacementSlips / Drive)
+        ============================================================ */
+        let rplHistoryCache = [];
+
+        function rplAttr(str) {
+            return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function rplFmtDateTh(isoStr) {
+            if (!isoStr) return '-';
+            const d = new Date(String(isoStr).slice(0, 10) + 'T00:00:00');
+            if (isNaN(d.getTime())) return isoStr;
+            const isEn = allData.settings?.dateFormat === 'EN';
+            const yr = isEn ? d.getFullYear() : d.getFullYear() + 543;
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${yr}`;
+        }
+
+        function rplCurrentUserName() {
+            return (typeof currentUserProfile !== 'undefined' && currentUserProfile) ? currentUserProfile.name : 'Web';
+        }
+
+        function saveReplacementSlipRecord(slip) {
+            callGAS('webSaveReplacementSlip', [slip, rplCurrentUserName()],
+                () => loadReplacementHistory(),
+                (err) => Swal.fire({ icon: 'warning', title: 'พิมพ์แล้ว แต่บันทึกประวัติไม่สำเร็จ', text: String(err) + ' — เลขที่เอกสาร ' + slip.docNo })
+            );
+        }
+
+        function loadReplacementHistory() {
+            const body = document.getElementById('rplHistBody');
+            if (body && !rplHistoryCache.length) body.innerHTML = '<tr><td colspan="7" class="text-center text-muted small py-3">กำลังโหลด...</td></tr>';
+            callGAS('webGetReplacementSlips', [300],
+                (res) => { rplHistoryCache = (res && res.slips) || []; renderReplacementHistory(); },
+                (err) => { if (body) body.innerHTML = '<tr><td colspan="7" class="text-center text-danger small py-3">โหลดประวัติไม่สำเร็จ: ' + escapeHtml(String(err)) + '</td></tr>'; }
+            );
+        }
+
+        function rplIsOverdue(s) {
+            if (s.type !== 'ยืม' || !s.dueDate) return false;
+            if (s.status === 'คืนแล้ว' || s.status === 'ยกเลิก') return false;
+            return String(s.dueDate).slice(0, 10) < new Date().toISOString().slice(0, 10);
+        }
+
+        function renderReplacementHistory() {
+            const body = document.getElementById('rplHistBody');
+            if (!body) return;
+            const q = (document.getElementById('rplHistSearch')?.value || '').trim().toLowerCase();
+            const st = document.getElementById('rplHistStatus')?.value || '';
+
+            const waitingSigned = rplHistoryCache.filter(s => s.status === 'ออกใบแล้ว').length;
+            const borrowing = rplHistoryCache.filter(s => s.type === 'ยืม' && (s.status === 'ออกใบแล้ว' || s.status === 'เซ็นแล้ว')).length;
+            const overdue = rplHistoryCache.filter(rplIsOverdue).length;
+            const stats = document.getElementById('rplHistStats');
+            if (stats) stats.innerHTML =
+                `<span class="badge bg-warning text-dark">รอใบเซ็น ${waitingSigned}</span>` +
+                `<span class="badge bg-primary">ยืมอยู่ ${borrowing}</span>` +
+                `<span class="badge ${overdue ? 'bg-danger' : 'bg-secondary'}">เกินกำหนดคืน ${overdue}</span>` +
+                `<span class="badge bg-light text-dark border">ทั้งหมด ${rplHistoryCache.length}</span>`;
+
+            const rows = rplHistoryCache.filter(s => {
+                if (st === 'รอเซ็น' && s.status !== 'ออกใบแล้ว') return false;
+                if (st === 'ค้างคืน' && !(s.type === 'ยืม' && (s.status === 'ออกใบแล้ว' || s.status === 'เซ็นแล้ว'))) return false;
+                if (st === 'เกินกำหนด' && !rplIsOverdue(s)) return false;
+                if (['เซ็นแล้ว', 'คืนแล้ว', 'ยกเลิก'].includes(st) && s.status !== st) return false;
+                if (q) {
+                    const hay = [s.docNo, s.person, s.empId, s.dept, s.company, s.purpose, s.summary, (s.items || []).map(i => i.name).join(' ')].join(' ').toLowerCase();
+                    if (!hay.includes(q)) return false;
+                }
+                return true;
+            });
+
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="7" class="text-center text-muted small py-3">ไม่พบรายการ</td></tr>';
+                return;
+            }
+
+            const badge = (s) => {
+                if (rplIsOverdue(s)) return '<span class="badge bg-danger">เกินกำหนดคืน</span>';
+                const map = { 'ออกใบแล้ว': 'bg-warning text-dark', 'เซ็นแล้ว': 'bg-success', 'คืนแล้ว': 'bg-secondary', 'ยกเลิก': 'bg-dark' };
+                return `<span class="badge ${map[s.status] || 'bg-light text-dark'}">${escapeHtml(s.status)}</span>`;
+            };
+
+            body.innerHTML = rows.map(s => {
+                const itemsHtml = (s.items || []).map(i => `${escapeHtml(i.code)} <span class="text-muted">×${formatNumber(i.qty)}</span>`).join('<br>');
+                const who = escapeHtml(s.person) + (s.company ? `<br><span class="small text-muted">${escapeHtml(s.company)}</span>` : '');
+                const closed = (s.status === 'ยกเลิก');
+                const fileHtml = s.signedFileUrl
+                    ? `<a href="${rplAttr(s.signedFileUrl)}" target="_blank" rel="noopener" class="small"><i class="fas fa-paperclip me-1"></i>เปิดไฟล์</a><div class="small text-muted">${escapeHtml(s.signedAt || '')}</div>`
+                    : '<span class="small text-muted">ยังไม่แนบ</span>';
+                const dn = rplAttr(s.docNo).replace(/'/g, '&#39;');
+                const btns = [
+                    `<button class="btn btn-sm btn-outline-primary" title="พิมพ์ซ้ำ" onclick="reprintReplacementSlip('${dn}')"><i class="fas fa-print"></i></button>`,
+                    closed ? '' : `<button class="btn btn-sm btn-outline-success" title="แนบไฟล์ใบที่เซ็นแล้ว (ถ่ายรูป/สแกน)" onclick="pickReplacementSignedFile('${dn}')"><i class="fas fa-upload"></i></button>`,
+                    (!closed && s.type === 'ยืม' && s.status !== 'คืนแล้ว') ? `<button class="btn btn-sm btn-outline-secondary" title="รับคืนแล้ว" onclick="setReplacementStatus('${dn}','คืนแล้ว')"><i class="fas fa-rotate-left"></i></button>` : '',
+                    closed ? '' : `<button class="btn btn-sm btn-outline-danger" title="ยกเลิกใบนี้" onclick="setReplacementStatus('${dn}','ยกเลิก')"><i class="fas fa-ban"></i></button>`
+                ].join(' ');
+                return `<tr${closed ? ' style="opacity:.55"' : ''}>
+                    <td><b>${escapeHtml(s.docNo)}</b><br><span class="small text-muted">${rplFmtDateTh(s.date)} · ${escapeHtml(s.type)}</span></td>
+                    <td>${who}</td>
+                    <td class="small">${itemsHtml}</td>
+                    <td class="small">${s.type === 'ยืม' ? rplFmtDateTh(s.dueDate) : '<span class="text-muted">ไม่ต้องคืน</span>'}</td>
+                    <td>${badge(s)}${s.returnedAt ? `<div class="small text-muted">คืน ${escapeHtml(s.returnedAt.slice(0, 10))}</div>` : ''}</td>
+                    <td>${fileHtml}</td>
+                    <td class="text-nowrap">${btns}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function reprintReplacementSlip(docNo) {
+            const s = rplHistoryCache.find(x => x.docNo === docNo);
+            if (!s) return;
+            printReplacementSlipDoc(s);
+            writeAudit('ใบแทน', `พิมพ์ซ้ำใบแทน [${docNo}]`);
+        }
+
+        function setReplacementStatus(docNo, status) {
+            const label = status === 'คืนแล้ว' ? 'ยืนยันว่ารับของคืนครบแล้ว?' : 'ยืนยันยกเลิกใบนี้?';
+            Swal.fire({ icon: 'question', title: docNo, text: label, showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ปิด' }).then(r => {
+                if (!r.isConfirmed) return;
+                callGAS('webUpdateReplacementSlipStatus', [docNo, status, rplCurrentUserName()],
+                    () => { writeAudit('ใบแทน', `เปลี่ยนสถานะ [${docNo}] → ${status}`); loadReplacementHistory(); },
+                    (err) => Swal.fire({ icon: 'error', title: 'ไม่สำเร็จ', text: String(err) })
+                );
+            });
+        }
+
+        function pickReplacementSignedFile(docNo) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,application/pdf';
+            input.onchange = () => { if (input.files && input.files[0]) uploadReplacementSignedFile(docNo, input.files[0]); };
+            input.click();
+        }
+
+        function rplFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
+                if (file.type === 'application/pdf') {
+                    if (file.size > 8 * 1024 * 1024) return reject(new Error('ไฟล์ PDF ใหญ่เกิน 8MB'));
+                    reader.onload = () => resolve({ data: String(reader.result).split(',')[1], mime: 'application/pdf' });
+                    reader.readAsDataURL(file);
+                    return;
+                }
+                // รูปภาพ: ย่อให้ด้านยาวไม่เกิน 1800px แล้วบีบเป็น JPEG เพื่อให้อัปโหลดเร็วและไม่กินที่ Drive
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error('ไฟล์รูปไม่ถูกต้อง'));
+                    img.onload = () => {
+                        const max = 1800;
+                        const scale = Math.min(1, max / Math.max(img.width, img.height));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.round(img.width * scale);
+                        canvas.height = Math.round(img.height * scale);
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve({ data: canvas.toDataURL('image/jpeg', 0.82).split(',')[1], mime: 'image/jpeg' });
+                    };
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function uploadReplacementSignedFile(docNo, file) {
+            try {
+                Swal.fire({ title: 'กำลังอัปโหลด...', text: docNo, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const f = await rplFileToBase64(file);
+                callGAS('webUploadReplacementSignedCopy', [docNo, f.data, f.mime, file.name, rplCurrentUserName()],
+                    (res) => {
+                        Swal.fire({ icon: 'success', title: 'แนบใบที่เซ็นแล้วเรียบร้อย', timer: 1600, showConfirmButton: false });
+                        writeAudit('ใบแทน', `แนบใบที่เซ็นแล้ว [${docNo}]`);
+                        loadReplacementHistory();
+                    },
+                    (err) => Swal.fire({ icon: 'error', title: 'อัปโหลดไม่สำเร็จ', text: String(err) }),
+                    90000
+                );
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'อัปโหลดไม่สำเร็จ', text: e.message || String(e) });
+            }
         }
 
         // ฟังก์ชันโหลดและแสดงตารางประวัติ
