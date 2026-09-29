@@ -8980,9 +8980,17 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     const targetList = type === 'tool' ? allData.tools : allData.items;
                     const renameByOldCode = {};
                     renameMap.forEach(r => { renameByOldCode[r.oldCode] = r.newCode; });
+                    const movedLocal = [];
                     targetList.forEach(i => {
-                        if (renameByOldCode[i.code]) { i.category = category; i.code = renameByOldCode[i.code]; }
+                        if (renameByOldCode[i.code]) { i.category = category; i.code = renameByOldCode[i.code]; movedLocal.push(i); }
                     });
+                    // ★ ย้ายรายการที่เพิ่งย้ายหมวดไปไว้ท้ายรายการ ให้ตรงกับลำดับในชีต (backend ย้ายแถวไปล่างสุดแล้ว)
+                    if (movedLocal.length) {
+                        const movedSet = new Set(movedLocal);
+                        const rest = targetList.filter(i => !movedSet.has(i));
+                        targetList.length = 0;
+                        rest.concat(movedLocal).forEach(i => targetList.push(i));
+                    }
                     clearInventorySelection(type);
                     onDataLoaded(allData);
                     Swal.fire({
