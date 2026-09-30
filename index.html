@@ -7456,7 +7456,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const _stockValueEl = document.getElementById('count-stock-value');
                 if (_stockValueEl) {
                     const totalStockValue = data.items.concat(data.tools).reduce((sum, i) => sum + ((Number(i.stock) || 0) * (Number(i.price) || 0)), 0);
-                    _stockValueEl.innerText = formatNumber(totalStockValue) + ' ฿';
+                    _stockValueEl.innerText = formatMoneyTH(totalStockValue) + ' ฿';
                 }
 
                 // ★ เพิ่มใหม่ — รายการที่ยังไม่ได้คืนจากใบแทน (ข้อมูลใบแทนดึงได้เฉพาะ Admin)
@@ -9155,7 +9155,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             ${isLast ? '' : `<div style="width:1px;flex:1;background:#2a2f3d;min-height:24px"></div>`}
                         </div>
                         <div style="flex:1;min-width:0;padding-bottom:14px">
-                            <p class="mb-0" style="font-size:13px"><span class="fw-bold" style="color:${actionColor}">${actionLabel} ${amountStr}</span> <span style="color:#6b7280">· เหลือ ${log.balance||'-'}</span>${valueStr}</p>
+                            <p class="mb-0" style="font-size:13px"><span class="fw-bold" style="color:${actionColor}">${actionLabel} ${amountStr}</span> <span style="color:#6b7280">· เหลือ ${log.balance||'-'}</span></p>
                             <p class="mb-0" style="color:#6b7280;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${timeParts[0]||'-'} ${timeParts[1]||''} · ${displayUser}${log.remark ? ' · ' + log.remark : ''}</p>
                         </div>
                     </div>`;
