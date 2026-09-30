@@ -1956,6 +1956,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                 <span class="badge" id="rhItemCat" style="background:#1e3a2f;color:#22c55e">-</span>
                                 <span class="badge" id="rhItemLoc" style="background:transparent;color:#a0aec0;border:1px solid #2a2f3d"><i class="fas fa-map-marker-alt text-danger me-1"></i> -</span>
                                 <span class="badge" id="rhItemStock" style="background:#1e3a2f;color:#22c55e">คงเหลือ: -</span>
+                                <span class="badge price-only-element" id="rhItemPrice" style="background:#2a2440;color:#c4b5fd;display:none"></span>
                             </div>
                         </div>
                         <!-- Filter -->
@@ -5724,6 +5725,12 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             return `${day}/${month}/${year} ${hours}:${minutes}`;
         }
 
+        // จัดรูปแบบตัวเงิน: คั่นหลักพันด้วย , และทศนิยม 2 ตำแหน่งเสมอ (เช่น 1,234.50)
+        function formatMoneyTH(num) {
+            const n = Number(num);
+            if (!isFinite(n)) return '0.00';
+            return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
         function formatNumber(num) {
             try {
                 if (num === null || num === undefined || num === '') return num;
@@ -9019,6 +9026,16 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             document.getElementById('rhItemCat').textContent = getItemCategory(item) || '-';
             document.getElementById('rhItemLoc').innerHTML = `<i class="fas fa-map-marker-alt text-danger me-1"></i> ${escapeHtml(item.location || '-')}`;
             document.getElementById('rhItemStock').textContent = `คงเหลือ: ${formatNumber(item.stock)} ${item.unit || ''}`;
+            modal._itemPrice = Number(item.price) || 0; // ราคาทุนต่อหน่วย (ใช้คำนวณมูลค่าต่อรายการในไทม์ไลน์)
+            const rhPriceEl = document.getElementById('rhItemPrice');
+            if (rhPriceEl) {
+                if (modal._itemPrice > 0 && userCanSeePrice()) {
+                    rhPriceEl.textContent = `ราคาทุน: ฿${formatMoneyTH(modal._itemPrice)}/${item.unit || 'หน่วย'}`;
+                    rhPriceEl.style.display = '';
+                } else {
+                    rhPriceEl.style.display = 'none';
+                }
+            }
             // รูปสินค้า
             const imgUrl = item.imageUrl ? getProxyImgUrl(item.imageUrl) : null;
             const imgEl = document.getElementById('rhItemImgEl');
@@ -9119,6 +9136,9 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 let actionLabel = isIn ? (act.includes('new item') ? 'รับเข้า (ใหม่)' : act.includes('คืน') ? 'คืน' : act.includes('ซ่อม') ? 'ซ่อมแล้ว' : 'รับเข้า') : (act.includes('ยืม') ? 'ยืม' : act.includes('ชำรุด') ? 'แจ้งชำรุด' : 'เบิก');
                 const actionColor = isIn ? '#22c55e' : '#ef4444';
                 const amountStr  = isIn ? '+' + formatNumber(amountNum) : '-' + formatNumber(amountNum);
+                const rhPrice = modal._itemPrice || 0;
+                const valueStr = (rhPrice > 0 && amountNum > 0 && userCanSeePrice())
+                    ? ` <span style="color:#a78bfa">· ฿${formatMoneyTH(amountNum * rhPrice)}</span>` : '';
                 // หัวข้อกลุ่มเดือน (sticky) — เปลี่ยนกลุ่มเมื่อเดือน/ปีต่างจากรายการก่อนหน้า
                 const d = parseThaiDate(log.time);
                 const monthKey = d ? `${d.getFullYear()}-${d.getMonth()}` : 'ไม่ทราบวันที่';
@@ -9135,7 +9155,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                             ${isLast ? '' : `<div style="width:1px;flex:1;background:#2a2f3d;min-height:24px"></div>`}
                         </div>
                         <div style="flex:1;min-width:0;padding-bottom:14px">
-                            <p class="mb-0" style="font-size:13px"><span class="fw-bold" style="color:${actionColor}">${actionLabel} ${amountStr}</span> <span style="color:#6b7280">· เหลือ ${log.balance||'-'}</span></p>
+                            <p class="mb-0" style="font-size:13px"><span class="fw-bold" style="color:${actionColor}">${actionLabel} ${amountStr}</span> <span style="color:#6b7280">· เหลือ ${log.balance||'-'}</span>${valueStr}</p>
                             <p class="mb-0" style="color:#6b7280;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${timeParts[0]||'-'} ${timeParts[1]||''} · ${displayUser}${log.remark ? ' · ' + log.remark : ''}</p>
                         </div>
                     </div>`;
