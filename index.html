@@ -15144,7 +15144,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
                         wrap.innerHTML = res.archives.map(function(a) {
                             const parts = a.name.replace('Archive_','').split('_');
                             const label = parts.length === 2 ? parts[0] + '/' + parts[1] : a.name;
-                            return '<div class="d-flex align-items-center justify-content-between px-3 py-2 mb-2 rounded-3" style="background:#232838;border:1px solid #2a2f3d">'                                + '<div>'                                + '<span class="fw-bold me-2" style="color:#e0e0e0"><i class="fas fa-file-archive me-2" style="color:#22c55e"></i>' + a.name + '</span>'                                + '<span class="badge" style="background:#1e3a2f;color:#22c55e;font-size:10px">' + a.rows + ' รายการ</span>'                                + '</div>'                                + '<div class="d-flex gap-2">'                                + '<a href="' + a.url + '" target="_blank" class="btn btn-sm" style="background:#1e3a5f;color:#60a5fa;border:1px solid #2a3f5f;border-radius:8px;font-size:12px"><i class="fas fa-external-link-alt me-1"></i>เปิด</a>'                                + '<button onclick="doRestoreArchive(\'' + a.name.replace(/'/g,"\\'") + '\')" class="btn btn-sm" style="background:#3a2a1e;color:#fbbf24;border:1px solid #5f4a2a;border-radius:8px;font-size:12px"><i class="fas fa-undo me-1"></i>กู้คืน</button>'                                + '</div>'                                + '</div>';
+                            return '<div class="d-flex align-items-center justify-content-between px-3 py-2 mb-2 rounded-3" style="background:#232838;border:1px solid #2a2f3d">'                                + '<div>'                                + '<span class="fw-bold me-2" style="color:#e0e0e0"><i class="fas fa-file-archive me-2" style="color:#22c55e"></i>' + a.name + '</span>'                                + '<span class="badge" style="background:#1e3a2f;color:#22c55e;font-size:10px">' + a.rows + ' รายการ</span>'                                + (a.sourceId ? '<span class="badge ms-1" style="background:#2a2350;color:#a78bfa;font-size:10px">' + (a.sourceName || 'ไฟล์อื่น') + '</span>' : '')                                + '</div>'                                + '<div class="d-flex gap-2">'                                + '<a href="' + a.url + '" target="_blank" class="btn btn-sm" style="background:#1e3a5f;color:#60a5fa;border:1px solid #2a3f5f;border-radius:8px;font-size:12px"><i class="fas fa-external-link-alt me-1"></i>เปิด</a>'                                + '<button onclick="doRestoreArchive(\'' + a.name.replace(/'/g,"\\'") + '\',\'' + (a.sourceId || '') + '\')" class="btn btn-sm" style="background:#3a2a1e;color:#fbbf24;border:1px solid #5f4a2a;border-radius:8px;font-size:12px"><i class="fas fa-undo me-1"></i>กู้คืน</button>'                                + '</div>'                                + '</div>';
                         }).join('');
                     })
                     .withFailureHandler(function(err) { const errMsg = (err && (err.message || err.toString())) || 'ไม่ทราบสาเหตุ'; wrap.innerHTML = '<div class="text-center py-3 text-danger small">โหลดไม่สำเร็จ: ' + errMsg + '</div>'; })
@@ -15156,7 +15156,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
 
         // loadArchiveList จะถูกเรียกเมื่อ goTo('archive') แทน (ลบ DOMContentLoaded auto-load เพราะตอนเปิดหน้ายังไม่ login)
 
-        function doRestoreArchive(archiveName) {
+        function doRestoreArchive(archiveName, sourceId) {
             if (!currentUserProfile || currentUserProfile.role !== 'admin') {
                 Swal.fire({ icon: 'error', title: 'ไม่มีสิทธิ์', text: 'ฟีเจอร์นี้สำหรับ Admin เท่านั้น', background: '#1a2230', color: '#e0e0e0' });
                 return;
@@ -15174,7 +15174,7 @@ function _doSubmitTransaction(payload, submitBtn, originalText) {
             }).then(function(result) {
                 if (!result.isConfirmed) return;
                 Swal.fire({ title: 'กำลังกู้คืน...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1a2230', color: '#e0e0e0' });
-                callGAS('webRestoreArchive', [archiveName, currentUserProfile ? currentUserProfile.uid : '-'], function(res) {
+                callGAS('webRestoreArchive', [archiveName, currentUserProfile ? currentUserProfile.uid : '-', sourceId || ''], function(res) {
                     if (res && res.success) {
                         Swal.fire({ icon: 'success', title: 'กู้คืนสำเร็จ!', text: 'นำข้อมูล ' + (res.restoredRows || 0) + ' รายการกลับเข้า Logs แล้ว', background: '#1a2230', color: '#e0e0e0' });
                         loadArchiveList();
