@@ -1211,7 +1211,7 @@ td:has(> i.fa-user-circle) { white-space: nowrap !important; }
 
 
 <script>
-// 🖼️ Client-side Image Compression Helper (ย่อขนาดรูปภาพก่อนส่งไป  ป้องกัน Timeout/Payload Error)
+// 🖼️ Client-side Image Compression Helper (ย่อขนาดรูปภาพก่อนส่งไป GAS ป้องกัน Timeout/Payload Error)
 function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.7) {
     return new Promise((resolve, reject) => {
         if (!file || !file.type || !file.type.startsWith('image/')) { resolve(file); return; }
@@ -1308,6 +1308,36 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
             will-change: transform;
         }
     </style>
+
+    <!-- ★ เพิ่มใหม่ — Modal รายการรับเข้า/เบิกออกประจำเดือน (เปิดจากการ์ดบนแดชบอร์ด) -->
+    <div class="modal fade" id="monthlyTxModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content" style="background:var(--card-bg); color:var(--text-main); border:1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom:1px solid var(--border-color);">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="monthlyTxTitle">รายการเดือนนี้</h5>
+                        <div class="small" id="monthlyTxSummary" style="color:#a78bfa; font-weight:700;"></div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <input type="text" id="monthlyTxSearch" class="form-control" style="max-width:320px; background:rgba(255,255,255,.04); color:inherit; border:1px solid var(--border-color);" placeholder="ค้นหารหัส, ชื่อ, ผู้ทำรายการ..." oninput="renderMonthlyTxTable()">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-warning active" id="monthlyTxViewAll" onclick="setMonthlyTxView('all')">ทุกรายการ</button>
+                            <button type="button" class="btn btn-sm btn-outline-warning" id="monthlyTxViewItem" onclick="setMonthlyTxView('item')">สรุปตามสินค้า</button>
+                        </div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="table table-sm align-middle mb-0" style="color:inherit; --bs-table-bg:transparent; --bs-table-color:inherit; --bs-table-border-color:var(--border-color);">
+                            <thead id="monthlyTxHead"></thead>
+                            <tbody id="monthlyTxBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="qrViewModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -2325,6 +2355,33 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                                     </div>
                                     <div class="stat-icon bg-danger bg-opacity-10 text-danger mb-0"><i class="fas fa-clock-rotate-left"></i></div>
                                 </div>
+                            </div>
+                        </div>
+                        <!-- ★ เพิ่มใหม่ — สรุปรับเข้า/เบิกออก "เดือนนี้" กดแล้วดูรายการทั้งหมดของเดือน -->
+                        <div class="col-6 col-md-3 col-sm-6">
+                            <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-success border-4" style="cursor:pointer;" onclick="openMonthlyTxModal('in')" title="คลิกเพื่อดูรายการรับเข้าทั้งหมดของเดือนนี้">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">รับเข้าเดือนนี้ <span id="monthTxLabelIn"></span></div>
+                                        <div class="stat-value text-success" id="count-month-in" style="font-size:2rem; font-weight:800; font-family:'TH Sarabun New','Sarabun',sans-serif;">0 <span style="font-size:1rem">รายการ</span></div>
+                                        <div style="font-size:12px; font-weight:700; margin-top:2px; color:#a78bfa;" id="sub-month-in">รวม 0 ชิ้น</div>
+                                    </div>
+                                    <div class="stat-icon bg-success bg-opacity-10 text-success mb-0"><i class="fas fa-box-open"></i></div>
+                                </div>
+                                <div style="font-size:11px; margin-top:8px; color:var(--text-muted);"><i class="fas fa-list me-1"></i> คลิกเพื่อดูรายการทั้งหมด</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 col-sm-6">
+                            <div class="stat-card border-top-0 border-end-0 border-bottom-0 border-start border-danger border-4" style="cursor:pointer;" onclick="openMonthlyTxModal('out')" title="คลิกเพื่อดูรายการเบิกออกทั้งหมดของเดือนนี้">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="stat-title" style="color:var(--text-muted); font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">เบิกออกเดือนนี้ <span id="monthTxLabelOut"></span></div>
+                                        <div class="stat-value text-danger" id="count-month-out" style="font-size:2rem; font-weight:800; font-family:'TH Sarabun New','Sarabun',sans-serif;">0 <span style="font-size:1rem">รายการ</span></div>
+                                        <div style="font-size:12px; font-weight:700; margin-top:2px; color:#a78bfa;" id="sub-month-out">รวม 0 ชิ้น</div>
+                                    </div>
+                                    <div class="stat-icon bg-danger bg-opacity-10 text-danger mb-0"><i class="fas fa-dolly"></i></div>
+                                </div>
+                                <div style="font-size:11px; margin-top:8px; color:var(--text-muted);"><i class="fas fa-list me-1"></i> คลิกเพื่อดูรายการทั้งหมด</div>
                             </div>
                         </div>
                     </div>
@@ -7450,7 +7507,7 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                 const _todayDateStr = getFormattedDate().split(' ')[0];
                 const _dispatchToday = data.history.filter(h => h.time && h.time.includes(_todayDateStr) && String(h.action).trim().toLowerCase().startsWith('เบิก')).length;
                 const _receiveToday = data.history.filter(h => h.time && h.time.includes(_todayDateStr) && (String(h.action).trim().toLowerCase() === 'รับเข้า' || String(h.action).trim().toLowerCase() === 'new item')).length;
-                animateValue("count-items", 0, data.items.length, 500); animateValue("count-tools", 0, data.tools.length, 500); animateValue("count-low", 0, _dispatchToday, 500); animateValue("count-logs", 0, _receiveToday, 500);
+                animateValue("count-items", 0, data.items.length, 500); animateValue("count-tools", 0, data.tools.length, 500); animateValue("count-low", 0, _dispatchToday, 500); animateValue("count-logs", 0, _receiveToday, 500); renderMonthlyTxCards(data);
 
                 // ★ เพิ่มใหม่ — มูลค่าคลังรวม (ราคาทุน) = ผลรวม (คงเหลือ × ราคาทุนต่อหน่วย) ของอะไหล่ + เครื่องมือทั้งหมด
                 const _stockValueEl = document.getElementById('count-stock-value');
@@ -7535,6 +7592,96 @@ function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.
                     }
                     onDataLoaded(allData, isSilent); 
                 }, 500);
+            }
+        }
+
+        /* ★ เพิ่มใหม่ — สรุปรับเข้า/เบิกออกเดือนปัจจุบัน (นับจาก Logs ของเดือนนี้ — เดือนที่ปิดไปแล้วอยู่ใน Archive จึงไม่นับ) */
+        window._monthTx = { in: [], out: [], label: '', view: 'all', type: 'in' };
+        function _histYM(timeStr) {
+            const p = String(timeStr || '').trim().split(' ')[0].split('/');
+            if (p.length < 3) return null;
+            let m = parseInt(p[1], 10), y = parseInt(p[2], 10);
+            if (isNaN(m) || isNaN(y)) return null;
+            if (y < 100) y += 1957; else if (y > 2400) y -= 543; // พ.ศ. 2 หลัก/4 หลัก -> ค.ศ.
+            return { y: y, m: m };
+        }
+        function _txQty(h) { return Math.abs(parseFloat(String(h.amount).replace(/[^0-9.\-]/g, '')) || 0); }
+        function renderMonthlyTxCards(data) {
+            try {
+                const MN = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                const now = new Date(); const cy = now.getFullYear(), cm = now.getMonth() + 1;
+                const inList = [], outList = [];
+                (data.history || []).forEach(function (h) {
+                    const ym = _histYM(h.time);
+                    if (!ym || ym.y !== cy || ym.m !== cm) return;
+                    const act = String(h.action || '').trim().toLowerCase();
+                    if (act === 'รับเข้า' || act === 'new item') inList.push(h);
+                    else if (act.startsWith('เบิก')) outList.push(h);
+                });
+                const label = '(' + MN[cm] + ' ' + String(cy + 543).slice(-2) + ')';
+                window._monthTx.in = inList; window._monthTx.out = outList; window._monthTx.label = label;
+                const sum = function (l) { return l.reduce(function (s, h) { return s + _txQty(h); }, 0); };
+                const set = function (id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+                set('count-month-in', formatNumber(inList.length) + ' <span style="font-size:1rem">รายการ</span>');
+                set('sub-month-in', 'รวม ' + formatNumber(sum(inList)) + ' ชิ้น');
+                set('count-month-out', formatNumber(outList.length) + ' <span style="font-size:1rem">รายการ</span>');
+                set('sub-month-out', 'รวม ' + formatNumber(sum(outList)) + ' ชิ้น');
+                set('monthTxLabelIn', label); set('monthTxLabelOut', label);
+                // ถ้า modal เปิดอยู่ตอนข้อมูลรีเฟรช ให้อัปเดตตารางด้วย
+                const md = document.getElementById('monthlyTxModal');
+                if (md && md.classList.contains('show')) renderMonthlyTxTable();
+            } catch (e) { console.warn('renderMonthlyTxCards error:', e); }
+        }
+        function openMonthlyTxModal(type) {
+            window._monthTx.type = type; window._monthTx.view = 'all';
+            const s = document.getElementById('monthlyTxSearch'); if (s) s.value = '';
+            setMonthlyTxView('all', true);
+            renderMonthlyTxTable();
+            const el = document.getElementById('monthlyTxModal');
+            if (el && window.bootstrap) bootstrap.Modal.getOrCreateInstance(el).show();
+        }
+        function setMonthlyTxView(v, silent) {
+            window._monthTx.view = v;
+            const a = document.getElementById('monthlyTxViewAll'), b = document.getElementById('monthlyTxViewItem');
+            if (a) a.classList.toggle('active', v === 'all'); if (b) b.classList.toggle('active', v === 'item');
+            if (!silent) renderMonthlyTxTable();
+        }
+        function renderMonthlyTxTable() {
+            const st = window._monthTx; const isIn = st.type === 'in';
+            const list = isIn ? st.in : st.out;
+            const q = (document.getElementById('monthlyTxSearch')?.value || '').trim().toLowerCase();
+            const rows = list.filter(function (h) {
+                if (!q) return true;
+                return [h.code, h.itemName, h.user, h.remark, h.time].join(' ').toLowerCase().indexOf(q) !== -1;
+            });
+            const totalQty = rows.reduce(function (s, h) { return s + _txQty(h); }, 0);
+            const t = document.getElementById('monthlyTxTitle');
+            if (t) t.innerHTML = (isIn ? '<i class="fas fa-box-open text-success me-2"></i>รายการรับเข้า' : '<i class="fas fa-dolly text-danger me-2"></i>รายการเบิกออก') + ' เดือนนี้ ' + escapeHtml(st.label);
+            const sm = document.getElementById('monthlyTxSummary');
+            if (sm) sm.textContent = formatNumber(rows.length) + ' รายการ · รวม ' + formatNumber(totalQty) + ' ชิ้น' + (q ? ' (กรองจากทั้งหมด ' + formatNumber(list.length) + ' รายการ)' : '');
+            const head = document.getElementById('monthlyTxHead'), body = document.getElementById('monthlyTxBody');
+            if (!head || !body) return;
+            const th = function (txt, cls) { return '<th class="' + (cls || '') + '" style="position:sticky;top:0;background:var(--card-bg);white-space:nowrap;">' + txt + '</th>'; };
+            if (rows.length === 0) {
+                head.innerHTML = ''; body.innerHTML = '<tr><td class="text-center py-4" style="color:var(--text-muted)">ไม่มีรายการ</td></tr>'; return;
+            }
+            if (st.view === 'item') {
+                const g = {};
+                rows.forEach(function (h) {
+                    const k = String(h.code || h.itemName);
+                    if (!g[k]) g[k] = { code: h.code, name: h.itemName, unit: h.unit || '', qty: 0, n: 0 };
+                    g[k].qty += _txQty(h); g[k].n += 1;
+                });
+                const arr = Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return b.qty - a.qty; });
+                head.innerHTML = '<tr>' + th('รหัส') + th('ชื่อ') + th('จำนวนครั้ง', 'text-center') + th('รวมจำนวน', 'text-end') + '</tr>';
+                body.innerHTML = arr.map(function (r) {
+                    return '<tr><td class="font-monospace">' + escapeHtml(r.code) + '</td><td>' + escapeHtml(r.name) + '</td><td class="text-center">' + r.n + '</td><td class="text-end fw-bold ' + (isIn ? 'text-success' : 'text-danger') + '">' + formatNumber(r.qty) + ' ' + escapeHtml(r.unit) + '</td></tr>';
+                }).join('');
+            } else {
+                head.innerHTML = '<tr>' + th('วันที่-เวลา') + th('รหัส') + th('ชื่อ') + th('จำนวน', 'text-end') + th('ผู้ทำรายการ') + th('หมายเหตุ') + '</tr>';
+                body.innerHTML = rows.map(function (h) {
+                    return '<tr><td style="white-space:nowrap">' + escapeHtml(h.time) + '</td><td class="font-monospace">' + escapeHtml(h.code) + '</td><td>' + escapeHtml(h.itemName) + '</td><td class="text-end fw-bold ' + (isIn ? 'text-success' : 'text-danger') + '" style="white-space:nowrap">' + formatNumber(_txQty(h)) + ' ' + escapeHtml(h.unit || '') + '</td><td>' + escapeHtml(h.user || '') + '</td><td>' + escapeHtml(h.remark || '') + '</td></tr>';
+                }).join('');
             }
         }
 
